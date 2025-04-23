@@ -1,0 +1,32 @@
+class BioSparks extends GoopSparks;
+
+defaultproperties
+{
+    Style=STY_Additive
+    Skins(0)=Texture'XEffectMat.redbolt'
+    mParticleType=PCL_Burst
+    mDirDev=(X=0.8,Y=0.8,Z=0.8)
+    mPosDev=(X=0.0,Y=0.0,Z=0.0)
+    mLifeRange(0)=2
+    mLifeRange(1)=3
+    mSpeedRange(0)=80.0
+    mSpeedRange(1)=240.0
+    mSizeRange(0)=5.0
+    mSizeRange(1)=6.0
+    mMassRange(0)=-1.0
+    mMassRange(1)=1.0
+    mRegenRange(0)=0.0
+    mRegenRange(1)=0.0
+    mStartParticles=30
+    mMaxParticles=30
+    ScaleGlow=2.0
+    mGrowthRate=-2.0
+    mRegen=false
+    mAttenuate=true
+    mAttenKa=0.0
+    mAirResistance=2.0      
+    mColorRange(0)=(R=255,B=0,G=0)
+    mColorRange(1)=(R=255,B=0,G=0)
+    mSpawnVecB=(X=8.0,Y=0.0,Z=0.04)
+    RemoteRole=ROLE_None
+}
