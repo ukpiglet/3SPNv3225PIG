@@ -59,7 +59,7 @@ simulated function ClientRestart()
 
 simulated function Touch(Actor Other) {
     super.Touch(Other);
-    if (Other.IsA('Teleporter'))
+    if (Other != None && Other.IsA('Teleporter'))
         IgnoreZChangeTicks = 2;
 }
 

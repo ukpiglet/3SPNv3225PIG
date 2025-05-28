@@ -1355,7 +1355,7 @@ function BecomeSpectator()
 	BroadcastLocalizedMessage(Level.Game.GameMessageClass, 14, PlayerReplicationInfo);
 
 	//level up when player of this ppr leaves
-	if(Team_GameBase(Level.Game)!=None && Team_GameBase(Level.Game).AutoBalanceOnJoinsOver > 0 && PlayerData.AvgPPR > Team_GameBase(Level.Game).AutoBalanceOnJoinsOver)
+	if(Team_GameBase(Level.Game)!=None && Team_GameBase(Level.Game).AutoBalanceOnJoinsOver > 0 && PlayerData != None && PlayerData.AvgPPR > Team_GameBase(Level.Game).AutoBalanceOnJoinsOver)
       Team_GameBase(Level.Game).ForceAutoBalance = true;
 
 	ClientBecameSpectator();
