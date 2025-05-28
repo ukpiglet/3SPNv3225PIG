@@ -335,11 +335,11 @@ function StorePlayerData()
 
 	if(PlayerData==None)
 	{
-		Log("No player data was being tracked for "$PlayerReplicationInfo.PlayerName);	
+		//Log("No player data was being tracked for "$PlayerReplicationInfo.PlayerName);	
 		return;
 	}
 
-	Log("Storing player data for "$PlayerReplicationInfo.PlayerName);	
+	//Log("Storing player data for "$PlayerReplicationInfo.PlayerName);	
 	
 	PlayerData.Current.Score           = PlayerReplicationInfo.Score;
 	PlayerData.Current.Kills           = PlayerReplicationInfo.Kills;
@@ -1380,7 +1380,7 @@ function ServerSpectate()
 
 function ClientSetWeapon( class<Weapon> WeaponClass )
 {
-	Log("ClientSetWeapon "$string(WeaponClass.name));
+	//Log("ClientSetWeapon "$string(WeaponClass.name));
 	Super.ClientSetWeapon(WeaponClass);
 }
 

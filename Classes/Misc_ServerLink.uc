@@ -142,7 +142,7 @@ function Tick(float DeltaTime)
 	DoBufferQueueIO();
 	if(ReadBufferedLine(Line))
 	{
-		Log("ServerLink: Received: "$Line);
+		//Log("ServerLink: Received: "$Line);
 		Split(Line, " ", Params);
 		HandleMessage(Params);
 	}

@@ -78,7 +78,7 @@ function Misc_PlayerData PlayerJoined(Misc_Player P)
 			
 		if(PD.StatsID == StatsID)
 		{
-			Log("Existing player record found for "$P.PlayerReplicationInfo.PlayerName);
+			//Log("Existing player record found for "$P.PlayerReplicationInfo.PlayerName);
 			class'Misc_PlayerData'.static.AttachPlayerRecord(Team_GameBase(Level.Game).misc_util_class, P, PD);
 			P.LoadPlayerData();
 			return PD;
@@ -98,7 +98,7 @@ function Misc_PlayerData PlayerJoined(Misc_Player P)
 	SL = GetServerLink();
 	if(SL != None)
 	{
-		Log("Requesting stats for player "$P.PlayerReplicationInfo.PlayerName);
+		//Log("Requesting stats for player "$P.PlayerReplicationInfo.PlayerName);
 		SL.RequestStats(i, PD.StatsID);
 	}
 	
@@ -123,7 +123,7 @@ function PlayerChangedName(Misc_Player P)
 {
 	local string PlayerName;
 	
-	Log("PlayerChangedName: "$P.PlayerReplicationInfo.PlayerName);
+	//Log("PlayerChangedName: "$P.PlayerReplicationInfo.PlayerName);
 	
 	PlayerName = class'Misc_Util'.static.StripColor(P.PlayerReplicationInfo.PlayerName);
 	ReplaceText(PlayerName, " ", "_");
@@ -181,7 +181,7 @@ function FinishMatch()
 		TeamScoreStr = int(TGB.Teams[0].Score)$","$int(TGB.Teams[1].Score);
 	}
 		
-	Log("Registering match stats...");
+	//Log("Registering match stats...");
 
 	TimeString = class'Misc_Util'.static.GetTimeStringFromLevel(Level);	
 	if(TimeString == "")
@@ -209,17 +209,17 @@ function FinishMatch()
 
 	if(PlayerCnt == 0)
 	{
-		Log("No active players in match");
+		//Log("No active players in match");
 		return;
 	}
 	
 	if(PlayerCnt <= Team_GameBase(Level.Game).AllowPersistentStatsIfMoreThan){
-		Log("Not enough active players in match"@PlayerCnt@"<="@Team_GameBase(Level.Game).AllowPersistentStatsIfMoreThan);
+		//Log("Not enough active players in match"@PlayerCnt@"<="@Team_GameBase(Level.Game).AllowPersistentStatsIfMoreThan);
 		return;
 	}
 	
 	MapName = class'Misc_Util'.static.GetMapName(Level);
-	Log("Registering match with time: "$TimeString$", map: "$MapName$", team scores: "$TeamScoreStr);
+	//Log("Registering match with time: "$TimeString$", map: "$MapName$", team scores: "$TeamScoreStr);
 	
 	SL.RegisterGame(TimeString, MapName, TeamScoreStr);
 	
@@ -236,7 +236,7 @@ function FinishMatch()
 		if((PD.Current.Score == 0 && PD.Current.Kills == 0 && PD.Current.Deaths == 0 && PD.Current.Thaws == 0 && PD.Current.Git == 0) || PD.Current.Rounds < Team_GameBase(Level.Game).AllowPersistentStatsAfter)
 			continue;
 
-		Log("Sending results for "$PD.OwnerID$" - "$PD.OwnerName$" (index:"$PD.StatsIndex$")");
+		//Log("Sending results for "$PD.OwnerID$" - "$PD.OwnerName$" (index:"$PD.StatsIndex$")");
 		SL.RegisterStats(TimeString, PD.OwnerName, PD.StatsID, PD.TeamIdx, PD.Current.Rounds, PD.Current.Score, PD.Current.Kills, PD.Current.Deaths, PD.Current.Thaws, PD.Current.Git, PD.Current.HealthGiven);
 	}
 }
