@@ -156,10 +156,20 @@ event PostBeginPlay()
 }
 
 simulated function PostNetBeginPlay(){
+
+	local PlayerController P;
+
 	Super.PostNetBeginPlay();
 	OldBaseEyeHeight = default.BaseEyeHeight;
     OldLocation = Location;
-	bUseChatIcon = Misc_BaseGRI(Level.GRI).bUseChatIcon;
+	
+	//Level.GRI is not present on client, so use the local route to GRI
+	//bUseChatIcon = Misc_BaseGRI(Level.GRI).bUseChatIcon;
+
+	if (Role != ROLE_Authority){
+		P = Level.getLocalPlayerController();
+		bUseChatIcon = Misc_BaseGRI(P.GameReplicationInfo).bUseChatIcon;
+	}
 }
 
 function PossessedBy(Controller C)

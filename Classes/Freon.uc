@@ -36,11 +36,19 @@ var config float SelfKillLavaThawtime;
 var config bool NoTriggerProtectionMsg;
 var config bool bThawPuff;
 
-
-
 var Sound TeleportSound;
 
 var config bool bAwardAmmoOnThaw;
+
+//Otherwise Log message: Freon DM-UCMP-Contrast-SE_Beta2.Freon (Function Engine.GameInfo.EndLogging:0027) 
+function EndLogging(string Reason)
+{
+	if (GameStats == None)
+		return;
+	GameStats.EndGame(Reason);
+	if (GameStats != None) GameStats.Destroy();
+	GameStats = None;
+}
 
 function InitGameReplicationInfo()
 {

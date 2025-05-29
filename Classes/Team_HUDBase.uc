@@ -36,6 +36,63 @@ var Actor TargetingActor;
 #include Classes\Include\DrawWeaponBar.uci
 #include Classes\Include\_HudCommon.p.uci
 
+
+//accessed nones on PawnOwner when using this function from hudbase.uc
+function DisplayHit(vector HitDir, int Damage, class<DamageType> damageType)
+{
+	local int i;
+	local vector X,Y,Z;
+	local byte Ignore[4];
+	local rotator LookDir;
+	local float NewDamageTime,Forward,Left;
+
+	if(PawnOwner != None){
+		LookDir = PawnOwner.Rotation;
+		LookDir.Pitch = 0;
+		GetAxes(LookDir, X,Y,Z);
+		HitDir.Z = 0;
+		HitDir = Normal(HitDir);
+
+		Forward = HitDir Dot X;
+		Left = HitDir Dot Y;
+
+		if ( Forward > 0 )
+		{
+			if ( Forward > 0.7 )
+				Emphasized[0] = 1;
+			Ignore[1] = 1;
+		}
+		else
+		{
+			if ( Forward < -0.7 )
+				Emphasized[1] = 1;
+			Ignore[0] = 1;
+		}
+		if ( Left > 0 )
+		{
+			if ( Left > 0.7 )
+				Emphasized[3] = 1;
+			Ignore[2] = 1;
+		}
+		else
+		{
+			if ( Left < -0.7 )
+				Emphasized[2] = 1;
+			Ignore[3] = 1;
+		}
+	}
+
+	NewDamageTime = 5 * Clamp(Damage,20,30);
+	for ( i=0; i<4; i++ )
+		if ( Ignore[i] != 1 )
+		{
+			DamageFlash[i].R = 255;
+			DamageTime[i] = NewDamageTime;
+		}
+}
+
+
+
 exec function ShowStats()
 {
     bShowLocalStats = !bShowLocalStats;

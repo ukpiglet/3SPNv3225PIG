@@ -191,14 +191,15 @@ function Died(Controller Killer, class<DamageType> DamageType, vector HitLocatio
     local Freon Freon;
     local Controller Gitter;
 
-	//piglet - test weapon activate on death
-	if ( Weapon != None && Freon(Level.Game).bDeathFire)
-    {
-		if ( Controller != None )
-			Controller.LastPawnWeapon = Weapon.Class;
-			
-        Weapon.HolderDied();
-    }
+	//piglet - test weapon activate on death (but not client side
+	if (Role == ROLE_Authority)
+		if ( Weapon != None && Freon(Level.Game).bDeathFire)
+		{
+			if ( Controller != None )
+				Controller.LastPawnWeapon = Weapon.Class;
+				
+			Weapon.HolderDied();
+		}
 	
 	
     if(bGivesGit)
@@ -261,15 +262,16 @@ function bool Froze(Controller Killer, class<DamageType> DamageType, Vector HitL
     if(bDeleteMe || Level.bLevelChange || Level.Game == None)
         return false;
 
-	//piglet - weapon activate on death
-	if ( Weapon != None && Freon(Level.Game).bDeathFire)
-    {
-		if ( Controller != None )
-			Controller.LastPawnWeapon = Weapon.Class;
+	//piglet - weapon activate on death (but not client side!)
+	if (Role == ROLE_Authority)
+		if ( Weapon != None && Freon(Level.Game).bDeathFire)
+		{
+			if ( Controller != None )
+				Controller.LastPawnWeapon = Weapon.Class;
+				
+			Weapon.HolderDied();
+		}
 			
-        Weapon.HolderDied();
-    }
-		
     if(Controller == None || DrivenVehicle != None)
         return false;
 

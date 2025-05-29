@@ -10,6 +10,40 @@ replication
         ClientSendStatsFreon, ClientListBestFreon;
 }
 
+
+//Otherwise:  Freon_Player (Function Engine.PlayerController.ClientVoiceMessage:002C) Accessed None 'Player'
+function ClientVoiceMessage (PlayerReplicationInfo Sender, PlayerReplicationInfo Recipient, name messagetype, byte MessageID)
+{
+  if ( Player == None)
+		return;
+  else
+		Super.ClientVoiceMessage ( Sender,  Recipient,  messagetype,  MessageID);
+ }
+
+//Overwridden as Pawn somestimes does not exist on client.
+//Warning: Freon_Player (Function UnrealGame.UnrealPlayer.NewClientPlayTakeHit:0095) Accessed None 'Pawn'
+function NewClientPlayTakeHit(vector AttackLoc, vector HitLoc, byte Damage, class<DamageType> damageType)
+{
+	local vector HitDir;
+
+	if ( (myHUD != None) && ((Damage > 0) || bGodMode) )
+	{
+		if ( AttackLoc != vect(0,0,0) )
+			HitDir = Normal(AttackLoc - Pawn.Location);
+		else
+			HitDir = Normal(HitLoc);
+		myHUD.DisplayHit(HitDir, Damage, DamageType);
+	}
+	
+    if( bEnableDamageForceFeedback )        // jdf
+        ClientPlayForceFeedback("Damage");  // jdf
+		
+    if ( Level.NetMode == NM_Client && Pawn != None){
+		HitLoc += Pawn.Location;
+		Pawn.PlayTakeHit(HitLoc, Damage, damageType);
+	}
+}
+
 function ServerUpdateStatArrays(TeamPlayerReplicationInfo PRI)
 {
     local Freon_PRI P;
