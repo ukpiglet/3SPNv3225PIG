@@ -50,6 +50,43 @@ function EndLogging(string Reason)
 	GameStats = None;
 }
 
+function Killed(Controller Killer, Controller Killed, Pawn KilledPawn, class<DamageType> DamageType)
+{
+	//if "shattered", then it's not a real kill. Don't count it as a kill or death on scoreboard or for Vendetta etc.
+	if (!ClassIsChildOf(DamageType, class'DamTypeShattered'))
+		Super.Killed(Killer, Killed, KilledPawn, DamageType);
+	
+	if(Killed != None && Killed.PlayerReplicationInfo != None)
+	{
+		if(bRespawning && Freon(Level.Game)==None)
+		{
+			Killed.PlayerReplicationInfo.bOutOfLives = false;
+			Killed.PlayerReplicationInfo.NumLives = 1;
+
+			if(PlayerController(Killed)!=None)
+				PlayerController(Killed).ClientReset();
+			Killed.Reset();
+			if(PlayerController(Killed)!=None)
+				PlayerController(Killed).GotoState('Spectating');
+
+			RestartPlayer(Killed);
+			return;
+		}
+		else
+		{
+			Killed.PlayerReplicationInfo.bOutOfLives = true;
+			Killed.PlayerReplicationInfo.NumLives = 0;
+		}
+
+		if(Killed.GetTeamNum() != 255 && !(Team_GameBase(Level.Game).bEndOfRound || Team_GameBase(Level.Game).EndOfRoundTime>0))   //Shatter (or any end of round death) should not increase team deaths, nor trigger alone sound
+		{
+			Deaths[Killed.GetTeamNum()]++;
+			CheckForAlone(Killed, Killed.GetTeamNum());
+		}
+	}
+}
+
+
 function InitGameReplicationInfo()
 {
     Super.InitGameReplicationInfo();

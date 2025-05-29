@@ -704,7 +704,8 @@ State Frozen
 	{
 		Health = 0;
 		Super.Died(None, ShatteredDamageTypeClass, Location);
-		PlayerReplicationInfo.Deaths = PlayerReplicationInfo.Deaths - 1; //From Frozen...doesn't count as a death.
+		
+		//PlayerReplicationInfo.Deaths = PlayerReplicationInfo.Deaths - 1; //From Frozen...doesn't count as a death. Not needed now Shattered doesn't count as a death
 	}
 
 	event Died (Controller Killer, Class<DamageType> DamageTypeClass, Vector HitLocation ){
