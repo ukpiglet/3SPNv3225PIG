@@ -2257,7 +2257,7 @@ function Typing( bool bTyping )
 {
 	Super.Typing(bTyping);
 	
-	if(Misc_pawn(pawn) != none && Misc_pawn(pawn).bUseChatIcon){
+	if(Misc_pawn(pawn) != none && Misc_BaseGRI(GameReplicationInfo).bUseChatIcon){
         Misc_pawn(pawn).SetChatIcon();
 	}
 }

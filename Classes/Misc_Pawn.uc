@@ -1,4 +1,4 @@
-class Misc_Pawn extends xPawn;
+Class Misc_Pawn extends xPawn;
 
 var Misc_Player MyOwner;
 
@@ -37,7 +37,6 @@ var float EyeHeightOffset;
 
 var xEmitter InvisEmitter;
 
-var bool bUseChatIcon;
 var ChatIcon ChatIcon;
 
 var config bool bPlayOwnLandings;
@@ -157,19 +156,9 @@ event PostBeginPlay()
 
 simulated function PostNetBeginPlay(){
 
-	local PlayerController P;
-
 	Super.PostNetBeginPlay();
 	OldBaseEyeHeight = default.BaseEyeHeight;
     OldLocation = Location;
-	
-	//Level.GRI is not present on client, so use the local route to GRI
-	//bUseChatIcon = Misc_BaseGRI(Level.GRI).bUseChatIcon;
-
-	if (Role != ROLE_Authority){
-		P = Level.getLocalPlayerController();
-		bUseChatIcon = Misc_BaseGRI(P.GameReplicationInfo).bUseChatIcon;
-	}
 }
 
 function PossessedBy(Controller C)
