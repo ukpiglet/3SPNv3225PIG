@@ -52,8 +52,7 @@ simulated function DoPostNet()
         if(!CheckForFakeProj())
         {
             bMoved = true;
-			//DoMove(FMax(0.5*Class'NewNet_TimeStamp'.default.AverDT, Class'NewNet_PRI'.default.PredictedPing - (Class'NewNet_TimeStamp'.default.AverDT)) * Velocity);
-			DoMove(FMax(0.00, Class'NewNet_PRI'.default.PredictedPing) * Velocity);
+			DoMove(FMax(0.00, Class'Misc_PRI'.default.GamePing) * Velocity);
         }
 }
 
@@ -91,7 +90,7 @@ simulated function bool CheckForFakeProj()
          if(bMoved)
              DesiredDeltaFake = Location - FP.Location;
          else
-             DesiredDeltaFake = (Location + (Velocity * Class'NewNet_PRI'.default.PredictedPing)) - FP.Location;
+             DesiredDeltaFake = (Location + (Velocity * Class'Misc_PRI'.default.GamePing)) - FP.Location;
          DoSetLoc(FP.Location);
          FPM.RemoveProjectile(FP);
          bOwned=False;

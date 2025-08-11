@@ -42,13 +42,7 @@ var WeaponData  WeaponDefaults[9];
 /* newnet */
 var bool EnableNewNet;
 var NewNet_PawnCollisionCopy PCC;
-var NewNet_TimeStamp StampInfo;
-var float AverDT;
-var float ClientTimeStamp;
-var array<float> DeltaHistory;
 var NewNet_FakeProjectileManager FPM;
-const AVERDT_SEND_PERIOD = 20;
-var float LastReplicatedAverDT;
 var class<Weapon> WeaponClasses[9];
 var class<weapon> NewNetWeaponClasses[9];
 var string NewNetWeaponNames[9];
@@ -151,30 +145,7 @@ simulated function Tick(float DeltaTime)
 
     if(!EnableNewNet)
         return;
-    if( Level.NetMode == NM_DedicatedServer ) // only spawn the NewNet timer on the server, to calculate delay from client
-    {
-        if(StampInfo == none) // init timestamps
-		{
-           StampInfo = Spawn(Class'NewNet_TimeStamp');
-		   ClientTimeStamp = DeltaTime;
-		   AverDT = DeltaTime;
-		}
-		if ( ClientTimeStamp > AVERDT_SEND_PERIOD ) // allow AVERDT_SEND_PERIOD seconds to pass before replicating the average tickrate
-		{
-			AverDT = ((9 * AverDT) + DeltaTime) * 0.1; // 10 sample average
-		}
-		StampInfo.ReplicatetimeStamp(ClientTimeStamp); // replicate the current timestamp to the client
-		if(ClientTimeStamp > LastReplicatedAverDT + AVERDT_SEND_PERIOD) // periodically replicate AverDT to client
-        {
-            StampInfo.ReplicatedAverDT(AverDT);
-            LastReplicatedAverDT = ClientTimeStamp;
-        }
-		//increment the timestamp
-		ClientTimeStamp += DeltaTime;
 
-		return;
-    }
-	
     // spawn the fake projectile handling class on the client
     if(Level.NetMode==NM_Client)
     {
@@ -435,11 +406,6 @@ function bool CheckReplacement(Actor Other, out byte bSuperRelevant)
 				{
 					 lPRI=lPRI.NextReplicationInfo;
 				}
-				lPRI.NextReplicationInfo = Spawn(Class'NewNet_PRI', Other.Owner);
-			}
-			else
-			{
-				PlayerReplicationInfo(Other).CustomReplicationInfo = Spawn(Class'NewNet_PRI', Other.Owner);
 			}
 			return true;
 		}

@@ -23,8 +23,8 @@ class NewNet_ClassicSniperRifle extends ClassicSniperRifle
     HideDropDown
 	CacheExempt;
 
-var NewNet_TimeStamp T;
-var TAM_Mutator M;
+var Misc_PRI MPRI;
+
 
 replication
 {
@@ -89,11 +89,7 @@ simulated event NewNet_ClientStartFire(int Mode)
     {
         if (StartFire(Mode))
         {
-            if(T==None)
-                foreach DynamicActors(Class'NewNet_TimeStamp', T)
-                     break;
-
-            NewNet_ServerStartFire(mode, T.ClientTimeStamp);
+            NewNet_ServerStartFire(mode, MPRI.GamePing);
         }
     }
     else
@@ -104,16 +100,9 @@ simulated event NewNet_ClientStartFire(int Mode)
 
 function NewNet_ServerStartFire(byte Mode, float ClientTimeStamp)
 {
-    if(M==None)
-        foreach DynamicActors(class'TAM_Mutator', M)
-	        break;
-
-    if(Team_GameBase(Level.Game)!=None && Misc_Player(Instigator.Controller)!=None)
-      Misc_Player(Instigator.Controller).NotifyServerStartFire(ClientTimeStamp, M.ClientTimeStamp, M.AverDT);
-          
     if(NewNet_ClassicSniperFire(FireMode[Mode])!=None)
     {
-        NewNet_ClassicSniperFire(FireMode[Mode]).PingDT = M.ClientTimeStamp - ClientTimeStamp + 1.75*M.AverDT;
+        NewNet_ClassicSniperFire(FireMode[Mode]).PingDT = MPRI.GamePing;
         NewNet_ClassicSniperFire(FireMode[Mode]).bUseEnhancedNetCode = true;
     }
 

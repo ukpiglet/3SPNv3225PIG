@@ -51,7 +51,7 @@ simulated function CheckFireEffect()
    {
 		if (Misc_BaseGRI(Level.GRI).NewNetExp)
 		{
-			if(Class'NewNet_PRI'.default.PredictedPing > EXP_MAX_PROJECTILE_FUDGE)
+			if(PingDT > EXP_MAX_PROJECTILE_FUDGE)
 				DoClientFireEffect();
 			else
 			{
@@ -60,12 +60,12 @@ simulated function CheckFireEffect()
 				Weapon.GetViewAxes(OldXAxis,OldYAxis,OldZAxis);
 				OldAim=AdjustAim(OldInstigatorLocation+OldInstigatorEyePosition, AimError);
 				OldLoad=Load;
-				SetAltTimer(Class'NewNet_PRI'.default.PredictedPing - EXP_MAX_PROJECTILE_FUDGE, false);
+				SetAltTimer(PingDT - EXP_MAX_PROJECTILE_FUDGE, false);
 			}
 		}
 		else
 		{
-			if(Class'NewNet_PRI'.default.PredictedPing <= MAX_PROJECTILE_FUDGE)
+			if(PingDT <= MAX_PROJECTILE_FUDGE)
 				DoClientFireEffect();
 			else
 			{
@@ -74,7 +74,7 @@ simulated function CheckFireEffect()
 				Weapon.GetViewAxes(OldXAxis,OldYAxis,OldZAxis);
 				OldAim=AdjustAim(OldInstigatorLocation+OldInstigatorEyePosition, AimError);
 				OldLoad=Load;
-				SetAltTimer(Class'NewNet_PRI'.default.PredictedPing - MAX_PROJECTILE_FUDGE, false);
+				SetAltTimer(PingDT - MAX_PROJECTILE_FUDGE, false);
 			}
 		}
 	}

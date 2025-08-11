@@ -36,8 +36,8 @@ struct ReplicatedVector
     var float Z;
 };
 
-var NewNet_TimeStamp T;
-var TAM_Mutator M;
+var Misc_PRI MPRI;
+
 
 replication
 {
@@ -132,10 +132,7 @@ simulated function NewNet_ClientStartFire(int mode)
             V.Y = Start.Y;
             V.Z = Start.Z;
 
-            if(T==None)
-                foreach DynamicActors(Class'NewNet_TimeStamp', T)
-                     break;
-            Stamp = T.ClientTimeStamp;
+            Stamp = MPRI.GamePing;
 
             NewNet_SniperFire(FireMode[mode]).DoInstantFireEffect();
             NewNet_ServerStartFire(Mode, stamp, R, V/*, b, V2, A,HN,HL*/);
@@ -187,21 +184,7 @@ function NewNet_ServerStartFire(byte Mode, float ClientTimeStamp, ReplicatedRota
 		return;
 	}
 
-	if(M==None)
-        foreach DynamicActors(class'TAM_Mutator', M)
-	        break;
-
-    if(Team_GameBase(Level.Game)!=None && Misc_Player(Instigator.Controller)!=None)
-      Misc_Player(Instigator.Controller).NotifyServerStartFire(ClientTimeStamp, M.ClientTimeStamp, M.AverDT);
-          
-	if (Misc_BaseGRI(Level.GRI).NewNetExp)
-	{
-		NewNet_SniperFire(FireMode[Mode]).PingDT = FClamp(M.ClientTimeStamp - ClientTimeStamp + (M.AverDT * Misc_BaseGRI(Level.GRI).NewNetExp_HSMult), 0, Misc_BaseGRI(Level.GRI).NewNetExp_ThresholdHS);
-	}
-	else
-	{
-		NewNet_SniperFire(FireMode[Mode]).PingDT = M.ClientTimeStamp - ClientTimeStamp + 1.75*M.AverDT;
-	}
+    NewNet_SniperFire(FireMode[Mode]).PingDT = MPRI.GamePing;
 	NewNet_SniperFire(FireMode[Mode]).bUseEnhancedNetCode = true;
     if ( (FireMode[Mode].NextFireTime <= Level.TimeSeconds + FireMode[Mode].PreFireTime)
 		&& StartFire(Mode) )

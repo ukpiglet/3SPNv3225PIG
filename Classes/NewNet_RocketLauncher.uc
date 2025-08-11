@@ -43,8 +43,8 @@ struct ReplicatedVector
     var float Z;
 };
 
-var NewNet_TimeStamp T;
-var TAM_Mutator M;
+var Misc_PRI MPRI;
+
 
 var float PingDT;
 var bool bUseEnhancedNetCode;
@@ -136,13 +136,9 @@ simulated function NewNet_AltClientStartFire(int mode)
     {
         if (StartFire(Mode))
         {
-            if(T==None)
-                foreach DynamicActors(Class'NewNet_TimeStamp', T)
-                     break;
-         /*   if(NewNet_RocketMultiFire(FireMode[Mode])!=None)
-                NewNet_RocketMultiFire(FireMode[Mode]).DoInstantFireEffect();
-            else*/ if(NewNet_RocketFire(FireMode[Mode])!=None)
+            if(NewNet_RocketFire(FireMode[Mode])!=None)
                 NewNet_RocketFire(FireMode[Mode]).DoInstantFireEffect();
+
             R.Pitch = Pawn(Owner).Controller.Rotation.Pitch;
             R.Yaw = Pawn(Owner).Controller.Rotation.Yaw;
             STart=Pawn(Owner).Location + Pawn(Owner).EyePosition();
@@ -151,7 +147,7 @@ simulated function NewNet_AltClientStartFire(int mode)
             V.Y = Start.Y;
             V.Z = Start.Z;
 
-            NewNet_ServerStartFire(mode, T.ClientTimeStamp, R, V);
+            NewNet_ServerStartFire(mode, MPRI.GamePing, R, V);
         }
     }
     else
@@ -191,13 +187,6 @@ simulated function bool AltReadyToFire(int Mode)
 
 function NewNet_ServerStartFire(byte Mode, float ClientTimeStamp, ReplicatedRotator R, ReplicatedVector V)
 {
-    if(M==None)
-        foreach DynamicActors(class'TAM_Mutator', M)
-	        break;
-
-    if(Team_GameBase(Level.Game)!=None && Misc_Player(Instigator.Controller)!=None)
-      Misc_Player(Instigator.Controller).NotifyServerStartFire(ClientTimeStamp, M.ClientTimeStamp, M.AverDT);
-          
     if ( (Instigator != None) && (Instigator.Weapon != self) )
 	{
 		if ( Instigator.Weapon == None )
@@ -207,25 +196,16 @@ function NewNet_ServerStartFire(byte Mode, float ClientTimeStamp, ReplicatedRota
 		return;
 	}
 
-	if (Misc_BaseGRI(Level.GRI).NewNetExp)
-	{
-		PingDT = FMin(M.ClientTimeStamp - ClientTimeStamp + (M.AverDT * Misc_BaseGRI(Level.GRI).NewNetExp_ProjMult), Misc_BaseGRI(Level.GRI).NewNetExp_ThresholdProj);
-		timestep = EXP_PROJ_TIMESTEP;
-	}
-	else
-	{
-    	PingDT = FMin(M.ClientTimeStamp - ClientTimeStamp + 1.75*M.AverDT, MAX_PROJECTILE_FUDGE);
-		timestep = PROJ_TIMESTEP;
-	}
+	PingDT = MPRI.GamePing;
+	timestep = EXP_PROJ_TIMESTEP;
+
     bUseEnhancedNetCode=true;
     if(NewNet_RocketFire(FireMode[Mode])!=None)
     {
-       // NewNet_RocketFire(FireMode[Mode]).PingDT = FMin(M.ClientTimeStamp - ClientTimeStamp + 1.75*M.AverDT, MAX_PROJECTILE_FUDGE_ALT);
         NewNet_RocketFire(FireMode[Mode]).bUseEnhancedNetCode = true;
     }
     else if(NewNet_RocketMultiFire(FireMode[Mode])!=None)
     {
-     //   NewNet_RocketMultiFire(FireMode[Mode]).PingDT = FMin(M.ClientTimeStamp - ClientTimeStamp + 1.75*M.AverDT, MAX_PROJECTILE_FUDGE);
         NewNet_RocketMultiFire(FireMode[Mode]).bUseEnhancedNetCode = true;
     }
 

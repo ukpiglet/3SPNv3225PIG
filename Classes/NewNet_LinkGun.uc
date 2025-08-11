@@ -23,8 +23,8 @@ class NewNet_LinkGun extends LinkGun
 	HideDropDown
 	CacheExempt;
 
-var NewNet_TimeStamp T;
-var TAM_Mutator M;
+var Misc_PRI MPRI;
+
 
 const MAX_PROJECTILE_FUDGE = 0.075;
 									  
@@ -87,11 +87,7 @@ simulated event NewNet_ClientStartFire(int Mode)
     {
         if (StartFire(Mode))
         {
-            if(T==None)
-                foreach DynamicActors(Class'NewNet_TimeStamp', T)
-                     break;
-
-            NewNet_ServerStartFire(mode, T.ClientTimeStamp);
+            NewNet_ServerStartFire(mode, MPRI.GamePing);
         }
     }
     else
@@ -102,35 +98,14 @@ simulated event NewNet_ClientStartFire(int Mode)
 
 function NewNet_ServerStartFire(byte Mode, float ClientTimeStamp)
 {
-    if(M==None)
-        foreach DynamicActors(class'TAM_Mutator', M)
-	        break;
-
-    if(Team_GameBase(Level.Game)!=None && Misc_Player(Instigator.Controller)!=None)
-      Misc_Player(Instigator.Controller).NotifyServerStartFire(ClientTimeStamp, M.ClientTimeStamp, M.AverDT);
-          
     if(NewNet_LinkAltFire(FireMode[Mode])!=None)
     {
-		if (Misc_BaseGRI(Level.GRI).NewNetExp)
-		{
-			NewNet_LinkAltFire(FireMode[Mode]).PingDT = FMin(M.ClientTimeStamp - ClientTimeStamp + (M.AverDT * Misc_BaseGRI(Level.GRI).NewNetExp_ProjMult), Misc_BaseGRI(Level.GRI).NewNetExp_ThresholdProj);
-		}
-		else
-		{
-        	NewNet_LinkAltFire(FireMode[Mode]).PingDT = FMin(M.ClientTimeStamp - ClientTimeStamp + 1.75*M.AverDT, MAX_PROJECTILE_FUDGE);
-		}
+        NewNet_LinkAltFire(FireMode[Mode]).PingDT = MPRI.GamePing;
         NewNet_LinkAltFire(FireMode[Mode]).bUseEnhancedNetCode = true;
     }
     else if(NewNet_LinkFire(FireMode[Mode])!=None)
     {
-		if (Misc_BaseGRI(Level.GRI).NewNetExp)
-		{
-			NewNet_LinkFire(FireMode[Mode]).PingDT = FClamp(M.ClientTimeStamp - ClientTimeStamp + (M.AverDT * Misc_BaseGRI(Level.GRI).NewNetExp_HSMult), 0, Misc_BaseGRI(Level.GRI).NewNetExp_ThresholdHS);
-		}
-		else
-		{
-			NewNet_LinkFire(FireMode[Mode]).PingDT = M.ClientTimeStamp - ClientTimeStamp + 1.75*M.AverDT;
-		}
+		NewNet_LinkFire(FireMode[Mode]).PingDT = MPRI.GamePing;
         NewNet_LinkFire(FireMode[Mode]).bUseEnhancedNetCode = true;
     }
 

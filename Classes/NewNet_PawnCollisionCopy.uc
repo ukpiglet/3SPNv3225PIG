@@ -15,7 +15,7 @@ var NewNet_PawnCollisionCopy Next;
 var float CrouchHeight;
 var float CrouchRadius;
 
-var TAM_Mutator M;
+
 
 var Pawn CopiedPawn;
 var bool bNormalDestroy;
@@ -107,7 +107,7 @@ function TimeTravelPawn(float dt)
 
     if(CopiedPawn == none || CopiedPawn.DrivenVehicle!=None)
        return;
-    StampDT = M.ClientTimeStamp - dt;
+    StampDT = Level.TimeSeconds - dt;
     SetCollision(false);
 
     //We cant backtrack, too recent, just go straight to the pawn
@@ -258,20 +258,20 @@ function AddHistory()
     PawnHistory[i].Location = CopiedPawn.Location;
     PawnHistory[i].Rotation = CopiedPawn.Rotation;
     PawnHistory[i].bCrouched = CopiedPawn.bIsCrouched;
-    PawnHistory[i].TimeStamp = M.ClientTimeStamp;
+    PawnHistory[i].TimeStamp = Level.TimeSeconds;
     PawnHistory[i].Physics = CopiedPawn.Physics;
 
-	XPoint.InVal = M.ClientTimeStamp;
+	XPoint.InVal = Level.TimeSeconds;
 	XPoint.OutVal = CopiedPawn.Location.X;
 	LocCurveX.Points.Insert(LocCurveX.Points.Length,1);
 	LocCurveX.Points[LocCurveX.Points.Length-1]=XPoint;
 
-	YPoint.InVal = M.ClientTimeStamp;
+	YPoint.InVal = Level.TimeSeconds;
 	YPoint.OutVal = CopiedPawn.Location.Y;
 	LocCurveY.Points.Insert(LocCurveY.Points.Length,1);
 	LocCurveY.Points[LocCurveY.Points.Length-1]=YPoint;
 
-	ZPoint.InVal = M.ClientTimeStamp;
+	ZPoint.InVal = Level.TimeSeconds;
 	ZPoint.OutVal = CopiedPawn.Location.Z;
 	LocCurveZ.Points.Insert(LocCurveZ.Points.Length,1);
 	LocCurveZ.Points[LocCurveZ.Points.Length-1]=ZPoint;
@@ -280,10 +280,10 @@ function AddHistory()
 
 function RemoveOutdatedHistory()
 {
-    while(PawnHistory.Length > 0 && PawnHistory[0].TimeStamp + MAX_HISTORY_LENGTH < M.ClientTimeStamp )
+    while(PawnHistory.Length > 0 && PawnHistory[0].TimeStamp + MAX_HISTORY_LENGTH < Level.TimeSeconds )
        PawnHistory.Remove(0,1);
 	
-	while(LocCurveX.Points.Length > 0 &&  LocCurveX.Points[0].InVal + MAX_HISTORY_LENGTH < M.ClientTimeStamp)
+	while(LocCurveX.Points.Length > 0 &&  LocCurveX.Points[0].InVal + MAX_HISTORY_LENGTH < Level.TimeSeconds)
 	{
 		LocCurveX.Points.Remove(0,1);
 		LocCurveY.Points.Remove(0,1);

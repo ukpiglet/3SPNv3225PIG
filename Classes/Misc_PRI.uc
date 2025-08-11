@@ -4,6 +4,11 @@ class Misc_PRI extends xPlayerReplicationInfo;
 
 var string ColoredName;
 
+var array<float> LastPings;
+var float RealPing  "Exact ping in real-time milliseconds";
+var float GamePing  "Exact ping in game seconds.";
+var byte  RepPing   "Replicated ping in real-time milliseconds, capped at 1020 and divided by 4.";
+
 var bool bWarned;               // has been warned for camping (next time will receive penalty) - NR
 var int CampCount;              // the number of times penalized for camping - NR
 var int ConsecutiveCampCount;   // the number of times penalized for camping consecutively - NR
@@ -67,6 +72,25 @@ replication
 		
     reliable if(Role<Role_Authority)
         SetColoredName;
+
+    reliable if ( bNetDirty && Role == Role_Authority && (!bNetOwner || bDemoRecording) )
+        RepPing;
+
+    // function replication
+    unreliable if ( Role == ROLE_Authority )
+        ClientReplyPing;
+
+    unreliable if ( Role < ROLE_Authority )
+        ServerRequestPing, ServerUpdatePing;
+}
+
+function PreBeginPlay()
+{
+    Super.PreBeginPlay();
+    if ( !bDeleteMe )
+    {
+        MyOwner = PlayerController(Owner);
+    }
 }
 
 event PostBeginPlay()
@@ -75,6 +99,23 @@ event PostBeginPlay()
 
     if(!bDeleteMe && Level.NetMode != NM_Client)
         PawnReplicationInfo = Spawn(PawnInfoClass, self,, vect(0,0,0), rot(0,0,0));
+}
+
+simulated function PostNetBeginPlay()
+{
+    if ( MyOwner != None )
+    {
+        if ( Level.NetMode == NM_Client )
+        {
+            SetTimer(0.25 + 0.1 * FRand(), True);  // start finding the ping
+        }
+    }
+    Super.PostNetBeginPlay();
+
+    if ( Level.NetMode == NM_Client )
+    {
+        bNetNotify = True;
+    }
 }
 
 simulated function string GetColoredName_old_deleteme()
@@ -241,6 +282,77 @@ function ProcessHitStats()
 
     if(count > 0)
         AveragePercent /= count;
+}
+
+//== Timer ====================================================================
+/**
+Update the client's ping.
+*/
+//=============================================================================
+
+simulated function Timer()
+{
+  if ( Level.Netmode == NM_Client ) {
+    ServerRequestPing(1000 * Level.TimeSeconds);
+    SetTimer(0.25 + 0.1 * FRand(), True);
+  }
+}
+
+
+//== ServerRequestPing ========================================================
+/**
+Called by the client on the server to request a ping.
+*/
+//=============================================================================
+
+function ServerRequestPing(float Timestamp)
+{
+  ClientReplyPing(Timestamp);
+}
+
+
+//== ClientReplyPing ==========================================================
+/**
+Called on the client when the server replied to a ping request.
+*/
+//=============================================================================
+
+simulated function ClientReplyPing(float Timestamp)
+{
+  local float NewPing;
+  local int i;
+
+  NewPing = 1000 * Level.TimeSeconds - Timestamp;
+  if ( NewPing > 0 ) {
+
+    GamePing = NewPing;
+    LastPings.Insert(0, 1);
+    LastPings[0] = GamePing;
+
+    for (i = 1; i < LastPings.Length; ++i)
+      GamePing += LastPings[i] * (LastPings.Length - i) / LastPings.Length;
+
+    GamePing *= 2;
+    GamePing /= i;
+    RealPing = GamePing / Level.TimeDilation;
+
+    ServerUpdatePing(GamePing);
+    GamePing *= 0.001;
+    RepPing   = FMin(Round(0.25 * RealPing), 255);
+  }
+}
+
+
+//== ServerUpdatePing =========================================================
+/**
+Called by the client on the server
+*/
+//=============================================================================
+
+function ServerUpdatePing(float NewPing)
+{
+  GamePing = NewPing * 0.001;
+  RepPing  = FMin(Round(0.25 * NewPing / Level.TimeDilation), 255);
 }
 
 

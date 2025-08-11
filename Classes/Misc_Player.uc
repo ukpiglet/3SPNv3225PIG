@@ -2221,38 +2221,6 @@ function ServerReportNewNetStats(bool enable)
   bReportNewNetStats = enable;
 }
 
-function NotifyServerStartFire(float ClientTimeStamp, float ServerTimeStamp, float AverDT)
-{
-  local Color  color;
-  local string Text, Number;
-  local float DeltaStamp;
-  
-  color = class'Canvas'.static.MakeColor(100, 100, 210);
-  Text = class'DMStatsScreen'.static.MakeColorCode(color);
-
-  color = class'Canvas'.static.MakeColor(210, 0, 0);
-  Number = class'DMStatsScreen'.static.MakeColorCode(color);
-  
-  if(!bReportNewNetStats)
-	{
-		return;
-	}
-	else
-	{
-		DeltaStamp = 1000 * ((ServerTimeStamp - ClientTimeStamp)/Level.TimeDilation);
-		if ( bReportNewNetStats && PlayerReplicationInfo.bAdmin )
-		{
-			AverDT = 1000 * AverDT;
-			ClientMessage("StartFire: "$Text$"Delta="$Number$DeltaStamp$Text$" AverDT="$Number$AverDT$Text);
-		}
-		if ( bReportNewNetStats && !PlayerReplicationInfo.bAdmin )
-		{
-			ClientMessage("Weapon latency: "$Text$"Delta="$Number$DeltaStamp$Text);
-		}
-	}
-}
-
-
 function Typing( bool bTyping )
 {
 	Super.Typing(bTyping);
