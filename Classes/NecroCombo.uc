@@ -417,7 +417,7 @@ function DoResurrection()
 	//Abort late res at end of round, unless it's the winning round
 	T=Team_GameBase(Level.Game);
 
-	if(T != None && (T.Teams[T.WinningTeamIndex].Score + 1) != T.GoalScore && (T.bRespawning || T.bEndOfRound || T.EndOfRoundTime > 0 || T.NextRoundTime > 0))
+	if(T != None && (T.Teams[Necromancer.GetTeamNum()].Score + 1) != T.GoalScore && (T.bRespawning || T.bEndOfRound || T.EndOfRoundTime > 0 || T.NextRoundTime > 0))
     {
         Abort(true);
         return;
@@ -504,6 +504,13 @@ function DoResurrection()
             }
         }
     }
+
+	// for some reason pawn is sometimes none! Abort until root cause is known
+	if(Resurrectee.Pawn == None)
+	{
+		Abort(false);
+		return;
+	}
 
     Resurrectee.Pawn.Health = ResurrecteeHealth;
     Resurrectee.Pawn.ShieldStrength = ResurrecteeShield;

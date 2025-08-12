@@ -52,7 +52,7 @@ simulated function HurtRadius( float DamageAmount, float DamageRadius, class<Dam
 	
 	foreach VisibleCollidingActors( class 'Freon_Pawn', Victim, DamageRadius, HitLocation )
 	{
-		if (Victim.bFrozen && Victim.GetTeamNum() != Instigator.GetTeamNum()){
+		if (Instigator != None && Victim.bFrozen && Victim.GetTeamNum() != Instigator.GetTeamNum()){
 			bHitEnemyFrozen = true;
 			Spawn(class'BioEffect', Victim, , Victim.Location, Victim.Rotation);
 			Spawn(class'BioSparks', Victim, , Victim.Location, Victim.Rotation);

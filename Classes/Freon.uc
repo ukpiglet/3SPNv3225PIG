@@ -123,7 +123,7 @@ function ShowPathTo(PlayerController P, int TeamNum)
 	BestDist = 99999;
     for(i = 0; i < FrozenPawns.Length; i++)
     {
-		if (FrozenPawns[i].GetTeamNum() == myteam){
+		if (FrozenPawns[i] != none && FrozenPawns[i].GetTeamNum() == myteam){
 			Dist = VSize(FrozenPawns[i].Location - P.Pawn.Location);
 			if (Dist < BestDist){
 				BestDist = Dist;
