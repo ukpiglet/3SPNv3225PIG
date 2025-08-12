@@ -24,7 +24,7 @@ class NewNet_ShockRifle extends ShockRifle
 	CacheExempt;
 
 var Misc_PRI MPRI;
-
+var TAM_Mutator M;
 
 struct ReplicatedRotator
 {
@@ -90,17 +90,22 @@ simulated event NewNet_ClientStartFire(int Mode)
     local ReplicatedVector V;
     local vector Start;
     local float stamp;
+	//local float pinglog;
 
     if ( Pawn(Owner).Controller.IsInState('GameEnded') || Pawn(Owner).Controller.IsInState('RoundEnded') )
         return;
     if (Role < ROLE_Authority)
     {
+		if ( (Pawn(Owner) != None) && (Pawn(Owner).PlayerReplicationInfo != None) )
+		{
+			MPRI = Misc_PRI(Pawn(Owner).PlayerReplicationInfo);
+			stamp = MPRI.GamePing;
+		}
         if (AltReadyToFire(Mode) && StartFire(Mode))
         {
             if(!ReadyToFire(Mode))
             {
-                Stamp = MPRI.GamePing;
-                NewNet_OldServerStartFire(Mode,Stamp);
+                NewNet_OldServerStartFire(Mode, stamp);
                 return;
             }
             R.Pitch = Pawn(Owner).Controller.Rotation.Pitch;
@@ -110,8 +115,6 @@ simulated event NewNet_ClientStartFire(int Mode)
             V.X = Start.X;
             V.Y = Start.Y;
             V.Z = Start.Z;
-
-            Stamp = MPRI.GamePing;
 
             NewNet_ShockBeamFire(FireMode[mode]).DoInstantFireEffect();
             NewNet_ServerStartFire(Mode, stamp, R, V);
@@ -152,7 +155,7 @@ simulated function bool AltReadyToFire(int Mode)
 	return true;
 }
 
-function NewNet_ServerStartFire(byte Mode, float ClientTimeStamp, ReplicatedRotator R, ReplicatedVector V)
+function NewNet_ServerStartFire(byte Mode, float ClientGamePing, ReplicatedRotator R, ReplicatedVector V)
 {
 	if ( (Instigator != None) && (Instigator.Weapon != self) )
 	{
@@ -163,7 +166,7 @@ function NewNet_ServerStartFire(byte Mode, float ClientTimeStamp, ReplicatedRota
 		return;
 	}
 
-    NewNet_ShockBeamFire(FireMode[Mode]).PingDT = MPRI.GamePing;
+    NewNet_ShockBeamFire(FireMode[Mode]).PingDT = ClientGamePing;
     NewNet_ShockBeamFire(FireMode[Mode]).bUseEnhancedNetCode = true;
     if ( (FireMode[Mode].NextFireTime <= Level.TimeSeconds + FireMode[Mode].PreFireTime)
 		&& StartFire(Mode) )
@@ -185,9 +188,9 @@ function NewNet_ServerStartFire(byte Mode, float ClientTimeStamp, ReplicatedRota
 		ClientForceAmmoUpdate(Mode, AmmoAmount(Mode));
 }
 
-function NewNet_OldServerStartFire(byte Mode, float ClientTimeStamp)
+function NewNet_OldServerStartFire(byte Mode, float ClientGamePing)
 {
-	NewNet_ShockBeamFire(FireMode[Mode]).PingDT = MPRI.GamePing;
+	NewNet_ShockBeamFire(FireMode[Mode]).PingDT = ClientGamePing;
     NewNet_ShockBeamFire(FireMode[Mode]).bUseEnhancedNetCode = true;
     ServerStartFire(mode);
 }

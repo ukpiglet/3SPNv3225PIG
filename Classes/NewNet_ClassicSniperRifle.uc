@@ -24,7 +24,7 @@ class NewNet_ClassicSniperRifle extends ClassicSniperRifle
 	CacheExempt;
 
 var Misc_PRI MPRI;
-
+var TAM_Mutator M;
 
 replication
 {
@@ -85,9 +85,13 @@ simulated event NewNet_ClientStartFire(int Mode)
 {
     if ( Pawn(Owner).Controller.IsInState('GameEnded') || Pawn(Owner).Controller.IsInState('RoundEnded') )
         return;
+	if ( (Pawn(Owner) != None) && (Pawn(Owner).PlayerReplicationInfo != None) )
+	{
+		MPRI = Misc_PRI(Pawn(Owner).PlayerReplicationInfo);
+	}
     if (Role < ROLE_Authority)
     {
-        if (StartFire(Mode))
+		if (StartFire(Mode))
         {
             NewNet_ServerStartFire(mode, MPRI.GamePing);
         }
@@ -98,11 +102,11 @@ simulated event NewNet_ClientStartFire(int Mode)
     }
 }
 
-function NewNet_ServerStartFire(byte Mode, float ClientTimeStamp)
+function NewNet_ServerStartFire(byte Mode, float ClientGamePing)
 {
-    if(NewNet_ClassicSniperFire(FireMode[Mode])!=None)
+	if(NewNet_ClassicSniperFire(FireMode[Mode])!=None)
     {
-        NewNet_ClassicSniperFire(FireMode[Mode]).PingDT = MPRI.GamePing;
+        NewNet_ClassicSniperFire(FireMode[Mode]).PingDT = ClientGamePing;
         NewNet_ClassicSniperFire(FireMode[Mode]).bUseEnhancedNetCode = true;
     }
 

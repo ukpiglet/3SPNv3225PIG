@@ -31,6 +31,7 @@ const EXP_MAX_PROJECTILE_FUDGE = 0.020;
 
 var class<Projectile> FakeProjectileClass;
 var NewNet_FakeProjectileManager FPM;
+var Misc_PRI MPRI;
 
 var float NextAltTimerTime;
 var bool bAltTimerActive;
@@ -49,35 +50,39 @@ simulated function CheckFireEffect()
 {
    if(Level.NetMode == NM_Client && Instigator.IsLocallyControlled())
    {
-		if (Misc_BaseGRI(Level.GRI).NewNetExp)
-		{
-			if(PingDT > EXP_MAX_PROJECTILE_FUDGE)
-				DoClientFireEffect();
-			else
-			{
-				OldInstigatorLocation = Instigator.Location;
-				OldInstigatorEyePosition = Instigator.EyePosition();
-				Weapon.GetViewAxes(OldXAxis,OldYAxis,OldZAxis);
-				OldAim=AdjustAim(OldInstigatorLocation+OldInstigatorEyePosition, AimError);
-				OldLoad=Load;
-				SetAltTimer(PingDT - EXP_MAX_PROJECTILE_FUDGE, false);
-			}
-		}
-		else
-		{
-			if(PingDT <= MAX_PROJECTILE_FUDGE)
-				DoClientFireEffect();
-			else
-			{
-				OldInstigatorLocation = Instigator.Location;
-				OldInstigatorEyePosition = Instigator.EyePosition();
-				Weapon.GetViewAxes(OldXAxis,OldYAxis,OldZAxis);
-				OldAim=AdjustAim(OldInstigatorLocation+OldInstigatorEyePosition, AimError);
-				OldLoad=Load;
-				SetAltTimer(PingDT - MAX_PROJECTILE_FUDGE, false);
-			}
-		}
-	}
+        if (Misc_BaseGRI(Level.GRI).NewNetExp)
+        {
+           if ( (Pawn(Owner) != None) && (Pawn(Owner).PlayerReplicationInfo != None) )
+            {
+                    MPRI = Misc_PRI(Pawn(Owner).PlayerReplicationInfo);
+            }
+            if(MPRI.GamePing> EXP_MAX_PROJECTILE_FUDGE)
+                DoClientFireEffect();
+            else
+            {
+                OldInstigatorLocation = Instigator.Location;
+                OldInstigatorEyePosition = Instigator.EyePosition();
+                Weapon.GetViewAxes(OldXAxis,OldYAxis,OldZAxis);
+                OldAim=AdjustAim(OldInstigatorLocation+OldInstigatorEyePosition, AimError);
+                OldLoad=Load;
+                SetAltTimer(MPRI.GamePing - EXP_MAX_PROJECTILE_FUDGE, false);
+            }
+        }
+        else
+        {
+            if(MPRI.GamePing <= MAX_PROJECTILE_FUDGE)
+                DoClientFireEffect();
+            else
+            {
+                OldInstigatorLocation = Instigator.Location;
+                OldInstigatorEyePosition = Instigator.EyePosition();
+                Weapon.GetViewAxes(OldXAxis,OldYAxis,OldZAxis);
+                OldAim=AdjustAim(OldInstigatorLocation+OldInstigatorEyePosition, AimError);
+                OldLoad=Load;
+                SetAltTimer(MPRI.GamePing - MAX_PROJECTILE_FUDGE, false);
+            }
+        }
+    }
 }
 
 simulated function FindFPM()
@@ -89,7 +94,7 @@ simulated function FindFPM()
 simulated function ModeTick(float DT)
 {
     super.ModeTick(dt);
-    if(LEvel.NetMode!=NM_Client)
+    if(Level.NetMode!=NM_Client)
         return;
     if(bAltTimerActive && Level.TimeSeconds > NextAltTimerTime)
     {

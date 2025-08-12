@@ -87,10 +87,6 @@ replication
 function PreBeginPlay()
 {
     Super.PreBeginPlay();
-    if ( !bDeleteMe )
-    {
-        MyOwner = PlayerController(Owner);
-    }
 }
 
 event PostBeginPlay()
@@ -103,13 +99,10 @@ event PostBeginPlay()
 
 simulated function PostNetBeginPlay()
 {
-    if ( MyOwner != None )
-    {
-        if ( Level.NetMode == NM_Client )
-        {
-            SetTimer(0.25 + 0.1 * FRand(), True);  // start finding the ping
-        }
-    }
+	if ( Level.NetMode == NM_Client )
+	{
+		SetTimer(0.25 + 0.1 * FRand(), True);  // start finding the ping
+	}
     Super.PostNetBeginPlay();
 
     if ( Level.NetMode == NM_Client )

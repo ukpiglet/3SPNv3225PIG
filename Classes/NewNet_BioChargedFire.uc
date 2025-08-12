@@ -24,6 +24,7 @@ class NewNet_BioChargedFire extends WeaponFire_BioAlt;
 var float PingDT;
 var bool bUseEnhancedNetCode;
 
+
 const PROJ_TIMESTEP = 0.0201;
 const MAX_PROJECTILE_FUDGE = 0.07500;
 

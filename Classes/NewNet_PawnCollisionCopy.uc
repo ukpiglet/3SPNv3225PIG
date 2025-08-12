@@ -52,9 +52,6 @@ function SetPawn(Pawn Other)
  //   if(CopiedPawn==None)
     CopiedPawn=Other;
 
-    if(M==None)
-        foreach DynamicActors(class'TAM_Mutator', M)
-            break;
     CrouchHeight=CopiedPawn.CrouchHeight;
     CrouchRadius=CopiedPawn.CrouchRadius;
     bUseCylinderCollision = CopiedPawn.bUseCylinderCollision;

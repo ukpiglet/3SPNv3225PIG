@@ -24,7 +24,7 @@ class NewNet_LinkGun extends LinkGun
 	CacheExempt;
 
 var Misc_PRI MPRI;
-
+var TAM_Mutator M;
 
 const MAX_PROJECTILE_FUDGE = 0.075;
 									  
@@ -85,7 +85,11 @@ simulated event NewNet_ClientStartFire(int Mode)
         return;
     if (Role < ROLE_Authority)
     {
-        if (StartFire(Mode))
+		if ( (Pawn(Owner) != None) && (Pawn(Owner).PlayerReplicationInfo != None) )
+		{
+			MPRI = Misc_PRI(Pawn(Owner).PlayerReplicationInfo);
+		}
+		if (StartFire(Mode))
         {
             NewNet_ServerStartFire(mode, MPRI.GamePing);
         }
@@ -96,16 +100,16 @@ simulated event NewNet_ClientStartFire(int Mode)
     }
 }
 
-function NewNet_ServerStartFire(byte Mode, float ClientTimeStamp)
+function NewNet_ServerStartFire(byte Mode, float ClientGamePing)
 {
-    if(NewNet_LinkAltFire(FireMode[Mode])!=None)
+	if(NewNet_LinkAltFire(FireMode[Mode])!=None)
     {
-        NewNet_LinkAltFire(FireMode[Mode]).PingDT = MPRI.GamePing;
+        NewNet_LinkAltFire(FireMode[Mode]).PingDT = ClientGamePing;
         NewNet_LinkAltFire(FireMode[Mode]).bUseEnhancedNetCode = true;
     }
     else if(NewNet_LinkFire(FireMode[Mode])!=None)
     {
-		NewNet_LinkFire(FireMode[Mode]).PingDT = MPRI.GamePing;
+		NewNet_LinkFire(FireMode[Mode]).PingDT = ClientGamePing;
         NewNet_LinkFire(FireMode[Mode]).bUseEnhancedNetCode = true;
     }
 

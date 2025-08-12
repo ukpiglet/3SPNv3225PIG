@@ -24,7 +24,7 @@ class NewNet_MiniGun extends MiniGun
 	CacheExempt;
 
 var Misc_PRI MPRI;
-
+var TAM_Mutator M;
 
 replication
 {
@@ -76,7 +76,11 @@ simulated event NewNet_ClientStartFire(int Mode)
         return;
     if (Role < ROLE_Authority)
     {
-        if (StartFire(Mode))
+		if ( (Pawn(Owner) != None) && (Pawn(Owner).PlayerReplicationInfo != None) )
+		{
+			MPRI = Misc_PRI(Pawn(Owner).PlayerReplicationInfo);
+		}
+		if (StartFire(Mode))
         {
             NewNet_ServerStartFire(mode, MPRI.GamePing);
         }
@@ -87,16 +91,16 @@ simulated event NewNet_ClientStartFire(int Mode)
     }
 }
 
-function NewNet_ServerStartFire(byte Mode, float ClientTimeStamp)
+function NewNet_ServerStartFire(byte Mode, float ClientGamePing)
 {
-    if(NewNet_MiniGunFire(FireMode[Mode])!=None)
+	if(NewNet_MiniGunFire(FireMode[Mode])!=None)
     {
-		NewNet_MiniGunFire(FireMode[Mode]).PingDT = MPRI.GamePing;
+		NewNet_MiniGunFire(FireMode[Mode]).PingDT = ClientGamePing;
         NewNet_MiniGunFire(FireMode[Mode]).bUseEnhancedNetCode = true;
     }
     else if(NewNet_MiniGunAltFire(FireMode[Mode])!=None)
     {
-		NewNet_MiniGunAltFire(FireMode[Mode]).PingDT = MPRI.GamePing;
+		NewNet_MiniGunAltFire(FireMode[Mode]).PingDT = ClientGamePing;
         NewNet_MiniGunAltFire(FireMode[Mode]).bUseEnhancedNetCode = true;
     }
 

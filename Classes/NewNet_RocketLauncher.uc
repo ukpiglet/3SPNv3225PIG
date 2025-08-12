@@ -44,7 +44,7 @@ struct ReplicatedVector
 };
 
 var Misc_PRI MPRI;
-
+var TAM_Mutator M;
 
 var float PingDT;
 var bool bUseEnhancedNetCode;
@@ -134,14 +134,18 @@ simulated function NewNet_AltClientStartFire(int mode)
         return;
     if (Role < ROLE_Authority)
     {
+		if ( (Pawn(Owner) != None) && (Pawn(Owner).PlayerReplicationInfo != None) )
+		{
+			MPRI = Misc_PRI(Pawn(Owner).PlayerReplicationInfo);
+		}
         if (StartFire(Mode))
         {
-            if(NewNet_RocketFire(FireMode[Mode])!=None)
+			if(NewNet_RocketFire(FireMode[Mode])!=None)
                 NewNet_RocketFire(FireMode[Mode]).DoInstantFireEffect();
 
             R.Pitch = Pawn(Owner).Controller.Rotation.Pitch;
             R.Yaw = Pawn(Owner).Controller.Rotation.Yaw;
-            STart=Pawn(Owner).Location + Pawn(Owner).EyePosition();
+            Start = Pawn(Owner).Location + Pawn(Owner).EyePosition();
 
             V.X = Start.X;
             V.Y = Start.Y;
@@ -185,7 +189,7 @@ simulated function bool AltReadyToFire(int Mode)
 	return true;
 }
 
-function NewNet_ServerStartFire(byte Mode, float ClientTimeStamp, ReplicatedRotator R, ReplicatedVector V)
+function NewNet_ServerStartFire(byte Mode, float ClientGamePing, ReplicatedRotator R, ReplicatedVector V)
 {
     if ( (Instigator != None) && (Instigator.Weapon != self) )
 	{
@@ -196,7 +200,7 @@ function NewNet_ServerStartFire(byte Mode, float ClientTimeStamp, ReplicatedRota
 		return;
 	}
 
-	PingDT = MPRI.GamePing;
+	PingDT = ClientGamePing;
 	timestep = EXP_PROJ_TIMESTEP;
 
     bUseEnhancedNetCode=true;

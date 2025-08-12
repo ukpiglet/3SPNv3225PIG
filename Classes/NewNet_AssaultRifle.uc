@@ -24,7 +24,7 @@ class NewNet_AssaultRifle extends AssaultRifle
 	CacheExempt;
 
 var Misc_PRI MPRI;
-
+var TAM_Mutator M;
 
 const MAX_PROJECTILE_FUDGE = 0.075;
 									  
@@ -79,8 +79,13 @@ simulated event NewNet_ClientStartFire(int Mode)
 {
     if ( Pawn(Owner).Controller.IsInState('GameEnded') || Pawn(Owner).Controller.IsInState('RoundEnded') )
         return;
+
     if (Role < ROLE_Authority)
     {
+		if ( (Pawn(Owner) != None) && (Pawn(Owner).PlayerReplicationInfo != None) )
+		{
+			MPRI = Misc_PRI(Pawn(Owner).PlayerReplicationInfo);
+		}
         if (StartFire(Mode))
         {
             NewNet_ServerStartFire(mode, MPRI.GamePing);
@@ -92,17 +97,16 @@ simulated event NewNet_ClientStartFire(int Mode)
     }
 }
 
-function NewNet_ServerStartFire(byte Mode, float PingDT)
+function NewNet_ServerStartFire(byte Mode, float ClientGamePing)
 {
-
-    if(NewNet_AssaultFire(FireMode[Mode])!=None)
+	if(NewNet_AssaultFire(FireMode[Mode])!=None)
     {
-		NewNet_AssaultFire(FireMode[Mode]).PingDT = MPRI.GamePing;
+		NewNet_AssaultFire(FireMode[Mode]).PingDT = ClientGamePing;
         NewNet_AssaultFire(FireMode[Mode]).bUseEnhancedNetCode = true;
     }
     else if(NewNet_AssaultGrenade(FireMode[Mode])!=None)
     {
-		NewNet_AssaultGrenade(FireMode[Mode]).PingDT = MPRI.GamePing;
+		NewNet_AssaultGrenade(FireMode[Mode]).PingDT = ClientGamePing;
 		NewNet_AssaultGrenade(FireMode[Mode]).bUseEnhancedNetCode = true;
     }
 

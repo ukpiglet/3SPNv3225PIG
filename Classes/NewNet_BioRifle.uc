@@ -27,7 +27,7 @@ const MAX_PROJECTILE_FUDGE = 0.075;
 									  
 
 var Misc_PRI MPRI;
-
+var TAM_Mutator M;
 
 var int CurIndex;
 var int ClientCurIndex;
@@ -84,6 +84,10 @@ simulated event NewNet_ClientStartFire(int Mode)
         return;
     if (Role < ROLE_Authority)
     {
+		if ( (Pawn(Owner) != None) && (Pawn(Owner).PlayerReplicationInfo != None) )
+		{
+			MPRI = Misc_PRI(Pawn(Owner).PlayerReplicationInfo);
+		}
         if (StartFire(Mode))
         {
             NewNet_ServerStartFire(mode, MPRI.GamePing);
@@ -95,16 +99,17 @@ simulated event NewNet_ClientStartFire(int Mode)
     }
 }
 
-function NewNet_ServerStartFire(byte Mode, float ClientTimeStamp)
+function NewNet_ServerStartFire(byte Mode, float ClientGamePing)
 {
+
     if(NewNet_BioFire(FireMode[Mode])!=None)
     {
-		NewNet_BioFire(FireMode[Mode]).PingDT = MPRI.GamePing;
+		NewNet_BioFire(FireMode[Mode]).PingDT = ClientGamePing;
         NewNet_BioFire(FireMode[Mode]).bUseEnhancedNetCode = true;
     }
     else if(NewNet_BioChargedFire(FireMode[Mode])!=None)
     {
-		NewNet_BioChargedFire(FireMode[Mode]).PingDT = MPRI.GamePing;
+		NewNet_BioChargedFire(FireMode[Mode]).PingDT = ClientGamePing;
         NewNet_BioChargedFire(FireMode[Mode]).bUseEnhancedNetCode = true;
     }
 

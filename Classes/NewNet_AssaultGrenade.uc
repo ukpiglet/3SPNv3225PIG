@@ -24,6 +24,7 @@ class NewNet_AssaultGrenade extends WeaponFire_AssaultAlt;
 var float PingDT;
 var bool bUseEnhancedNetCode;
 
+
 const PROJ_TIMESTEP = 0.0201;
 const MAX_PROJECTILE_FUDGE = 0.0750;
 

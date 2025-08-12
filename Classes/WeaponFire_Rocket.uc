@@ -4,8 +4,10 @@ event ModeDoFire()
 {
 local Misc_PRI PRI;
 
-	PRI = Misc_PRI(xPawn(Weapon.Owner).PlayerReplicationInfo);
-	
+	if ( (Pawn(Owner) != None) && (Pawn(Owner).PlayerReplicationInfo != None) )
+	{
+		PRI = Misc_PRI (Pawn(Owner).PlayerReplicationInfo);
+	}	
     if (PRI != none && !PRI.bBot)
 		PRI.Rockets.Fired += load;
     

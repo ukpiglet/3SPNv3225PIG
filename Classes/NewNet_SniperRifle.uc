@@ -37,7 +37,7 @@ struct ReplicatedVector
 };
 
 var Misc_PRI MPRI;
-
+var TAM_Mutator M;
 
 replication
 {
@@ -122,17 +122,20 @@ simulated function NewNet_ClientStartFire(int mode)
         return;
     if (Role < ROLE_Authority)
     {
+		if ( (Pawn(Owner) != None) && (Pawn(Owner).PlayerReplicationInfo != None) )
+		{
+			MPRI = Misc_PRI(Pawn(Owner).PlayerReplicationInfo);
+			stamp = MPRI.GamePing;
+		}
         if (AltReadyToFire(mode) && StartFire(Mode) )
         {
             R.Pitch = Pawn(Owner).Controller.Rotation.Pitch;
             R.Yaw = Pawn(Owner).Controller.Rotation.Yaw;
-            STart=Pawn(Owner).Location + Pawn(Owner).EyePosition();
+            Start=Pawn(Owner).Location + Pawn(Owner).EyePosition();
 
             V.X = Start.X;
             V.Y = Start.Y;
             V.Z = Start.Z;
-
-            Stamp = MPRI.GamePing;
 
             NewNet_SniperFire(FireMode[mode]).DoInstantFireEffect();
             NewNet_ServerStartFire(Mode, stamp, R, V/*, b, V2, A,HN,HL*/);
@@ -173,7 +176,7 @@ simulated function bool AltReadyToFire(int Mode)
 	return true;
 }
 
-function NewNet_ServerStartFire(byte Mode, float ClientTimeStamp, ReplicatedRotator R, ReplicatedVector V)
+function NewNet_ServerStartFire(byte Mode, float ClientGamePing, ReplicatedRotator R, ReplicatedVector V)
 {
 	if ( (Instigator != None) && (Instigator.Weapon != self) )
 	{
@@ -184,7 +187,7 @@ function NewNet_ServerStartFire(byte Mode, float ClientTimeStamp, ReplicatedRota
 		return;
 	}
 
-    NewNet_SniperFire(FireMode[Mode]).PingDT = MPRI.GamePing;
+    NewNet_SniperFire(FireMode[Mode]).PingDT = ClientGamePing;
 	NewNet_SniperFire(FireMode[Mode]).bUseEnhancedNetCode = true;
     if ( (FireMode[Mode].NextFireTime <= Level.TimeSeconds + FireMode[Mode].PreFireTime)
 		&& StartFire(Mode) )
