@@ -31,6 +31,10 @@ var bool bUseEnhancedNetCode;
 
 function PlayFiring()
 {
+
+   if (Weapon == None)
+       return;
+
    super.PlayFiring();
 
    if(Level.NetMode != NM_Client || !class'Misc_Player'.static.UseNewNet())
@@ -344,6 +348,12 @@ function SpawnBeamEffect(Vector Start, Rotator Dir, Vector HitLocation, Vector H
         if (ReflectNum != 0) Beam.Instigator = None; // prevents client side repositioning of beam start
             Beam.AimAt(HitLocation, HitNormal);
     }
+}
+
+event ModeDoFire()
+{
+	if (Weapon != None)
+		Super.ModeDoFire();
 }
 
 defaultproperties

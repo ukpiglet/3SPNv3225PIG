@@ -104,6 +104,26 @@ function DisplayDebug(Canvas Canvas, out float YL, out float YPos){
 	super.DisplayDebug(Canvas, YL, YPos);
 }
 
+function bool WeaponFireAgain(float RefireRate, bool bFinishedFire)
+{
+	if (pawn != None)
+		return Super.WeaponFireAgain(RefireRate, bFinishedFire);
+	else
+	{
+		StopFiring();
+		return false;
+	}
+}
+
+function bool NeedToTurn(vector targ)
+{
+	if (pawn != None)
+		return Pawn.NeedToTurn(targ);
+	else
+		return false;
+}
+
+
 defaultproperties
 {
      PlayerReplicationInfoClass=Class'3SPNv3225PIG.Freon_PRI'
