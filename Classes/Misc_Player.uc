@@ -409,7 +409,7 @@ event PlayerTick(float DeltaTime)
 			SetViewTarget(Pawn);
 	}
 	
-	if(!PlayerInitialized && PlayerReplicationInfo!=None)
+	if(!PlayerInitialized && PlayerReplicationInfo != None && GameReplicationInfo != None)
 	{
 		class'Misc_Player'.default.bAdminVisionInSpec = false;
 		class'Misc_Player'.default.bDrawTargetingLineInSpec = false;
@@ -2359,7 +2359,8 @@ function int FractionCorrection(float in, out float fraction) {
 function UpdateRotation(float DeltaTime, float maxPitch)
 {
     local rotator newRotation, ViewRotation;
-    if( Misc_BaseGRI(GameReplicationInfo).UTComp_MoveRep == False || class'Misc_Player'.default.NewClientReplication == False ){
+	
+    if(GameReplicationInfo == None || Misc_BaseGRI(GameReplicationInfo).UTComp_MoveRep == False || class'Misc_Player'.default.NewClientReplication == False ){
 			Super.UpdateRotation(DeltaTime, maxPitch);
 			return;
 	}
