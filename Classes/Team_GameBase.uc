@@ -2047,15 +2047,17 @@ state MatchInProgress
 function RespawnTimer()
 {
     local Actor Reset;
-    local Controller C;
+    local Controller C, Next;
 
     RespawnTime--;
     bRespawning = RespawnTime > 0;
 
     if(RespawnTime == 3)
     {
-        for(C = Level.ControllerList; C != None; C = C.NextController)
+        for(C = Level.ControllerList; C != None; C = Next)
         {
+            Next = C.NextController;
+
             if(Misc_Player(C) != None)
             {
                 Misc_Player(C).Spree = 0;

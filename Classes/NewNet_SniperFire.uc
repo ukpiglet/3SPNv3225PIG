@@ -437,19 +437,6 @@ function UnTimeTravel()
         PCC.TurnOffCollision();
 }
 
-function ServerPlayFiring()
-{
-	if (Weapon != None)
-		Super.ServerPlayFiring();
-}
-
-event ModeDoFire()
-{
-	if (Weapon != None)
-		Super.ModeDoFire();
-}
-
-
 defaultproperties
 {
 }

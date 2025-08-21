@@ -1240,7 +1240,8 @@ function CheckForCampers()
             if(MaxDim < CampThreshold && p.ReWarnTime == 0)
             {
                 PunishCamper(c, p, pri);
-                p.ReWarnTime = CampInterval;
+                if (p != None)		// May have been punished to death!
+                    p.ReWarnTime = CampInterval;
             }
             else if(MaxDim > CampThreshold)
             {

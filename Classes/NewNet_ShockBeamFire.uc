@@ -350,12 +350,6 @@ function SpawnBeamEffect(Vector Start, Rotator Dir, Vector HitLocation, Vector H
     }
 }
 
-event ModeDoFire()
-{
-	if (Weapon != None)
-		Super.ModeDoFire();
-}
-
 defaultproperties
 {
      BeamEffectClass=Class'3SPNv3225PIG.NewNet_ShockBeamEffect'
