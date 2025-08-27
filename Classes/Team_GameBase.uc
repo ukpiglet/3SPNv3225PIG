@@ -1196,7 +1196,7 @@ function int ReduceDamage(int Damage, pawn injured, pawn instigatedBy, vector Hi
         else if(injured.GetTeamNum() != instigatedBy.GetTeamNum()) // different teams
         {
             //if(Level.TimeSeconds-injured.SpawnTime < DeathMatch(Level.Game).SpawnProtectionTime)
-            if(Misc_Pawn(injured).IsSpawnProtectionEnabled())
+            if( Misc_Pawn(injured) != None && Misc_Pawn(injured).IsSpawnProtectionEnabled())					// Poor misc_bot. No spawn protection for you!?
                 return Super.ReduceDamage(Damage, injured, instigatedBy, HitLocation, Momentum, DamageType);
 
             OldDamage = PRI.EnemyDamage;

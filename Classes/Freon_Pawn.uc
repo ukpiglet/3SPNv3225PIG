@@ -638,7 +638,7 @@ State Frozen
         if ( InstigatedBy != None && InstigatedBy != self )
             LastHitBy = InstigatedBy.Controller;
     
-		if ( Freon(Level.Game).bEnemyBioThaws &&
+		if ( InstigatedBy != None && Freon(Level.Game).bEnemyBioThaws &&
 			(self.GetTeamNum() != InstigatedBy.GetTeamNum()) && 
 			(DamageType == class'DamTypeBioGlob' || DamageType == class'DamType_BioGlob')){
 			GiveHealth(Freon(Level.Game).EnemyBioThawPercent*Damage/100, 99);

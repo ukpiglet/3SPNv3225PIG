@@ -474,7 +474,10 @@ function PlayerThawed(Freon_Pawn Thawed, optional float Health, optional float S
         PlayerController(C).ClientReset();
 
     RestartFrozenPlayer(C, Pos, Rot, N);
-
+	
+	if (C == None)	//can be destroyed by RestartFrozenPlayer()
+		return;
+	
     if(C.Pawn != None)
     {
         C.Pawn.SetLocation(Pos);
@@ -583,11 +586,14 @@ function PlayerThawedByTouch(Freon_Pawn Thawed, array<Freon_Pawn> Thawers, optio
     C = Thawed.Controller;
     PlayerThawed(Thawed, Health, Shield);
 
-    if(PlayerController(C) != None)
-        PlayerController(C).ReceiveLocalizedMessage(class'Freon_ThawMessage', 0, Thawers[0].PlayerReplicationInfo);
+    if( C != None )	//can be destroyed in PlayerThawed() - but still continue and award points as they did the thaw!
+    {   
+		if(PlayerController(C) != None)
+			PlayerController(C).ReceiveLocalizedMessage(class'Freon_ThawMessage', 0, Thawers[0].PlayerReplicationInfo);
 
-    if(C.PlayerReplicationInfo == None)
-        return;
+		if(C.PlayerReplicationInfo == None)
+			return;
+	}
 
     for(i = 0; i < Thawers.Length; i++){
 		if (!Freon(Level.Game).bFullThaws){
@@ -601,7 +607,7 @@ function PlayerThawedByTouch(Freon_Pawn Thawed, array<Freon_Pawn> Thawers, optio
 			SpecialEvent(xPRI, "Thaw"); //allow stats for thawing
 		}
 				
-		if(PlayerController(Thawers[i].Controller) != None)
+		if(C != None && PlayerController(Thawers[i].Controller) != None)
 			PlayerController(Thawers[i].Controller).ReceiveLocalizedMessage(class'Freon_ThawMessage', 1, C.PlayerReplicationInfo);
 	}
 }
@@ -784,7 +790,7 @@ function ReTrigger(Controller ThawedController){
 	bProtected = True;
 	Freon = Freon(Level.Game);
 	
-	if (ThawedController.Pawn == None || Freon_Pawn(ThawedController.Pawn) == None){ //shouldn't be possible
+	if (ThawedController == None || ThawedController.Pawn == None || Freon_Pawn(ThawedController.Pawn) == None){ // can be destroyed on restart (if a bot and too many of them)
 		return;
 	}
 
