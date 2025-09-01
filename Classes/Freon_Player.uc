@@ -277,6 +277,27 @@ state Frozen extends Spectating
 }
 */
 
+state Dead
+{
+    function FindGoodView()
+    {
+		local Actor Pick;
+
+		if (ViewTarget == None)
+		{
+			if (FrozenPawn != None)
+				Pick = FrozenPawn;
+			else if (Pawn != None)
+				Pick = Pawn;
+			else 
+				Pick = Self;
+				
+			SetViewTarget(Pick);
+			ClientSetViewTarget(Pick);
+		}
+		super.FindGoodView();
+	}
+}
 
 //based on Spectating and BaseSpectating from PlayerController.uc
 //trying to get round bug where we can't always get back to own camera

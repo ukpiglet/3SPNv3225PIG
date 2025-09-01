@@ -53,6 +53,21 @@ function PawnDied(Pawn P)
         TAM_TeamInfo(PlayerReplicationInfo.Team).PlayerDied(self);
 }
 
+event NotifyJumpApex()
+{
+
+	if (Pawn != None)
+		super.NotifyJumpApex();
+	else
+	{
+		bDodgingForward = false;
+		bNotifyApex = false;
+		bPendingDoubleJump = false;
+		return;
+	}
+		
+}
+
 function TryCombo(string ComboName)
 {
     local class<Combo> ComboClass;
