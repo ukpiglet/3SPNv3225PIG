@@ -274,6 +274,7 @@ function ResetPlayerData()
 	PlayerReplicationInfo.Deaths = 0;
 	Misc_PRI(PlayerReplicationInfo).Rank = 0;
 	Misc_PRI(PlayerReplicationInfo).AvgPPR = 0;
+	Misc_PRI(PlayerReplicationInfo).StatsReceived = false;
 	
 	if(Freon_PRI(PlayerReplicationInfo)!=None) {
 		Freon_PRI(PlayerReplicationInfo).Thaws = 0;
@@ -291,6 +292,7 @@ function LoadPlayerDataStats()
 {
 	Misc_PRI(PlayerReplicationInfo).Rank = PlayerData.Rank;
 	Misc_PRI(PlayerReplicationInfo).AvgPPR = PlayerData.AvgPPR;
+	Misc_PRI(PlayerReplicationInfo).StatsReceived = PlayerData.StatsReceived;
 	
 	//level up when player of this ppr joins
 	if(!PlayerReplicationInfo.bOnlySpectator && Team_GameBase(Level.Game)!=None && Team_GameBase(Level.Game).AutoBalanceOnJoinsOver > 0 && PlayerData.AvgPPR > Team_GameBase(Level.Game).AutoBalanceOnJoinsOver)

@@ -99,26 +99,27 @@ function FindBestConfigurations()
     // Find the best configurations
     Configurations.Length = Max(0, MaxConfigurations);
 
-    for (i = 0; i < CenterMostActors.Length; i++)
-    {
-        j = 0;
-        k = 0;
+    if (Actors.Length != 0)
+		for (i = 0; i < CenterMostActors.Length; i++)
+		{
+			j = 0;
+			k = 0;
 
-        while (NextCombination(Actors.Length, j, k))
-        {
-            // Maximize the distance between each other and from the
-            // designated center point
-            Cfg.Score = VSize(Actors[j].Location - Actors[k].Location)
-                    * VSize(Actors[j].Location - CenterMostActors[i].Location)
-                    * VSize(Actors[k].Location - CenterMostActors[i].Location);
+			while (NextCombination(Actors.Length, j, k))
+			{
+				// Maximize the distance between each other and from the
+				// designated center point
+				Cfg.Score = VSize(Actors[j].Location - Actors[k].Location)
+						* VSize(Actors[j].Location - CenterMostActors[i].Location)
+						* VSize(Actors[k].Location - CenterMostActors[i].Location);
 
-            Cfg.PrimaryActor = CenterMostActors[i];
-            Cfg.SecondaryActors[0] = Actors[j];
-            Cfg.SecondaryActors[1] = Actors[k];
+				Cfg.PrimaryActor = CenterMostActors[i];
+				Cfg.SecondaryActors[0] = Actors[j];
+				Cfg.SecondaryActors[1] = Actors[k];
 
-            InsertConfiguration(Cfg);
-        }
-    }
+				InsertConfiguration(Cfg);
+			}
+		}
 
     TrimConfigurations();
 }

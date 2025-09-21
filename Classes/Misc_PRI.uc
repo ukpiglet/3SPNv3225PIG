@@ -24,6 +24,7 @@ var float EndOfRoundScore;      // the score they had at the end of the last rou
 
 var float Rank;
 var float AvgPPR;
+var bool StatsReceived;
 
 var localized string StringDeadNoRez;
 
@@ -63,7 +64,7 @@ var Misc_PawnReplicationInfo PawnReplicationInfo;
 replication
 {
     reliable if(bNetDirty && Role == ROLE_Authority)
-        PlayedRounds, PawnReplicationInfo, ColoredName, Rank, AvgPPR, EndOfRoundScore;
+        PlayedRounds, PawnReplicationInfo, ColoredName, Rank, AvgPPR, EndOfRoundScore, StatsReceived;
 		
     reliable if(Role<Role_Authority)
         SetColoredName;

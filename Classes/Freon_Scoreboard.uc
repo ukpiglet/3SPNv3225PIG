@@ -281,8 +281,8 @@ simulated function DrawPlayerBar(Canvas C, int BarX, int BarY, int BarW, int Bar
 	C.SetPos(BarX, BarY);
 	C.DrawTile(BaseTex, BarW,BarH, 18,107,745,81);
 
-	//New
-	if (Misc_PRI(PRI).AvgPPR == 0 && !PRI.bBot){
+	//New - if got zero from stats server
+	if (Misc_PRI(PRI).StatsReceived && Misc_PRI(PRI).AvgPPR == 0 && !PRI.bBot){
 		C.SetPos(BarX+NewX, BarY+NewY);
 		DrawNew(C, BarX + NewX, BarY + NewY, RankW, RankH);
 	}
