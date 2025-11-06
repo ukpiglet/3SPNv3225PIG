@@ -181,9 +181,11 @@ function TimeTravel(float delta)
 function UnTimeTravel()
 {
     local NewNet_PawnCollisionCopy PCC;
+
     //Now, lets turn off the old hits
-    for(PCC = NewNet_MiniGun(Weapon).M.PCC; PCC!=None; PCC=PCC.Next)
-        PCC.TurnOffCollision();
+	if (Weapon != None)
+		for(PCC = NewNet_MiniGun(Weapon).M.PCC; PCC!=None; PCC=PCC.Next)
+			PCC.TurnOffCollision();
 }
 
 defaultproperties

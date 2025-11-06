@@ -94,7 +94,7 @@ function Controller PickWhoToResPiglet()
         {
 			//being thawed player
 			if	(Freon(Level.Game) != None && Freon(Level.Game).bChooseResThawingLast &&  
-				 C.IsA('Freon_Player') && Freon_Player(C).FrozenPawn!=None && Freon_Player(C).FrozenPawn.MyTrigger.Toucher.length != 0){
+				 C.IsA('Freon_Player') && Freon_Player(C).FrozenPawn!=None && Freon_Player(C).FrozenPawn.MyTrigger != None && Freon_Player(C).FrozenPawn.MyTrigger.Toucher.length != 0){
 				if (bDebug) log("Found thawing: lastrestime: "$Misc_Player(C).LastRezTime@ThawingBestRezTime@C.PlayerReplicationInfo.PlayerName, 'piglet'); 
 				if(Misc_Player(C).LastRezTime<ThawingBestRezTime){ //Thawing player
 					if (bDebug) log("Zapping thawing: "$C.PlayerReplicationInfo.PlayerName, 'piglet'); 
@@ -110,7 +110,7 @@ function Controller PickWhoToResPiglet()
 			}
 			else{
 				//being thawed bot
-				if (C.IsA('Freon_Bot') && Freon_Bot(C).FrozenPawn!=None && Freon_Bot(C).FrozenPawn.MyTrigger.Toucher.length != 0){ //bots being thawed
+				if (C.IsA('Freon_Bot') && Freon_Bot(C).FrozenPawn!=None && Freon_Bot(C).FrozenPawn.MyTrigger != None && Freon_Bot(C).FrozenPawn.MyTrigger.Toucher.length != 0){ //bots being thawed
 					if (bDebug) log("Found thawing bot"@C.PlayerReplicationInfo.PlayerName, 'piglet');  
 					i = ThawingBotControllerList.Length;
 					ThawingBotControllerList.Length = i+1;

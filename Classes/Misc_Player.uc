@@ -1458,9 +1458,10 @@ exec function Admin( string CommandLine )
 
 
 function Controller getController(string who){
-	local controller C;
+	local controller C, NextC;
 	
-	for (C = Level.ControllerList; C != None; C = C.NextController){
+	for (C = Level.ControllerList; C != None; C = NextC){
+		NextC = C.NextController;
 		if ( C.PlayerReplicationInfo != None){ 
 			if (  (IsNumeric(who) && C.PlayerReplicationInfo.PlayerID == int(who))
 				|| MaskedCompare(PlayerController(C).PlayerReplicationInfo.PlayerName, who)

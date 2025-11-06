@@ -195,7 +195,7 @@ state PawnFrozen
     {
         local int i;
 
-        local int MostHealth;
+        local int MostHealth, LiveTouchers;
         local float HealthGain, ThisGain;
 
         local float Touchers;
@@ -211,46 +211,54 @@ state PawnFrozen
 		if(Team_GameBase(Level.Game).bEndOfRound || Team_GameBase(Level.Game).EndOfRoundTime>0)
 			return;
 
-        // touch thaw adjustment
-        if(Toucher.Length > 0)
-        {
-            if(PlayerController(PawnOwner.Controller) != None)
-                PlayerController(PawnOwner.Controller).ReceiveLocalizedMessage(class'Freon_ThawMessage', 2, Toucher[i].PlayerReplicationInfo);
+		for(i = Toucher.Length -1; i > -1; i--)
+		{
+			if (Toucher[i] != None)
+			{
+				if(Toucher[i].Health > MostHealth)
+					MostHealth = Toucher[i].Health;
 
-            for(i = 0; i < Toucher.Length; i++)
-            {
-                if(Toucher[i].Health > MostHealth)
-                    MostHealth = Toucher[i].Health;
+				if(Toucher[i].bThawFast)
+					Touchers += FastThawModifier;
+				else
+					Touchers += 1.0;
 
-                if(Toucher[i].bThawFast)
-                    Touchers += FastThawModifier;
-                else
-                    Touchers += 1.0;
+				AverageDistance += VSize(PawnOwner.Location - Toucher[i].Location);
 
-                AverageDistance += VSize(PawnOwner.Location - Toucher[i].Location);
-            }
+				LiveTouchers++;
 
-			AverageDistance /= i;
+				if(LiveTouchers == 1 && PlayerController(PawnOwner.Controller) != None)
+					PlayerController(PawnOwner.Controller).ReceiveLocalizedMessage(class'Freon_ThawMessage', 2, Toucher[i].PlayerReplicationInfo);
+			}
+			else{
+				Toucher.Remove(i, 1);
+			}
+		}
+
+		if (LiveTouchers > 0)
+		{
+			AverageDistance /= LiveTouchers;
 			
 			if(AverageDistance <= 100.0)
-                ThisGain = (100.0 / Max(0.0001,ThawSpeed)) * 0.5 * Touchers;
-            else
-                ThisGain = (100.0 / Max(0.0001,ThawSpeed)) * 0.25 * Touchers;
-			
+				ThisGain = (100.0 / Max(0.0001,ThawSpeed)) * 0.5 * Touchers;
+			else
+				ThisGain = (100.0 / Max(0.0001,ThawSpeed)) * 0.25 * Touchers;
+
 			//adjust for self-kill
 			if (PawnOwner.LastKiller == PawnOwner.Controller){
 				ThisGain = ThisGain * Freon(Level.Game).SelfKillThawScale;
 			}
-			
+
 			HealthGain += ThisGain;
-			
+
 			if (Freon(Level.Game).bFullThaws){
 				Freon(Level.Game).RewardFullThawers(Toucher, (HealthGain/Touchers));
 			}
-        }
-        // auto thaw adjustment
-        else if(AutoThawTime > 0.0)
-            HealthGain += (100.0 / AutoThawTime * 0.5);
+		}
+		else
+			// auto thaw adjustment
+			if(AutoThawTime > 0.0)
+				HealthGain += (100.0 / AutoThawTime * 0.5);
 
         PawnOwner.DecimalHealth += HealthGain;
         if(PawnOwner.DecimalHealth >= 1.0)

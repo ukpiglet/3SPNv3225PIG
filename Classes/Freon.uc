@@ -50,6 +50,13 @@ function EndLogging(string Reason)
 	GameStats = None;
 }
 
+
+function DiscardInventory( Pawn Other )
+{
+    if (Other != None)
+		Super.DiscardInventory( Other );
+}
+
 function Killed(Controller Killer, Controller Killed, Pawn KilledPawn, class<DamageType> DamageType)
 {
 	//if "shattered", then it's not a real kill. Don't count it as a kill or death on scoreboard or for Vendetta etc.
@@ -58,7 +65,8 @@ function Killed(Controller Killer, Controller Killed, Pawn KilledPawn, class<Dam
 	
 	if(Killed != None && Killed.PlayerReplicationInfo != None)
 	{
-		if(bRespawning && Freon(Level.Game)==None)
+	/*
+		if(bRespawning && Freon(Level.Game)==None)  //surely this can never happen as this *is* Freon!
 		{
 			Killed.PlayerReplicationInfo.bOutOfLives = false;
 			Killed.PlayerReplicationInfo.NumLives = 1;
@@ -74,11 +82,12 @@ function Killed(Controller Killer, Controller Killed, Pawn KilledPawn, class<Dam
 		}
 		else
 		{
+*/
 			Killed.PlayerReplicationInfo.bOutOfLives = true;
 			Killed.PlayerReplicationInfo.NumLives = 0;
-		}
+//		}
 
-		if(Killed.GetTeamNum() != 255 && !(Team_GameBase(Level.Game).bEndOfRound || Team_GameBase(Level.Game).EndOfRoundTime>0))   //Shatter (or any end of round death) should not increase team deaths, nor trigger alone sound
+		if(Killed.GetTeamNum() != 255 && !(bEndOfRound || EndOfRoundTime>0))   //Shatter (or any end of round death) should not increase team deaths, nor trigger alone sound
 		{
 			Deaths[Killed.GetTeamNum()]++;
 			CheckForAlone(Killed, Killed.GetTeamNum());
@@ -429,7 +438,7 @@ function PlayerThawed(Freon_Pawn Thawed, optional float Health, optional float S
         else
             TeamNum = C.PlayerReplicationInfo.Team.TeamIndex;
 
-        startSpot = Level.Game.FindPlayerStart(C, TeamNum);
+        startSpot = FindPlayerStart(C, TeamNum);
     }
 
     if(startSpot != None)
@@ -596,19 +605,21 @@ function PlayerThawedByTouch(Freon_Pawn Thawed, array<Freon_Pawn> Thawers, optio
 	}
 
     for(i = 0; i < Thawers.Length; i++){
-		if (!Freon(Level.Game).bFullThaws){
-			RewardThaw(Thawers[i], ThawPointAward, 5.0f, 1);
-			WholeThaw(Thawers[i]);
+		if(Thawers[i] != None){
+			if (!bFullThaws){
+				RewardThaw(Thawers[i], ThawPointAward, 5.0f, 1);
+				WholeThaw(Thawers[i]);
+			}
+
+			xPRI = Freon_PRI(Thawers[i].PlayerReplicationInfo);
+			if (xPRI != None){
+				xPRI.Thaws++;
+				SpecialEvent(xPRI, "Thaw"); //allow stats for thawing
+			}
+
+			if(C != None && PlayerController(Thawers[i].Controller) != None)
+				PlayerController(Thawers[i].Controller).ReceiveLocalizedMessage(class'Freon_ThawMessage', 1, C.PlayerReplicationInfo);
 		}
-		
-		xPRI = Freon_PRI(Thawers[i].PlayerReplicationInfo);
-		if (xPRI != None){
-			xPRI.Thaws++;
-			SpecialEvent(xPRI, "Thaw"); //allow stats for thawing
-		}
-				
-		if(C != None && PlayerController(Thawers[i].Controller) != None)
-			PlayerController(Thawers[i].Controller).ReceiveLocalizedMessage(class'Freon_ThawMessage', 1, C.PlayerReplicationInfo);
 	}
 }
 
@@ -641,7 +652,7 @@ function WholeThaw(Freon_Pawn Thawer){
 		Message = None;
 		
 	
-		if (Freon(Level.Game).bFullThaws){
+		if (bFullThaws){
 			Thaws = int(xPRI.HealthGiven/100);
 		}
 		else{
@@ -785,10 +796,8 @@ function ReTrigger(Controller ThawedController){
 	local Freon_Pawn ThawedPawn;
 	local int ThawedTeam;
 	local bool bProtected;
-	local Freon Freon;
-	
+
 	bProtected = True;
-	Freon = Freon(Level.Game);
 	
 	if (ThawedController == None || ThawedController.Pawn == None || Freon_Pawn(ThawedController.Pawn) == None){ // can be destroyed on restart (if a bot and too many of them)
 		return;
@@ -819,11 +828,11 @@ function ReTrigger(Controller ThawedController){
 					P.MyTrigger.Touch(ThawedPawn);
 					ThawedPawn.MyTrigger.Touch(P);
 			
-					if (bProtected && P.bFrozen && Freon.bNoTriggerProtection){
+					if (bProtected && P.bFrozen && bNoTriggerProtection){
 						ThawedPawn.DeactivateSpawnProtection();
 						if (PlayerController(ThawedController) != None)
 							PlayerController(ThawedController).ReceiveLocalizedMessage(class'Message_SpawnProtection', 0);
-						//if (Freon(Level.Game).NoTriggerProtectionMsg && PlayerController(ThawedPawn.Controller) != None){
+						//if (NoTriggerProtectionMsg && PlayerController(ThawedPawn.Controller) != None){
 						//	PlayerController(ThawedPawn.Controller).ReceiveLocalizedMessage(class'Message_SpawnProtection', 0);
 						//}
 						bProtected=False;
@@ -1042,7 +1051,7 @@ function AnnounceBest()
 			thawsies = thaws.Thaws;
 
 		if (thawsies > 0){
-			if (Freon(Level.Game).bFullThaws){
+			if (bFullThaws){
 				thawstring = string(int(thaws.HealthGiven))@" (Present at"@thaws.Thaws@"thaw moment"$plural$")";
 				thawstringprefix = "Most Thawhealth:";
 			}
