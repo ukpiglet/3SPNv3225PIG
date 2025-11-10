@@ -1423,29 +1423,32 @@ exec function Admin( string CommandLine )
 {
 	local string ThePlayer;
 	local controller C;
+	local PlayerController PC;
+	local int CLL;
 
 	if (PlayerReplicationInfo.bAdmin){
-		if (left(CommandLine, 9) ~= "forceres " && len(CommandLine) > 9)
+		CLL = len(CommandLine);
+
+		if (left(CommandLine, 9) ~= "forceres " && CLL > 9)
 		{
-			ThePlayer = right(CommandLine, len(CommandLine) - 9);
+			ThePlayer = right(CommandLine, CLL - 9);
 
 			C = getController(ThePlayer);
 			if (C != None){
 					DoResOn(C);
 			}
 			return;
-
 		}
 		else{ 
-			if(left(CommandLine, 9) ~= "makespec " && len(CommandLine) > 9){
-				ThePlayer = right(CommandLine, len(CommandLine) - 9);
-				C = getController(ThePlayer);
-				if (C != None && PlayerController(C) != None){
-					if ( PlayerController(C).PlayerReplicationInfo.bOnlySpectator)
-						ClientMessage("Error Player already a spectator:"@PlayerController(C).PlayerReplicationInfo.PlayerName);
+			if(left(CommandLine, 9) ~= "makespec " && CLL > 9){
+				ThePlayer = right(CommandLine, CLL - 9);
+				PC = PlayerController(getController(ThePlayer));
+				if (PC != None){
+					if ( PC.PlayerReplicationInfo.bOnlySpectator)
+						ClientMessage("Error Player already a spectator:"@PC.PlayerReplicationInfo.PlayerName);
 					else{
-						ClientMessage("Attempting to make spectator:"@PlayerController(C).PlayerReplicationInfo.PlayerName);
-						PlayerController(C).BecomeSpectator();
+						ClientMessage("Attempting to make spectator:"@PC.PlayerReplicationInfo.PlayerName);
+						PC.BecomeSpectator();
 					}
 				}
 			}
@@ -1456,23 +1459,24 @@ exec function Admin( string CommandLine )
 	}
 }
 
-
 function Controller getController(string who){
 	local controller C, NextC;
-	
+	local PlayerController PC;
+			
 	for (C = Level.ControllerList; C != None; C = NextC){
 		NextC = C.NextController;
+
 		if ( C.PlayerReplicationInfo != None){ 
-			if (  (IsNumeric(who) && C.PlayerReplicationInfo.PlayerID == int(who))
-				|| MaskedCompare(PlayerController(C).PlayerReplicationInfo.PlayerName, who)
-				|| Misc_Player(C).GetPlayerIdHash() == who
-			)
-			{
+			if (IsNumeric(who) && C.PlayerReplicationInfo.PlayerID == int(who)
+			||	MaskedCompare(C.PlayerReplicationInfo.PlayerName, who))
 				return C;
-			}
+
+			PC = PlayerController(C);
+			if (PC != None && PC.GetPlayerIdHash() == who)
+				return C;
 		}
 	}
-	
+
 	return none;
 }
 

@@ -146,17 +146,23 @@ function Timer()
 		
     if(bTeamHeal && Toucher.Length > 0)
     {
-        for(i = 0; i < Toucher.Length; i++)
-        {
-            if(Toucher[i].Health > MostHealth)
-                MostHealth = Toucher[i].Health;
+		for(i = Toucher.Length -1; i > -1; i--)
+		{
+			if (Toucher[i] != None)
+			{
+				if(Toucher[i].Health > MostHealth)
+					MostHealth = Toucher[i].Health;
 
-            if(Toucher[i].bThawFast)
-                Touchers += FastThawModifier;
-            else
-                Touchers += 1.0;
+				if(Toucher[i].bThawFast)
+					Touchers += FastThawModifier;
+				else
+					Touchers += 1.0;
 
-            AverageDistance += VSize(PawnOwner.Location - Toucher[i].Location);
+				AverageDistance += VSize(PawnOwner.Location - Toucher[i].Location);
+			}
+			else{
+				Toucher.Remove(i, 1);
+			}
         }
 
         if(PawnOwner.Health < MostHealth)

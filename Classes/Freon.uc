@@ -400,7 +400,7 @@ function PlayerThawed(Freon_Pawn Thawed, optional float Health, optional float S
     local vector Pos;
     local vector Vel;
     local rotator Rot;
-    local Controller C;
+    local Controller C, NextC;
     local array<TAM_Mutator.WeaponData> WD;
     local Inventory inv;
     local int i;
@@ -411,13 +411,14 @@ function PlayerThawed(Freon_Pawn Thawed, optional float Health, optional float S
     local int TeamNum;
     local NavigationPoint startSpot;
 
-    if(bEndOfRound)
+    if(bEndOfRound || Thawed.Controller == None)
         return;
 
     if(!dying && Health == 0.0)
     {
-        for(C = Level.ControllerList; C != None; C = C.NextController)
+        for(C = Level.ControllerList; C != None; C = NextC)
         {
+			NextC = C.NextController;
             if(C.Pawn != None)
             {
                 Health += C.Pawn.Health;
@@ -429,12 +430,13 @@ function PlayerThawed(Freon_Pawn Thawed, optional float Health, optional float S
             Health /= i;
     }
 
+	C = Thawed.Controller;
+
     if(!dying && TeleportOnThaw)
     {
-        C = Thawed.Controller;
-
         if(C.PlayerReplicationInfo==None || C.PlayerReplicationInfo.Team==None)
-            TeamNum = 255;
+			return;
+			//TeamNum = 255;
         else
             TeamNum = C.PlayerReplicationInfo.Team.TeamIndex;
 
@@ -457,7 +459,6 @@ function PlayerThawed(Freon_Pawn Thawed, optional float Health, optional float S
         Vel = Thawed.Velocity;
     }
 
-    C = Thawed.Controller;
     N = Thawed.Anchor;
     LastHitBy = Thawed.LastHitBy;
     bGivesGit = Thawed.bGivesGit;

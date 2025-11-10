@@ -711,7 +711,8 @@ State Frozen
 	event Died (Controller Killer, Class<DamageType> DamageTypeClass, Vector HitLocation ){
 		Health = 0;
 		Super.Died (None, ShatteredDamageTypeClass, HitLocation); // Ignore Global.Died () because already thawing.
-		PlayerReplicationInfo.Deaths = PlayerReplicationInfo.Deaths - 1; //From Frozen...doesn't count as a death.
+		if(PlayerReplicationInfo != None)
+			PlayerReplicationInfo.Deaths = PlayerReplicationInfo.Deaths - 1; //From Frozen...doesn't count as a death.
 	}
 
 	simulated event PlayDying (Class<DamageType> DamageTypeClass, Vector HitLoc)
