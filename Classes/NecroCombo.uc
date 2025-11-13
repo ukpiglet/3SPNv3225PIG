@@ -468,6 +468,12 @@ function DoResurrection()
 		if(PlayerController(Resurrectee) != None)
 			PlayerController(Resurrectee).ClientReset();
 
+        if(Resurrectee.Pawn == None)
+        {
+            Abort(false);
+            return;
+        }
+
 		if(Team_GameBase(Level.Game)!=None && Team_GameBase(Level.Game).bSpawnProtectionOnRez==False && Misc_Pawn(Resurrectee.Pawn)!=None)
 			Misc_Pawn(Resurrectee.Pawn).DeactivateSpawnProtection();
 			
