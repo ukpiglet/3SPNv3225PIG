@@ -23,7 +23,20 @@ function WasKilledBy(Controller Other)
 		LastKillerPosition = Other.Pawn.Location;
 }
 
-//Otherwise:    Freon_Bot DM-UCMP-Contrast-SE_Beta2.Freon_Bot (Function UnrealGame.Bot.NotifyPhysicsVolumeChange:0084) Accessed None 'Pawn'
+
+//Otherwise: (Function Engine.AIController.WaitForMover:0051) Accessed None 'Pawn'
+function WaitForMover(Mover M)
+{
+	if ( Pawn != None)
+		Super.WaitForMover(M);
+	else
+	{
+		PendingMover = None;
+		bPreparingMove = false;
+	}
+}
+
+//Otherwise: (Function UnrealGame.Bot.NotifyPhysicsVolumeChange:0084) Accessed None 'Pawn'
 function bool NotifyPhysicsVolumeChange (PhysicsVolume NewVolume)
 {
   if ( Pawn == None )

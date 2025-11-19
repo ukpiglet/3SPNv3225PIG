@@ -459,7 +459,7 @@ function DoResurrection()
         Resurrectee.PlayerReplicationInfo.NumLives = 1;
 
         Level.Game.RestartPlayer(Resurrectee);
-        if(Resurrectee.Pawn == None)
+        if(Resurrectee == None || Resurrectee.Pawn == None)
         {
             Abort(false);
             return;
@@ -468,7 +468,7 @@ function DoResurrection()
 		if(PlayerController(Resurrectee) != None)
 			PlayerController(Resurrectee).ClientReset();
 
-        if(Resurrectee.Pawn == None)
+        if(Resurrectee == None || Resurrectee.Pawn == None)
         {
             Abort(false);
             return;
@@ -512,7 +512,7 @@ function DoResurrection()
     }
 
 	// for some reason pawn is sometimes none! Abort until root cause is known
-	if(Resurrectee.Pawn == None)
+	if(Resurrectee == None || Resurrectee.Pawn == None)
 	{
 		Abort(false);
 		return;

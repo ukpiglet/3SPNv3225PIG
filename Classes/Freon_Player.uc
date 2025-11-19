@@ -277,6 +277,27 @@ state Frozen extends Spectating
 }
 */
 
+
+state PlayerSwimming
+{
+	function PlayerMove(float DeltaTime)
+    {
+        if ( Pawn == None )
+		{
+			if ( frozenpawn == None )
+			{
+				GotoState('dead');
+			}
+			else{
+				GotoState('frozen');   // surely this shouldn't happen!
+			}
+			return;
+		}
+		else
+			super.PlayerMove(DeltaTime);
+	}
+}
+
 state Dead
 {
     function FindGoodView()

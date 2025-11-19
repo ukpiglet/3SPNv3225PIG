@@ -68,7 +68,7 @@ static function Misc_PlayerSettings LoadPlayerSettings(Misc_Player P)
 	StatsID = class'Misc_Util'.static.GetStatsID(P);
 	if(StatsID!="")
 	{
-		NewPlayerSettings = Misc_PlayerSettings(FindObject("Package." $ StatsID, class'Misc_PlayerSettings'));
+		NewPlayerSettings = FindObject("Package." $ StatsID, class'Misc_PlayerSettings');
 		if(NewPlayerSettings == None)
 			NewPlayerSettings = new(None, StatsID) class'Misc_PlayerSettings';		
 		
@@ -83,7 +83,7 @@ static function Misc_PlayerSettings LoadPlayerSettings(Misc_Player P)
 	ReplaceText(PlayerName, "]", "_");		
 	OwnerID = P.GetPlayerIDHash() $ "_" $ PlayerName;
 		
-	PlayerSettings = Misc_PlayerSettings(FindObject("Package." $ OwnerID, class'Misc_PlayerSettings'));
+	PlayerSettings = FindObject("Package." $ OwnerID, class'Misc_PlayerSettings');
 	if(PlayerSettings == None)
 		PlayerSettings = new(None, OwnerID) class'Misc_PlayerSettings';
 	
