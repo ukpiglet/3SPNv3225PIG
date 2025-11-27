@@ -1755,6 +1755,7 @@ event TeamMessage( PlayerReplicationInfo PRI, coerce string S, name Type  )
 function ServerSay(string Msg)
 {
   local bool isAdmin; //pass player admin status if they say 'teams'
+  local int ThePlayer;
   
   Super.ServerSay(Msg);
   
@@ -1763,10 +1764,13 @@ function ServerSay(string Msg)
       isAdmin = False;
 
       if(PlayerReplicationInfo != None)
+      {
           isAdmin = PlayerReplicationInfo.bAdmin;
+          ThePlayer = PlayerReplicationInfo.PlayerID;
+      }
 
       if(Team_GameBase(Level.Game) != None)
-         Team_GameBase(Level.Game).QueueAutoBalance(isAdmin);
+         Team_GameBase(Level.Game).QueueAutoBalance(isAdmin, ThePlayer);
   }
 }
 

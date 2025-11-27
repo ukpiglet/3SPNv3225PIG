@@ -167,6 +167,7 @@ var config float AutoBalanceAvgPPRWeight;
 var config bool AutoBalanceOnJoins;
 var config float AutoBalanceOnJoinsOver;
 var config bool AllowForceAutoBalance;
+var config int neededToCallTeams;
 var config int ForceAutoBalanceCooldown;
 var int ForceAutoBalanceTimer;
 var bool TeamsAutoBalanced;
@@ -239,6 +240,9 @@ struct RestartInfo
 var array<RestartInfo> RestartQueue;
 var config int RestartPlayerDelay;
 */
+
+var array<int> whoCalledTeams;
+
 static function PrecacheGameTextures(LevelInfo MyLevel)
 {
     class'xTeamGame'.static.PrecacheGameTextures(MyLevel);
@@ -444,6 +448,7 @@ static function FillPlayInfo(PlayInfo PI)
     PI.AddSetting("3SPN", "AutoBalanceOnJoins", "Auto Balance When New Players Join", 0, Weight++, "Check",,, True);
 	PI.AddSetting("3SPN", "AutoBalanceOnJoinsOver", "Auto Balance when players join with ppr over this", 0, Weight++, "Text", "8;0:100",, True);
     PI.AddSetting("3SPN", "AllowForceAutoBalance", "Auto Balance By Users Writing 'teams' Into Chat", 0, Weight++, "Check",,, True);
+    PI.AddSetting("3SPN", "neededToCallTeams", "Number of Users needed to put 'teams' Into Chat to auto-balance",  0, Weight++, "Text", "3;0:999");
     PI.AddSetting("3SPN", "ForceAutoBalanceCooldown", "Auto Balance Cooldown Timer In Seconds", 0, Weight++, "Text", "3;0:300",, True);
     PI.AddSetting("3SPN", "AutoBalanceRandomization", "Auto Balance Randomization Percentage", 0, Weight++, "Text", "8;0:100",, True);
 	PI.AddSetting("3SPN", "AutoBalanceAvgPPRWeight", "Auto Balance Avg (100) VS Current PPR Weight (0) Percent", 0, Weight++, "Text", "8;0:100",, True);
@@ -559,6 +564,7 @@ static event string GetDescriptionText(string PropName)
       case "AutoBalanceOnJoins":            return "Auto Balance Teams When New Players Join";
       case "AutoBalanceOnJoinsOver":        return "Auto Balance Teams When New Players Join with ppr over this (zero to turn off)";
       case "AllowForceAutoBalance":         return "Saying 'teams' Forces Balance (admins can always do this)";
+      case "neededToCallTeams":         	return "The number of players needed to call teams";
       case "ForceAutoBalanceCooldown":      return "Force Auto Balance Cooldown Timer In Seconds";
       case "AutoBalanceRandomization":      return "Randomization Percentage Used For Automatic Balancing";
       case "AutoBalanceAvgPPRWeight":       return "Auto Balance Avg (100) VS Current PPR Weight (0) Percent";
@@ -2950,11 +2956,50 @@ function BalanceTeamsRoundStart()
 }
 
 
-function QueueAutoBalance(bool bAdminUser)
+function int addPlayerToTeamsCall(int playerID)
 {
-  if(!bAdminUser)
-    if(!AutoBalanceTeams || !AllowForceAutoBalance)
-      return;
+	local int i;
+
+	for (i=0; i<whoCalledTeams.length; i++){
+		if (whoCalledTeams[i] == playerID)
+			return whoCalledTeams.length;
+	}
+
+	whoCalledTeams[whoCalledTeams.length] = playerID;
+
+	return whoCalledTeams.length;
+}
+
+function RemovePlayerFromTeamsCall(int playerID)
+{
+	local int i;
+
+	for (i=0; i<whoCalledTeams.length; i++){
+		if (whoCalledTeams[i] == playerID)
+		{
+			whoCalledTeams.remove(i, 1);
+			break;
+		}
+	}	
+}
+
+function QueueAutoBalance(bool bAdminUser, int playerID)
+{
+
+	local int numberCalledTeams;
+
+	if(!bAdminUser){
+
+		if(!AutoBalanceTeams || !AllowForceAutoBalance)
+		  return;
+
+		numberCalledTeams = addPlayerToTeamsCall(playerID);
+		if (numberCalledTeams < neededToCallTeams)
+		{
+			BroadcastLocalizedMessage( class'Message_TeamsCalled', numberCalledTeams * 1000 + neededToCallTeams );
+			return;
+		}
+	}
 
   if(ForceAutoBalanceTimer>0 && !bAdminUser){
 		BroadcastLocalizedMessage( class'Message_ForceAutoBalanceCooldown', ForceAutoBalanceTimer );
@@ -3964,6 +4009,7 @@ defaultproperties
     AutoBalanceOnJoins=True
 	AutoBalanceOnJoinsOver=0
     AllowForceAutoBalance=True
+	neededToCallTeams=2
     ForceAutoBalanceCooldown=120
     AutoBalanceRandomization=50
     AutoBalanceAvgPPRWeight=100
