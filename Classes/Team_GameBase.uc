@@ -2963,27 +2963,14 @@ function BalanceTeamsRoundStart()
   ForceAutoBalance = false;
 }
 
-
 function int addPlayerToTeamsCall(int playerID)
 {
 	local int i;
 	local float t;
+	local teamsCall tc;
+	local bool updated;
 
 	t = level.timeseconds;
-
-	for (i=0; i<whoCalledTeams.length; i++)	//look for existing record for player
-	{
-		if (whoCalledTeams[i].who == playerID)
-		{
-			whoCalledTeams[i].when = t;		//update the time
-		}
-	}
-	
-	if ( i == whoCalledTeams.length) //player not found in the list. Add them at position i (the end)
-	{
-		whoCalledTeams[i].who = playerID;
-		whoCalledTeams[i].when = t;
-	}
 
 	for (i = whoCalledTeams.length - 1; i >= 0; i--)
 	{
@@ -2991,6 +2978,22 @@ function int addPlayerToTeamsCall(int playerID)
 		{
 			whoCalledTeams.remove(i, 1);
 		}
+	}
+
+	for (i=0; i<whoCalledTeams.length; i++)	//look for existing record for player
+	{
+		if (whoCalledTeams[i].who == playerID)
+		{
+			whoCalledTeams[i].when = t;		//update the time
+			updated = True;
+		}
+	}
+	
+	if (!Updated) //player not found in the list
+	{
+		tc.who = playerID;
+		tc.when = t;
+		whoCalledTeams[whoCalledTeams.length] = tc;
 	}
 
 	return whoCalledTeams.length;
@@ -3016,7 +3019,7 @@ function QueueAutoBalance(bool bAdminUser, int playerID)
 
 	if(!bAdminUser){
 
-		if(!AutoBalanceTeams || !AllowForceAutoBalance)
+		if(!AutoBalanceTeams || !AllowForceAutoBalance || ForceAutoBalance) //don't count if can't be triggered or is already triggered
 		  return;
 
 		numberCalledTeams = addPlayerToTeamsCall(playerID);
