@@ -3454,6 +3454,7 @@ function EndRound(PlayerReplicationInfo Scorer)
     bEndOfRound = true;
     Misc_BaseGRI(GameReplicationInfo).bEndOfRound = true;
     Misc_BaseGRI(GameReplicationInfo).NetUpdateTime = Level.TimeSeconds - 1;
+	whoCalledTeams.length = 0;
 
     AnnounceBest();
     AnnounceSurvivors();
