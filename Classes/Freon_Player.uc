@@ -160,6 +160,9 @@ function ServerDoCombo(class<Combo> ComboClass)
     }
 }
 
+
+
+
 function Reset()
 {
     Super.Reset();
@@ -191,7 +194,123 @@ function Freeze()
     }
 }
 
+// Engine.PlayerController.AdjustAim assumes that pawn will exist - may be cause crash
+function rotator AdjustAim(FireProperties FiredAmmunition, vector projStart, int aimerror)
+{
+    local vector FireDir, AimSpot, HitNormal, HitLocation, OldAim, AimOffset;
+    local actor BestTarget;
+    local float bestAim, bestDist, projspeed;
+    local actor HitActor;
+    local bool bNoZAdjust, bLeading;
+    local rotator AimRot;
 
+	local pawn MyPawn;
+	
+	if (FrozenPawn != None)
+		MyPawn = FrozenPawn;
+	else
+		MyPawn = Pawn;
+
+    FireDir = vector(Rotation);
+    if ( FiredAmmunition.bInstantHit )
+        HitActor = Trace(HitLocation, HitNormal, projStart + 10000 * FireDir, projStart, true);
+    else
+        HitActor = Trace(HitLocation, HitNormal, projStart + 4000 * FireDir, projStart, true);
+    if ( (HitActor != None) && HitActor.bProjTarget )
+    {
+        BestTarget = HitActor;
+        bNoZAdjust = true;
+        OldAim = HitLocation;
+        BestDist = VSize(BestTarget.Location - MyPawn.Location);
+    }
+    else
+    {
+        // adjust aim based on FOV
+        bestAim = 0.90;
+        if ( (Level.NetMode == NM_Standalone) && bAimingHelp )
+        {
+            bestAim = 0.93;
+            if ( FiredAmmunition.bInstantHit )
+                bestAim = 0.97;
+            if ( FOVAngle < DefaultFOV - 8 )
+                bestAim = 0.99;
+        }
+        else if ( FiredAmmunition.bInstantHit )
+                bestAim = 1.0;
+        BestTarget = PickTarget(bestAim, bestDist, FireDir, projStart, FiredAmmunition.MaxRange);
+        if ( BestTarget == None )
+        {
+            if (bBehindView)
+                return MyPawn.Rotation;
+            else
+				return Rotation;
+        }
+        OldAim = projStart + FireDir * bestDist;
+    }
+	InstantWarnTarget(BestTarget,FiredAmmunition,FireDir);
+	ShotTarget = Pawn(BestTarget);
+    if ( !bAimingHelp || (Level.NetMode != NM_Standalone) )
+    {
+        if (bBehindView)
+            return MyPawn.Rotation;
+        else
+            return Rotation;
+    }
+
+    // aim at target - help with leading also
+    if ( !FiredAmmunition.bInstantHit )
+    {
+        projspeed = FiredAmmunition.ProjectileClass.default.speed;
+        BestDist = vsize(BestTarget.Location + BestTarget.Velocity * FMin(1, 0.02 + BestDist/projSpeed) - projStart);
+        bLeading = true;
+        FireDir = BestTarget.Location + BestTarget.Velocity * FMin(1, 0.02 + BestDist/projSpeed) - projStart;
+        AimSpot = projStart + bestDist * Normal(FireDir);
+        // if splash damage weapon, try aiming at feet - trace down to find floor
+        if ( FiredAmmunition.bTrySplash
+            && ((BestTarget.Velocity != vect(0,0,0)) || (BestDist > 1500)) )
+        {
+            HitActor = Trace(HitLocation, HitNormal, AimSpot - BestTarget.CollisionHeight * vect(0,0,2), AimSpot, false);
+            if ( (HitActor != None)
+                && FastTrace(HitLocation + vect(0,0,4),projstart) )
+                return rotator(HitLocation + vect(0,0,6) - projStart);
+        }
+    }
+    else
+    {
+        FireDir = BestTarget.Location - projStart;
+        AimSpot = projStart + bestDist * Normal(FireDir);
+    }
+    AimOffset = AimSpot - OldAim;
+
+    // adjust Z of shooter if necessary
+    if ( bNoZAdjust || (bLeading && (Abs(AimOffset.Z) < BestTarget.CollisionHeight)) )
+        AimSpot.Z = OldAim.Z;
+    else if ( AimOffset.Z < 0 )
+        AimSpot.Z = BestTarget.Location.Z + 0.4 * BestTarget.CollisionHeight;
+    else
+        AimSpot.Z = BestTarget.Location.Z - 0.7 * BestTarget.CollisionHeight;
+
+    if ( !bLeading )
+    {
+        // if not leading, add slight random error ( significant at long distances )
+        if ( !bNoZAdjust )
+        {
+            AimRot = rotator(AimSpot - projStart);
+            if ( FOVAngle < DefaultFOV - 8 )
+                AimRot.Yaw = AimRot.Yaw + 200 - Rand(400);
+            else
+                AimRot.Yaw = AimRot.Yaw + 375 - Rand(750);
+            return AimRot;
+        }
+    }
+    else if ( !FastTrace(projStart + 0.9 * bestDist * Normal(FireDir), projStart) )
+    {
+        FireDir = BestTarget.Location - projStart;
+        AimSpot = projStart + bestDist * Normal(FireDir);
+    }
+
+    return rotator(AimSpot - projStart);
+}
 
 function ServerViewNextPlayer() //Freon_player
 {

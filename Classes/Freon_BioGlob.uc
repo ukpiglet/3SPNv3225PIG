@@ -28,7 +28,7 @@ auto state Flying
 {
     simulated function ProcessTouch(Actor Other, Vector HitLocation)
     {
-		if (Other.IsA('Freon_Pawn') && Freon_Pawn(Other).bFrozen && Freon_Pawn(Other).GetTeamNum() != Instigator.GetTeamNum())
+		if (Instigator != None && Other.IsA('Freon_Pawn') && Freon_Pawn(Other).bFrozen && Freon_Pawn(Other).GetTeamNum() != Instigator.GetTeamNum())
 			bHitEnemyFrozen = true;
 			
 		Super.ProcessTouch( Other,  HitLocation);
@@ -39,7 +39,7 @@ state OnGround
 {
     simulated function ProcessTouch(Actor Other, Vector HitLocation)
     {
-        if (Other.IsA('Freon_Pawn') && Freon_Pawn(Other).bFrozen && Freon_Pawn(Other).GetTeamNum() != Instigator.GetTeamNum())
+        if (Instigator != None && Other.IsA('Freon_Pawn') && Freon_Pawn(Other).bFrozen && Freon_Pawn(Other).GetTeamNum() != Instigator.GetTeamNum())
 			bHitEnemyFrozen = true;
 
 		Super.ProcessTouch(Other, HitLocation);

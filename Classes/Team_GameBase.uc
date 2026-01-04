@@ -2110,11 +2110,11 @@ function RespawnTimer()
                 Reset.Reset();
         }
     }
-
-    if(RespawnTime <= 3)
+	else if(RespawnTime <= 3)
     {
-        for(C = Level.ControllerList; C != None; C = C.NextController)
+		for(C = Level.ControllerList; C != None; C = Next)
         {
+            Next = C.NextController;
             if(C == None || C.PlayerReplicationInfo == None || C.PlayerReplicationInfo.bOnlySpectator)
                 continue;
 
@@ -2695,7 +2695,8 @@ function BalanceBestPair(){
 	local float PPR, Closest, TargetPPR;
 	local Controller C, C0, C1;
 	local array<BalPlayer> Team0, Team1;
-	local int i,j;
+	local BalPlayer MovingPlayer;
+	local int i,j, highestplayernumber, highestplayernumberindex;
 	local float TeamPPR[2];
 
 
@@ -2726,7 +2727,51 @@ function BalanceBestPair(){
 			}
 		}
 	}
-
+	
+	// Team zero has 2+ more players.
+	while ((Team0.Length - Team1.Length) > 1)
+	{
+		highestplayernumber = 0;
+		highestplayernumberindex = 0;
+		
+		// Find latest joining player and move them to the other team
+		for(i=0; i<Team0.Length; ++i) {
+			if (Team0[i].C.playerreplicationinfo.PlayerID > highestplayernumber)
+			{
+				highestplayernumber = Team0[i].C.playerreplicationinfo.PlayerID;
+				highestplayernumberindex = i;
+			}
+		}
+		MovingPlayer = Team0[highestplayernumberindex];
+		Team0.Remove(highestplayernumberindex, 1);
+		TeamPPR[0] -= MovingPlayer.PPR;
+		TeamPPR[1] += MovingPlayer.PPR;
+		Team1[Team1.length] = MovingPlayer; 
+		AutoBalanceSwitchPlayer(MovingPlayer.C);
+	}
+	
+	// Team one has 2+ more players.
+	while ((Team1.Length - Team0.Length) > 1)
+	{
+		highestplayernumber = 0;
+		highestplayernumberindex = 0;
+		
+		// Find latest joining player and move them to the other team
+		for(i=0; i<Team1.Length; ++i) {
+			if (Team1[i].C.playerreplicationinfo.PlayerID > highestplayernumber)
+			{
+				highestplayernumber = Team1[i].C.playerreplicationinfo.PlayerID;
+				highestplayernumberindex = i;
+			}
+		}
+		MovingPlayer = Team1[highestplayernumberindex];
+		Team1.Remove(highestplayernumberindex, 1);
+		TeamPPR[1] -= MovingPlayer.PPR;
+		TeamPPR[0] += MovingPlayer.PPR;
+		Team1[Team0.length] = MovingPlayer; 
+		AutoBalanceSwitchPlayer(MovingPlayer.C);
+	}
+	
 	//Team Average PPR check - need to be using using Piglet's algorithm
 	//If set up for auto balance on average and the averages are not out, and force autobalance is not set then exit
 	if (AutoBalanceAve > 0 && AutoBalanceAve > abs(TeamPPR[0]/Team0.Length - TeamPPR[1]/Team1.Length) && !ForceAutoBalance )
