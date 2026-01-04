@@ -2110,7 +2110,8 @@ function RespawnTimer()
                 Reset.Reset();
         }
     }
-	else if(RespawnTime <= 3)
+	
+	if(RespawnTime <= 3)
     {
 		for(C = Level.ControllerList; C != None; C = Next)
         {
