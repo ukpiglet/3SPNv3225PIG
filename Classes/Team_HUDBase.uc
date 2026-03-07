@@ -121,8 +121,7 @@ static function Color GetHealthRampColor(Misc_PRI PRI)
         StartHealth = TAM_TeamInfoBlue(PRI.Team).StartingHealth;
     else
         StartHealth = 200;
-
-
+/*
     if(CurrentHealth < StartHealth)
     {
         HealthColor.A = 255; //visible
@@ -134,6 +133,25 @@ static function Color GetHealthRampColor(Misc_PRI PRI)
         else
             HealthColor.G = 200;
     }
+*/
+
+    if(CurrentHealth < StartHealth)
+    {
+        HealthColor.A = 255; //visible
+        HealthColor.B = 0;
+		HealthColor.R = 400 * (StartHealth - CurrentHealth) / StartHealth;
+		if (HealthColor.R > 200)
+			HealthColor.R = 200;
+
+		if (HealthColor.R == 200)
+		{
+			HealthColor.G = 400 * (CurrentHealth / StartHealth);
+			if (HealthColor.G > 200)
+				HealthColor.G = 200;
+		}
+		else
+			HealthColor.G = 200;
+	}
 
     return HealthColor;
 }

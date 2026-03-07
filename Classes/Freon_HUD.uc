@@ -13,6 +13,8 @@ var float ThawBarHeight;
 var Texture ThawBackMat;
 var Texture ThawBarMat;
 
+// Note: This class is held in variable PlayerController.myHUD
+
 /*
 //stub of something to try to visualise time till next full thaw or reward. Not positioned or checking whether this is in use.
 simulated function UpdateRankAndSpread(Canvas C)
@@ -52,6 +54,7 @@ static function Color GetHealthRampColor(Misc_PRI PRI)
 {
     local int CurrentHealth;
     local Color HealthColor;
+	local Freon_PawnReplicationInfo FPRI;
 
     HealthColor = default.FullHealthColor;
 
@@ -60,10 +63,10 @@ static function Color GetHealthRampColor(Misc_PRI PRI)
 
 
     // downcast to Freon PRI to check frozen
-    if(Freon_PawnReplicationInfo(PRI.PawnReplicationInfo) != None &&
-       Freon_PawnReplicationInfo(PRI.PawnReplicationInfo).bFrozen)
+	FPRI = Freon_PawnReplicationInfo(PRI.PawnReplicationInfo);
+    if(FPRI != None && FPRI.bFrozen)
     {
-        CurrentHealth = PRI.PawnReplicationInfo.Health;
+        CurrentHealth = FPRI.Health;
         HealthColor = class'Freon_PRI'.default.FrozenColor * (0.5 + (CurrentHealth * 0.005));
     }
     else
@@ -102,18 +105,15 @@ function DrawCustomBeacon(Canvas C, Pawn P, float ScreenLocX, float ScreenLocY)
     local float scaledist;
     local float scale;
     local float XL, YL;
-    local byte pawnTeam, ownerTeam;
     local string info;
     local string name;
 	local texture mytexture;
+	local Misc_PRI MPRI;
 
     if((FrozenBeacon == None) || (P.PlayerReplicationInfo == None) || P.PlayerReplicationInfo.Team == None)
         return;
 
-    pawnTeam = P.PlayerReplicationInfo.Team.TeamIndex;
-    ownerTeam = PlayerOwner.GetTeamNum();
-
-    if(!PlayerOwner.PlayerReplicationInfo.bOnlySpectator && pawnTeam != ownerTeam)
+    if(!PlayerOwner.PlayerReplicationInfo.bOnlySpectator && P.PlayerReplicationInfo.Team.TeamIndex != PlayerOwner.GetTeamNum())
         return;
 
     C.GetCameraLocation(CamLoc, CamRot);
@@ -135,8 +135,10 @@ function DrawCustomBeacon(Canvas C, Pawn P, float ScreenLocX, float ScreenLocY)
 
     C.Style = ERenderStyle.STY_Normal;
 	
-	if (Freon_Pawn(P) != None && Freon_PawnReplicationInfo(Misc_PRI(P.PlayerReplicationInfo).PawnReplicationInfo).bKilledSelf){
-		if (Freon_PawnReplicationInfo(Misc_PRI(P.PlayerReplicationInfo).PawnReplicationInfo).bLavaSafe){
+	MPRI = Misc_PRI(P.PlayerReplicationInfo);
+	
+	if (Freon_Pawn(P) != None && Freon_PawnReplicationInfo(MPRI.PawnReplicationInfo).bKilledSelf){
+		if (Freon_PawnReplicationInfo(MPRI.PawnReplicationInfo).bLavaSafe){
 			mytexture = SuicideBeacon;
 		}
 		else{
@@ -152,12 +154,12 @@ function DrawCustomBeacon(Canvas C, Pawn P, float ScreenLocX, float ScreenLocY)
         C.Font = C.SmallFont;
 
         if(class'TAM_ScoreBoard'.default.bEnableColoredNamesOnHUD)
-            name = Misc_PRI(P.PlayerReplicationInfo).GetColoredName();
+            name = MPRI.GetColoredName();
         else
             name = P.PlayerReplicationInfo.PlayerName;
         info = name $ " (" $ P.Health $ "%)";
-		/*if (Freon_Pawn(P) != None && Freon_PawnReplicationInfo(Misc_PRI(P.PlayerReplicationInfo).PawnReplicationInfo).bKilledSelf){
-			if (Freon_PawnReplicationInfo(Misc_PRI(P.PlayerReplicationInfo).PawnReplicationInfo).bLavaSafe){
+		/*if (Freon_Pawn(P) != None && Freon_PawnReplicationInfo(MPRI.PawnReplicationInfo).bKilledSelf){
+			if (Freon_PawnReplicationInfo(MPRI.PawnReplicationInfo).bLavaSafe){
 				info = info@" (Kamakaze)";
 			}
 			else{
@@ -238,24 +240,22 @@ simulated function bool ShouldDrawPlayer(Misc_PRI PRI)
 
 simulated function bool ShouldDrawPlayer(Misc_PRI PRI)
 {
-    local Misc_PRI PRI_PO; //PRI PlayerOwner
+    //local Misc_PRI PRI_PO; //PRI PlayerOwner
     //local Misc_PRI PRI_VT; //PRI ViewTarget
+	local Freon_PawnReplicationInfo FPRI;
 
     if(PRI == None || PRI.Team == None)
         return false;
 
-    if(Freon_PawnReplicationInfo(PRI.PawnReplicationInfo) == None)
-        return false;
-
-    if(PRI.bOutOfLives && !Freon_PawnReplicationInfo(PRI.PawnReplicationInfo).bFrozen)
+	FPRI = Freon_PawnReplicationInfo(PRI.PawnReplicationInfo);
+    if(FPRI == None || (PRI.bOutOfLives && !FPRI.bFrozen))
         return false;
 
     // Show PlayerOwner only if frozen
     // Player can see their HUD entry from other players HUD when frozen spec-ing
-    PRI_PO = Misc_PRI(PlayerOwner.PlayerReplicationInfo);
-    if(PRI == PRI_PO)
+    if(PRI == PlayerOwner.PlayerReplicationInfo)
     {
-        if(!Freon_PawnReplicationInfo(PRI_PO.PawnReplicationInfo).bFrozen)
+        if(!FPRI.bFrozen)
            return false;
     }
 

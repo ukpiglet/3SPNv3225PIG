@@ -237,7 +237,10 @@ function rotator AdjustAim(FireProperties FiredAmmunition, vector projStart, int
         }
         else if ( FiredAmmunition.bInstantHit )
                 bestAim = 1.0;
-        BestTarget = PickTarget(bestAim, bestDist, FireDir, projStart, FiredAmmunition.MaxRange);
+
+		if (Role == ROLE_Authority)
+			BestTarget = PickTarget(bestAim, bestDist, FireDir, projStart, FiredAmmunition.MaxRange);
+
         if ( BestTarget == None )
         {
             if (bBehindView)

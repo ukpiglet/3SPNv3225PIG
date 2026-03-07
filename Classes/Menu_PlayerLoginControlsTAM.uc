@@ -97,6 +97,9 @@ function ContextClick(GUIContextMenu Menu, int ClickIndex)
     local GameReplicationInfo GRI;
     local PlayerController PC;
 
+	if (ClickIndex > ContextItems.length -1)
+		return;
+
     if (MenuCommand[ClickIndex] == '')
     {
         Super.ContextClick(Menu, ClickIndex);
