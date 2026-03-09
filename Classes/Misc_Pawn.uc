@@ -253,12 +253,12 @@ function ServerChangedWeapon(Weapon OldWeapon, Weapon NewWeapon)
 		OldWeapon.SetDefaultDisplayProperties();
 		OldWeapon.DetachFromPawn(self);
         OldWeapon.GotoState('Hidden');
-        OldWeapon.NetUpdateFrequency = 2;
+        //OldWeapon.NetUpdateFrequency = 2;
 	}
 
 	if ( Weapon != None )
 	{
-	    Weapon.NetUpdateFrequency = 100;
+	    //Weapon.NetUpdateFrequency = 100;
 		Weapon.AttachToPawn(self);
 		Weapon.BringUp(OldWeapon);
         PlayWeaponSwitch(NewWeapon);

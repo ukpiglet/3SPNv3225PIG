@@ -105,6 +105,12 @@ static function Color GetHealthRampColor(Misc_PRI PRI)
     local int StartHealth;
     local int CurrentHealth;
     local Color HealthColor;
+    local float invStartHealth;
+    local int t;
+
+	local TAM_TeamInfo TTI;
+	local TAM_TeamInfoRed TIR;
+	local TAM_TeamInfoBlue TIB;
 
     HealthColor = default.FullHealthColor;
 
@@ -113,49 +119,57 @@ static function Color GetHealthRampColor(Misc_PRI PRI)
 
     CurrentHealth = Max(0,PRI.PawnReplicationInfo.Health + PRI.PawnReplicationInfo.Shield);
 
-    if(TAM_TeamInfo(PRI.Team) != None)
-        StartHealth = TAM_TeamInfo(PRI.Team).StartingHealth;
-    else if(TAM_TeamInfoRed(PRI.Team) != None)
-        StartHealth = TAM_TeamInfoRed(PRI.Team).StartingHealth;
-    else if(TAM_TeamInfoBlue(PRI.Team) != None)
-        StartHealth = TAM_TeamInfoBlue(PRI.Team).StartingHealth;
+    TIR = TAM_TeamInfoRed(PRI.Team);
+	if(TIR != None)
+        StartHealth = TIR.StartingHealth;
     else
-        StartHealth = 200;
-/*
-    if(CurrentHealth < StartHealth)
-    {
-        HealthColor.A = 255; //visible
-        HealthColor.B = 0;
-        HealthColor.R = Min(200, (400 * (float(StartHealth - CurrentHealth) / float(StartHealth))));
-
-        if(HealthColor.R == 200)
-            HealthColor.G = Min(200, (400 * (float(CurrentHealth) / float(StartHealth))));
-        else
-            HealthColor.G = 200;
-    }
-*/
-
-    if(CurrentHealth < StartHealth)
-    {
-        HealthColor.A = 255; //visible
-        HealthColor.B = 0;
-		HealthColor.R = 400 * (StartHealth - CurrentHealth) / StartHealth;
-		if (HealthColor.R > 200)
-			HealthColor.R = 200;
-
-		if (HealthColor.R == 200)
-		{
-			HealthColor.G = 400 * (CurrentHealth / StartHealth);
-			if (HealthColor.G > 200)
-				HealthColor.G = 200;
-		}
+	{
+		TIB = TAM_TeamInfoBlue(PRI.Team);
+		if(TIB != None)
+			StartHealth = TIB.StartingHealth;
 		else
-			HealthColor.G = 200;
+		{
+			TTI = TAM_TeamInfo(PRI.Team);
+			if(TTI != None)
+				StartHealth = TTI.StartingHealth;
+			else
+				StartHealth = 200;
+		}
 	}
 
+    if(CurrentHealth < StartHealth)
+    {
+        HealthColor.A = 255;
+        HealthColor.B = 0;
+
+        invStartHealth = 1.0 / StartHealth;
+        t = 400 * CurrentHealth * invStartHealth;
+
+        if(t > 200)
+            t = 200;
+
+        HealthColor.R = 200 - t;
+        HealthColor.G = Min(200, t * 1.35);
+    }
+
+/* colours too muddy	
+	if(CurrentHealth < StartHealth)
+    {
+        HealthColor.A = 255;
+        HealthColor.B = 0;
+
+        invStartHealth = 1.0 / StartHealth;
+        t = 400 * CurrentHealth * invStartHealth;
+
+        if(t > 200)
+            t = 200;
+
+        HealthColor.R = 200 - t;
+		HealthColor.G = t;
+    }
+*/
     return HealthColor;
 }
-
 
 function Draw2DLocationDot(Canvas C, vector Loc, float OffsetX, float OffsetY, float ScaleX, float ScaleY)
 {
@@ -722,7 +736,7 @@ simulated function DrawPlayersExtended(Canvas C)
 }
 
 
-simulated function DrawPlayersExtendedZAxis(Canvas C)
+simulated function DrawPlayersExtendedZAxis(Canvas C, bool ExtendedInfo)
 {
     local int i;
     local int HUDOwnerTeam; //team for the HUDOwner
@@ -750,6 +764,12 @@ simulated function DrawPlayersExtendedZAxis(Canvas C)
 
     local int allies;
     local int enemies;
+
+	if (!ExtendedInfo)
+	{
+		DrawPlayersZAxis(C);
+		return;
+	}
 
     if(myOwner == None)
         return;
@@ -1000,28 +1020,23 @@ simulated function DrawHudPassC(Canvas C)
 
 simulated function UpdateRankAndSpread(Canvas C)
 {
-    local Misc_BaseGRI GRI;	
-        
     if(MyOwner == None)
         return;
-
-    GRI = Misc_BaseGRI(MyOwner.GameReplicationInfo);
 
     if(class'Misc_Player'.default.bExtendedInfo)
     {
         if(class'Misc_Player'.default.bUseOld)
 			DrawPlayersExtended(C);
         else
-			DrawPlayersExtendedZAxis(C);
-
+			DrawPlayersExtendedZAxis(C, True);
     }
     else
     {
         if(class'Misc_Player'.default.bUseOld)
 			DrawPlayers(C);
         else
-			DrawPlayersZAxis(C);
-           
+			DrawPlayersExtendedZAxis(C, False);
+			//DrawPlayersZAxis(C); //Should no longer be needed in Freon_Hud. Here DrawPlayersExtendedZAxis will redirect it!
     }
 }
 
@@ -1506,27 +1521,23 @@ function NewDraw2DHeightDot(Canvas C, vector Loc, int CenterX, int CenterY, int 
 	local int zdiff;
 
 
-    if(PlayerOwner.Pawn == None)
+	Start = PlayerOwner.Pawn;
+    if(Start == None)
     {
         if(PlayerOwner.ViewTarget != None)
             Start = PlayerOwner.ViewTarget;
         else
             Start = PlayerOwner;
     }
-    else
-    {
-        Start = PlayerOwner.Pawn;
-    }
 
 	zdiff = int((Loc.Z - Start.Location.Z) / 176);
-	if (zdiff>5) zdiff = 5;
-	if (zdiff<-5) zdiff = -5;
+	zdiff = Clamp(zdiff, -5, 5);
 	
     dotSize = OutsideDiameter * 0.25; // 25% diameter
 
-    posCenterY = CenterY - (OutsideDiameter/10 * zdiff);
+    posCenterY = CenterY - (OutsideDiameter* 0.1 * zdiff);
 
-    C.SetPos(CenterX - (dotSize/2.0), posCenterY - (dotSize/2.0)); //adjust for dot size
+    C.SetPos(CenterX - (dotSize* 0.5), posCenterY - (dotSize * 0.5)); //adjust for dot size
 
     C.Style = ERenderStyle.STY_Alpha;
     C.DrawTile(LocationDot, dotSize, dotSize, 340, 432, 78, 78);

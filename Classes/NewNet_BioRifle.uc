@@ -101,37 +101,50 @@ simulated event NewNet_ClientStartFire(int Mode)
 
 function NewNet_ServerStartFire(byte Mode, float ClientTimeStamp)
 {
+	local Misc_BaseGRI BRGI;
+	local weaponfire FM;
+	local NewNet_BioFire BF;
+	local NewNet_BioChargedFire BCF;
+
     if(M==None)
         foreach DynamicActors(class'TAM_Mutator', M)
 	        break;
 
+	BRGI = Misc_BaseGRI(Level.GRI);
+	FM = FireMode[Mode];
+	BF = NewNet_BioFire(FM);
+
     if(Team_GameBase(Level.Game)!=None && Misc_Player(Instigator.Controller)!=None)
       Misc_Player(Instigator.Controller).NotifyServerStartFire(ClientTimeStamp, M.ClientTimeStamp, M.AverDT);
-          
-    if(NewNet_BioFire(FireMode[Mode])!=None)
+
+    if(BF!=None)
     {
-		if( Misc_BaseGRI(Level.GRI).NewNetExp )
+		if( BRGI.NewNetExp )
 		{
-			NewNet_BioFire(FireMode[Mode]).PingDT = FMin(M.ClientTimeStamp - ClientTimeStamp + (M.AverDT * Misc_BaseGRI(Level.GRI).NewNetExp_ProjMult), Misc_BaseGRI(Level.GRI).NewNetExp_ThresholdProj);
+			BF.PingDT = FMin(M.ClientTimeStamp - ClientTimeStamp + (M.AverDT * BRGI.NewNetExp_ProjMult), BRGI.NewNetExp_ThresholdProj);
 		}
 		else
 		{
-        	NewNet_BioFire(FireMode[Mode]).PingDT = FMin(M.ClientTimeStamp - ClientTimeStamp + 1.75*M.AverDT, MAX_PROJECTILE_FUDGE);
+			BF.PingDT = FMin(M.ClientTimeStamp - ClientTimeStamp + 1.75*M.AverDT, MAX_PROJECTILE_FUDGE);
 		}
-        NewNet_BioFire(FireMode[Mode]).bUseEnhancedNetCode = true;
+        BF.bUseEnhancedNetCode = true;
     }
-    else if(NewNet_BioChargedFire(FireMode[Mode])!=None)
-    {
-		if (Misc_BaseGRI(Level.GRI).NewNetExp)
+    else
+	{
+		BCF = NewNet_BioChargedFire(FM);
+		if(BCF!=None)
 		{
-			NewNet_BioChargedFire(FireMode[Mode]).PingDT = FMin(M.ClientTimeStamp - ClientTimeStamp + (M.AverDT * Misc_BaseGRI(Level.GRI).NewNetExp_ProjMult), Misc_BaseGRI(Level.GRI).NewNetExp_ThresholdProj);
+			if (BRGI.NewNetExp)
+			{
+				BCF.PingDT = FMin(M.ClientTimeStamp - ClientTimeStamp + (M.AverDT * BRGI.NewNetExp_ProjMult), BRGI.NewNetExp_ThresholdProj);
+			}
+			else
+			{
+				BCF.PingDT = FMin(M.ClientTimeStamp - ClientTimeStamp + 1.75*M.AverDT, MAX_PROJECTILE_FUDGE);
+			}
+			BCF.bUseEnhancedNetCode = true;
 		}
-		else
-		{
-        	NewNet_BioChargedFire(FireMode[Mode]).PingDT = FMin(M.ClientTimeStamp - ClientTimeStamp + 1.75*M.AverDT, MAX_PROJECTILE_FUDGE);
-		}
-        NewNet_BioChargedFire(FireMode[Mode]).bUseEnhancedNetCode = true;
-    }
+	}
 
     ServerStartFire(Mode);
 }

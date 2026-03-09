@@ -104,6 +104,7 @@ function TimeTravelPawn(float dt)
     local bool bFloor, bCeiling;
     local vector V2; //, V; used in old code
     local float StampDT; //Alpha, Interpdt;  only used by old path
+	local PawnHistoryElement PHE;
 
     if(CopiedPawn == none || CopiedPawn.DrivenVehicle!=None)
        return;
@@ -137,22 +138,23 @@ function TimeTravelPawn(float dt)
         }
     }
 
+	PHE = PawnHistory[Floor];
     if(bCeiling)
     {
 		V2.X = InterpCurveEval(LocCurveX,StampDT);
 		V2.Y = InterpCurveEval(LocCurveY,StampDT);
 		V2.Z = InterpCurveEval(LocCurveZ,StampDT);
 		SetLocation(V2);
-		SetRotation(PawnHistory[Floor].Rotation);
+		SetRotation(PHE.Rotation);
 		
 		if(bUseCylinderCollision)
 		{
-			if(!bCrouched && PawnHistory[Floor].bCrouched && PawnHistory[Ceiling].bCrouched)
+			if(!bCrouched && PHE.bCrouched && PawnHistory[Ceiling].bCrouched)
 			{
 				SetCollisionSize(CrouchRadius, CrouchHeight);
 				bCrouched=True;
 			}
-			else if(bCrouched && (!PawnHistory[Floor].bCrouched || !PawnHistory[Ceiling].bCrouched))
+			else if(bCrouched && (!PHE.bCrouched || !PawnHistory[Ceiling].bCrouched))
 			{
 				SetCollisionSize(default.CollisionRadius, default.CollisionHeight);
 				bCrouched=false;
@@ -164,15 +166,15 @@ function TimeTravelPawn(float dt)
     {
           /* FixMe:  This shouldn't need to be set unless it changes, but for now
          lets just be safe and set it every time for now*/
-         if(PawnHistory[Floor].bCrouched)
+         if(PHE.bCrouched)
              SetCollisionSize(CrouchRadius, CrouchHeight);
          else if(CopiedPawn.IsA('xPawn'))
              SetCollisionSize(default.CollisionRadius, default.CollisionHeight);
          else if(bUseCylinderCollision)
              SetCollisionSize(CopiedPawn.CollisionRadius, CopiedPawn.CollisionHeight);
 
-         SetLocation(PawnHistory[Floor].Location);
-         SetRotation(PawnHistory[Floor].Rotation);
+         SetLocation(PHE.Location);
+         SetRotation(PHE.Rotation);
     }
     SetCollision(true);
 }
@@ -252,29 +254,29 @@ function AddHistory()
 {
     local int i;
 	local InterpCurvePoint XPoint,YPoint,ZPoint;
+	local PawnHistoryElement PH;
 	
-    i=Pawnhistory.Length;
-    PawnHistory.Length=i+1;
-    PawnHistory[i].Location = CopiedPawn.Location;
-    PawnHistory[i].Rotation = CopiedPawn.Rotation;
-    PawnHistory[i].bCrouched = CopiedPawn.bIsCrouched;
-    PawnHistory[i].TimeStamp = M.ClientTimeStamp;
-    PawnHistory[i].Physics = CopiedPawn.Physics;
+	//Assumption being made here (looking at RemoveOutdatedHistory() is that the LocCurveX, LocCurveY, and LocCurveZ are all the same length, and that Pawnhistory is almost certainly the same length as all get added here)
+	i = Pawnhistory.Length;
+
+    PH.Location  = CopiedPawn.Location;
+    PH.Rotation  = CopiedPawn.Rotation;
+    PH.bCrouched = CopiedPawn.bIsCrouched;
+    PH.TimeStamp = M.ClientTimeStamp;
+    PH.Physics   = CopiedPawn.Physics;
+	Pawnhistory[i] = PH;
 
 	XPoint.InVal = M.ClientTimeStamp;
 	XPoint.OutVal = CopiedPawn.Location.X;
-	LocCurveX.Points.Insert(LocCurveX.Points.Length,1);
-	LocCurveX.Points[LocCurveX.Points.Length-1]=XPoint;
+	LocCurveX.Points[i]=XPoint;
 
 	YPoint.InVal = M.ClientTimeStamp;
 	YPoint.OutVal = CopiedPawn.Location.Y;
-	LocCurveY.Points.Insert(LocCurveY.Points.Length,1);
-	LocCurveY.Points[LocCurveY.Points.Length-1]=YPoint;
+	LocCurveY.Points[i]=YPoint;
 
 	ZPoint.InVal = M.ClientTimeStamp;
 	ZPoint.OutVal = CopiedPawn.Location.Z;
-	LocCurveZ.Points.Insert(LocCurveZ.Points.Length,1);
-	LocCurveZ.Points[LocCurveZ.Points.Length-1]=ZPoint;
+	LocCurveZ.Points[i]=ZPoint;
 
 }
 

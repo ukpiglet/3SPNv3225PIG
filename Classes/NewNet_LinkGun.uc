@@ -81,8 +81,12 @@ simulated event ClientStartFire(int Mode)
 
 simulated event NewNet_ClientStartFire(int Mode)
 {
-    if ( Pawn(Owner).Controller.IsInState('GameEnded') || Pawn(Owner).Controller.IsInState('RoundEnded') )
+	local controller C;
+
+	C = Pawn(Owner).Controller;
+    if ( C.IsInState('GameEnded') || C.IsInState('RoundEnded') )
         return;
+
     if (Role < ROLE_Authority)
     {
         if (StartFire(Mode))
@@ -102,37 +106,52 @@ simulated event NewNet_ClientStartFire(int Mode)
 
 function NewNet_ServerStartFire(byte Mode, float ClientTimeStamp)
 {
-    if(M==None)
+    local Misc_BaseGRI BRGI;
+	local Misc_Player MP;
+	local NewNet_LinkAltFire LA;
+	local NewNet_LinkFire LF;
+	local WeaponFire FM;
+
+	if(M==None)
         foreach DynamicActors(class'TAM_Mutator', M)
 	        break;
 
-    if(Team_GameBase(Level.Game)!=None && Misc_Player(Instigator.Controller)!=None)
-      Misc_Player(Instigator.Controller).NotifyServerStartFire(ClientTimeStamp, M.ClientTimeStamp, M.AverDT);
-          
-    if(NewNet_LinkAltFire(FireMode[Mode])!=None)
+	MP = Misc_Player(Instigator.Controller);
+    if(Team_GameBase(Level.Game)!=None && MP!=None)
+      MP.NotifyServerStartFire(ClientTimeStamp, M.ClientTimeStamp, M.AverDT);
+
+	BRGI = Misc_BaseGRI(Level.GRI);
+	FM = FireMode[Mode];
+	LA = NewNet_LinkAltFire(FM);
+
+    if(LA!=None)
     {
-		if (Misc_BaseGRI(Level.GRI).NewNetExp)
+		if (BRGI.NewNetExp)
 		{
-			NewNet_LinkAltFire(FireMode[Mode]).PingDT = FMin(M.ClientTimeStamp - ClientTimeStamp + (M.AverDT * Misc_BaseGRI(Level.GRI).NewNetExp_ProjMult), Misc_BaseGRI(Level.GRI).NewNetExp_ThresholdProj);
+			LA.PingDT = FMin(M.ClientTimeStamp - ClientTimeStamp + (M.AverDT * BRGI.NewNetExp_ProjMult), BRGI.NewNetExp_ThresholdProj);
 		}
 		else
 		{
-        	NewNet_LinkAltFire(FireMode[Mode]).PingDT = FMin(M.ClientTimeStamp - ClientTimeStamp + 1.75*M.AverDT, MAX_PROJECTILE_FUDGE);
+			LA.PingDT = FMin(M.ClientTimeStamp - ClientTimeStamp + 1.75*M.AverDT, MAX_PROJECTILE_FUDGE);
 		}
-        NewNet_LinkAltFire(FireMode[Mode]).bUseEnhancedNetCode = true;
+        LA.bUseEnhancedNetCode = true;
     }
-    else if(NewNet_LinkFire(FireMode[Mode])!=None)
-    {
-		if (Misc_BaseGRI(Level.GRI).NewNetExp)
+    else
+	{
+		LF = NewNet_LinkFire(FM);
+		if(LF!=None)
 		{
-			NewNet_LinkFire(FireMode[Mode]).PingDT = FClamp(M.ClientTimeStamp - ClientTimeStamp + (M.AverDT * Misc_BaseGRI(Level.GRI).NewNetExp_HSMult), 0, Misc_BaseGRI(Level.GRI).NewNetExp_ThresholdHS);
+			if (BRGI.NewNetExp)
+			{
+				LF.PingDT = FClamp(M.ClientTimeStamp - ClientTimeStamp + (M.AverDT * BRGI.NewNetExp_HSMult), 0, BRGI.NewNetExp_ThresholdHS);
+			}
+			else
+			{
+				LF.PingDT = M.ClientTimeStamp - ClientTimeStamp + 1.75*M.AverDT;
+			}
+			LF.bUseEnhancedNetCode = true;
 		}
-		else
-		{
-			NewNet_LinkFire(FireMode[Mode]).PingDT = M.ClientTimeStamp - ClientTimeStamp + 1.75*M.AverDT;
-		}
-        NewNet_LinkFire(FireMode[Mode]).bUseEnhancedNetCode = true;
-    }
+	}
 
     ServerStartFire(Mode);
 }

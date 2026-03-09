@@ -41,6 +41,8 @@ function bool TellBotToFollow(Bot B, Controller C)
 function bool CheckSquadObjectives(Bot B)
 {
     local int i;
+	local Freon F;
+	local Freon_Pawn FP;
 	
     if(TryingToThaw(B))
         return true;
@@ -49,13 +51,15 @@ function bool CheckSquadObjectives(Bot B)
         if(SetThawTarget(B, Freon_Player(SquadLeader).FrozenPawn))
             return true;
 
-    if(Freon(Level.Game).FrozenPawns.Length > 0)
+    F = Freon(Level.Game);
+	if(F.FrozenPawns.Length > 0)
     {
-        for(i = 0; i < Freon(Level.Game).FrozenPawns.Length; i++)
+        for(i = 0; i < F.FrozenPawns.Length; i++)
         {
-            if(Freon(Level.Game).FrozenPawns[i] != None && Freon(Level.Game).FrozenPawns[i].GetTeamNum() == Team.TeamIndex)
+			FP = F.FrozenPawns[i];
+            if(FP != None && FP.GetTeamNum() == Team.TeamIndex)
             {
-                if(SetThawTarget(B, Freon(Level.Game).FrozenPawns[i]))
+                if(SetThawTarget(B, FP))
 					return true;
             }
         }

@@ -23,27 +23,31 @@ function SetMyPawn(xPawn P)
 function PawnFroze()
 {
     bFrozen = true;
-    NetUpdateFrequency = default.NetUpdateFrequency * 0.5;
-    NetPriority = default.NetPriority * 0.5;
+    //NetUpdateFrequency = default.NetUpdateFrequency * 0.5;
+    //NetPriority = default.NetPriority * 0.5;
     NetUpdateTime = Level.TimeSeconds - 5;
     SetTimer(0.4, true);
 }
 
 event Timer()
 {
+	local Freon_Pawn FP;
+	local Freon F;
     Super.Timer();
 
-    if(Freon_Pawn(MyPawn) != None){
-        bFrozen = Freon_Pawn(MyPawn).bFrozen;
-		if (Freon(Level.Game).SelfKillThawScale != 1){
-			bKilledSelf = Freon_Pawn(MyPawn).LastKiller == MyPawn.Controller;
+    FP = Freon_Pawn(MyPawn);
+	F = Freon(Level.Game);
+	if(FP != None){
+        bFrozen = FP.bFrozen;
+		if (F.SelfKillThawScale != 1){
+			bKilledSelf = FP.LastKiller == MyPawn.Controller;
 		}
 		else{
 			bKilledSelf = False;
 		}
 		
-		if (!Freon(Level.Game).bAllowSelfKillThaw && bKilledSelf){
-			bLavaSafe = (Level.TimeSeconds - Freon_Pawn(MyPawn).TimeKilled > Freon(Level.Game).SelfKillLavaThawtime);
+		if (!F.bAllowSelfKillThaw && bKilledSelf){
+			bLavaSafe = (Level.TimeSeconds - FP.TimeKilled > F.SelfKillLavaThawtime);
 		}
 	}
 }

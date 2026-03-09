@@ -65,7 +65,7 @@ function TakeDamage(int Damage, Pawn InstigatedBy, Vector HitLocation, Vector Mo
     local Controller Killer;
 
     zeroVec = vect(0.0,0.0,0.0);
-    //if(Level.TimeSeconds-SpawnTime < DeathMatch(Level.Game).SpawnProtectionTime)
+
 	if(IsSpawnProtectionEnabled())
     {
         Super.TakeDamage(0, instigatedBy, hitlocation, zeroVec, damageType);
@@ -256,6 +256,7 @@ function bool Froze(Controller Killer, class<DamageType> DamageType, Vector HitL
     //local Vector TossVel;
     local Trigger T;
     local NavigationPoint N;
+	local Freon_PawnReplicationInfo FPRI;
 
     // DETERMINE IF PAWN FROZE -->
 
@@ -287,8 +288,9 @@ function bool Froze(Controller Killer, class<DamageType> DamageType, Vector HitL
 
     bFrozen = true;
 
-    if(Freon_PawnReplicationInfo(Freon_PRI(PlayerReplicationInfo).PawnReplicationInfo) != None)
-        Freon_PawnReplicationInfo(Freon_PRI(PlayerReplicationInfo).PawnReplicationInfo).PawnFroze();
+    FPRI = Freon_PawnReplicationInfo(Freon_PRI(PlayerReplicationInfo).PawnReplicationInfo);
+	if(FPRI != None)
+        FPRI.PawnFroze();
 
     FillWeaponData();
     Health = 0;
@@ -462,8 +464,11 @@ simulated function SetSkin(int OverrideTeamIndex)
 
 function DiedFrozen(Controller Killer, class<DamageType> DamageType, vector HitLocation)
 {
-    if(Freon(Level.Game) != None){
-        Freon(Level.Game).PlayerThawed(self, 0, 0);
+	local Freon F;
+
+	F = Freon(Level.Game);
+    if(F != None){
+		F.PlayerThawed(self, 0, 0);
 	}
     Died(Killer, DamageType, HitLocation);
 }
@@ -471,13 +476,15 @@ function DiedFrozen(Controller Killer, class<DamageType> DamageType, vector HitL
 function Thaw()
 {
 local Controller C;
+local Freon F;
 
 	C = Controller;
 
 	bGivesGit = false;
-    if(Freon(Level.Game) != None){
-     	 Freon(Level.Game).PlayerThawed(self, 0, 0);
-		 Freon(Level.Game).ReTrigger(C);
+	F = Freon(Level.Game);
+    if(F != None){
+     	 F.PlayerThawed(self, 0, 0);
+		 F.ReTrigger(C);
 	}
 	
 }
@@ -485,13 +492,15 @@ local Controller C;
 function ThawByTouch(array<Freon_Pawn> Thawers, optional float mosthealth)
 {
 local Controller C;
+local Freon F;
 
 	C = Controller;
 
 	bGivesGit = false;
-    if(Freon(Level.Game) != None){
-        Freon(Level.Game).PlayerThawedByTouch(self, Thawers, mosthealth, shieldstrength);
-		Freon(Level.Game).ReTrigger(C);
+	F = Freon(Level.Game);
+    if(F != None){
+        F.PlayerThawedByTouch(self, Thawers, mosthealth, shieldstrength);
+		F.ReTrigger(C);
 	}
 }
 
@@ -584,6 +593,7 @@ State Frozen
 
     function TakeDamage( int Damage, Pawn InstigatedBy, Vector HitLocation, Vector Momentum, class<DamageType> DamageType )
     {
+		local Freon_Pawn FP;
       		
         if ( DamageType == None )
         {
@@ -611,9 +621,10 @@ State Frozen
 			if(DamageType.IsA('FellLava')){
 				Thaw();
 				if (!Freon(Level.Game).bAllowSelfKillThaw && LastKiller != None && LastKiller == Controller && Level.TimeSeconds - TimeKilled <= Freon(Level.Game).SelfKillLavaThawtime){
-					Freon_Pawn(Controller.Pawn).DeactivateSpawnProtection();
-					Freon_Pawn(Controller.Pawn).Health = 1;
-					Freon_Pawn(Controller.Pawn).ShieldStrength = 1;
+					FP = Freon_Pawn(Controller.Pawn);
+					FP.DeactivateSpawnProtection();
+					FP.Health = 1;
+					FP.ShieldStrength = 1;
 				}
 			}
 			else{
@@ -647,19 +658,27 @@ State Frozen
 
     function BeginState()
     {
+		local Freon_Player FP;
+		local Freon_Bot FB;
+
         SetPhysics(PHYS_Falling);
 
         LastHitBy = None;
         Acceleration = vect(0,0,0);
         TearOffMomentum = vect(0,0,0);
 
-        if(Freon_Player(Controller) != None)
+		FP = Freon_Player(Controller);
+        if(FP != None)
         {
-            Freon_Player(Controller).FrozenPawn = self;
-            Freon_Player(Controller).Freeze();
+            FP.FrozenPawn = self;
+            FP.Freeze();
         }
-        else if(Freon_Bot(Controller) != None)
-            Freon_Bot(Controller).Freeze();
+        else
+		{
+			FB  = Freon_Bot(Controller);
+			if(FB != None)
+				FB.Freeze();
+		}
 			
 		if (Freon(Level.Game).bCanStandOnIcicle)
 			bCanBeBaseForPawns = True;

@@ -92,9 +92,14 @@ simulated event NewNet_ClientStartFire(int Mode)
     local ReplicatedVector V;
     local vector Start;
     local float stamp;
+	local Pawn P;
+	local Controller C;
 
-    if ( Pawn(Owner).Controller.IsInState('GameEnded') || Pawn(Owner).Controller.IsInState('RoundEnded') )
+	P = Pawn(Owner);
+	C = P.Controller;
+    if ( C.IsInState('GameEnded') || C.IsInState('RoundEnded') )
         return;
+
     if (Role < ROLE_Authority)
     {
         if (AltReadyToFire(Mode) && StartFire(Mode))
@@ -108,9 +113,9 @@ simulated event NewNet_ClientStartFire(int Mode)
                 NewNet_OldServerStartFire(Mode,Stamp);
                 return;
             }
-            R.Pitch = Pawn(Owner).Controller.Rotation.Pitch;
-            R.Yaw = Pawn(Owner).Controller.Rotation.Yaw;
-            Start = Pawn(Owner).Location + Pawn(Owner).EyePosition();
+            R.Pitch = C.Rotation.Pitch;
+            R.Yaw = C.Rotation.Yaw;
+            Start = P.Location + P.EyePosition();
 
             V.X = Start.X;
             V.Y = Start.Y;
@@ -135,6 +140,7 @@ simulated function bool AltReadyToFire(int Mode)
 {
     local int alt;
     local float f;
+	local WeaponFire FMA, FMM;
 
     //There is a very slight descynchronization error on the server
     // with weapons due to differing deltatimes which accrues to a pretty big
@@ -150,9 +156,11 @@ simulated function bool AltReadyToFire(int Mode)
     else
         alt = 0;
 
-    if ( ((FireMode[alt] != FireMode[Mode]) && FireMode[alt].bModeExclusive && FireMode[alt].bIsFiring)
-		|| !FireMode[Mode].AllowFire()
-		|| (FireMode[Mode].NextFireTime > Level.TimeSeconds + FireMode[Mode].PreFireTime - f) )
+	FMM = FireMode[Mode];
+	FMA = FireMode[alt];
+    if ( ((FMA != FMM) && FMA.bModeExclusive && FMA.bIsFiring)
+		|| !FMM.AllowFire()
+		|| (FMM.NextFireTime > Level.TimeSeconds + FMM.PreFireTime - f) )
     {
         return false;
     }
@@ -162,6 +170,11 @@ simulated function bool AltReadyToFire(int Mode)
 
 function NewNet_ServerStartFire(byte Mode, float ClientTimeStamp, ReplicatedRotator R, ReplicatedVector V)
 {
+	local Misc_BaseGRI BGRI;
+	local WeaponFire FM;
+	local NewNet_ShockBeamFire BF;
+	local Misc_Player MP;
+
 	if ( (Instigator != None) && (Instigator.Weapon != self) )
 	{
 		if ( Instigator.Weapon == None )
@@ -175,33 +188,37 @@ function NewNet_ServerStartFire(byte Mode, float ClientTimeStamp, ReplicatedRota
         foreach DynamicActors(class'TAM_Mutator', M)
 	        break;
 
-    if(Team_GameBase(Level.Game)!=None && Misc_Player(Instigator.Controller)!=None)
-      Misc_Player(Instigator.Controller).NotifyServerStartFire(ClientTimeStamp, M.ClientTimeStamp, M.AverDT);
-          
-	if (Misc_BaseGRI(Level.GRI).NewNetExp)
+	MP = Misc_Player(Instigator.Controller);
+    if(Team_GameBase(Level.Game)!=None && MP!=None)
+      MP.NotifyServerStartFire(ClientTimeStamp, M.ClientTimeStamp, M.AverDT);
+
+	BGRI = Misc_BaseGRI(Level.GRI);
+	FM = FireMode[Mode];
+	BF = NewNet_ShockBeamFire(FM);
+	if (BGRI.NewNetExp)
 	{
-		NewNet_ShockBeamFire(FireMode[Mode]).PingDT = FClamp(M.ClientTimeStamp - ClientTimeStamp + (M.AverDT * Misc_BaseGRI(Level.GRI).NewNetExp_HSMult), 0, Misc_BaseGRI(Level.GRI).NewNetExp_ThresholdHS);
+		BF.PingDT = FClamp(M.ClientTimeStamp - ClientTimeStamp + (M.AverDT * BGRI.NewNetExp_HSMult), 0, BGRI.NewNetExp_ThresholdHS);
 	}
 	else
 	{
-		NewNet_ShockBeamFire(FireMode[Mode]).PingDT = M.ClientTimeStamp - ClientTimeStamp + 1.75*M.AverDT;
+		BF.PingDT = M.ClientTimeStamp - ClientTimeStamp + 1.75*M.AverDT;
 	}
-    NewNet_ShockBeamFire(FireMode[Mode]).bUseEnhancedNetCode = true;
-    if ( (FireMode[Mode].NextFireTime <= Level.TimeSeconds + FireMode[Mode].PreFireTime)
+    BF.bUseEnhancedNetCode = true;
+    if ( (FM.NextFireTime <= Level.TimeSeconds + FM.PreFireTime)
 		&& StartFire(Mode) )
     {
-        FireMode[Mode].ServerStartFireTime = Level.TimeSeconds;
-        FireMode[Mode].bServerDelayStartFire = false;
-        NewNet_ShockBeamFire(FireMode[Mode]).SavedVec.X = V.X;
-        NewNet_ShockBeamFire(FireMode[Mode]).SavedVec.Y = V.Y;
-        NewNet_ShockBeamFire(FireMode[Mode]).SavedVec.Z = V.Z;
-        NewNet_ShockBeamFire(FireMode[Mode]).SavedRot.Yaw = R.Yaw;
-        NewNet_ShockBeamFire(FireMode[Mode]).SavedRot.Pitch = R.Pitch;
-        NewNet_ShockBeamFire(FireMode[Mode]).bUseReplicatedInfo=IsReasonable(NewNet_ShockBeamFire(FireMode[Mode]).SavedVec);
+        FM.ServerStartFireTime = Level.TimeSeconds;
+        FM.bServerDelayStartFire = false;
+        BF.SavedVec.X = V.X;
+        BF.SavedVec.Y = V.Y;
+        BF.SavedVec.Z = V.Z;
+        BF.SavedRot.Yaw = R.Yaw;
+        BF.SavedRot.Pitch = R.Pitch;
+        BF.bUseReplicatedInfo=IsReasonable(BF.SavedVec);
     }
-    else if ( FireMode[Mode].AllowFire() )
+    else if ( FM.AllowFire() )
     {
-        FireMode[Mode].bServerDelayStartFire = true;
+        FM.bServerDelayStartFire = true;
 	}
 	else
 		ClientForceAmmoUpdate(Mode, AmmoAmount(Mode));
@@ -209,18 +226,24 @@ function NewNet_ServerStartFire(byte Mode, float ClientTimeStamp, ReplicatedRota
 
 function NewNet_OldServerStartFire(byte Mode, float ClientTimeStamp)
 {
+	local Misc_BaseGRI BGRI;
+	local NewNet_ShockBeamFire SBF;
+
     if(M==None)
         foreach DynamicActors(class'TAM_Mutator', M)
 	        break;
-    if (Misc_BaseGRI(Level.GRI).NewNetExp)
+
+	BGRI = Misc_BaseGRI(Level.GRI);
+	SBF = NewNet_ShockBeamFire(FireMode[Mode]);
+    if (BGRI.NewNetExp)
 	{
-		NewNet_ShockBeamFire(FireMode[Mode]).PingDT = FClamp(M.ClientTimeStamp - ClientTimeStamp + (M.AverDT * Misc_BaseGRI(Level.GRI).NewNetExp_HSMult), 0, Misc_BaseGRI(Level.GRI).NewNetExp_ThresholdHS);
+		SBF.PingDT = FClamp(M.ClientTimeStamp - ClientTimeStamp + (M.AverDT * BGRI.NewNetExp_HSMult), 0, BGRI.NewNetExp_ThresholdHS);
 	}
 	else
 	{
-		NewNet_ShockBeamFire(FireMode[Mode]).PingDT = M.ClientTimeStamp - ClientTimeStamp + 1.75*M.AverDT;
+		SBF.PingDT = M.ClientTimeStamp - ClientTimeStamp + 1.75*M.AverDT;
 	}
-    NewNet_ShockBeamFire(FireMode[Mode]).bUseEnhancedNetCode = true;
+    SBF.bUseEnhancedNetCode = true;
     ServerStartFire(mode);
 }
 

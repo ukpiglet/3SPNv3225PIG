@@ -93,37 +93,50 @@ simulated event NewNet_ClientStartFire(int Mode)
 
 function NewNet_ServerStartFire(byte Mode, float ClientTimeStamp)
 {
-    if(M==None)
+    local Misc_BaseGRI BRGI;
+	local WeaponFire FM;
+	local NewNet_MiniGunFire MGF;
+	local NewNet_MiniGunAltFire MGAF;
+
+	if(M==None)
         foreach DynamicActors(class'TAM_Mutator', M)
 	        break;
 
     if(Team_GameBase(Level.Game)!=None && Misc_Player(Instigator.Controller)!=None)
       Misc_Player(Instigator.Controller).NotifyServerStartFire(ClientTimeStamp, M.ClientTimeStamp, M.AverDT);
-          
-    if(NewNet_MiniGunFire(FireMode[Mode])!=None)
+
+	BRGI = Misc_BaseGRI(Level.GRI);
+	FM = FireMode[Mode];
+	MGF = NewNet_MiniGunFire(FM);
+
+    if(MGF!=None)
     {
-		if (Misc_BaseGRI(Level.GRI).NewNetExp)
+		if (BRGI.NewNetExp)
 		{
-			NewNet_MiniGunFire(FireMode[Mode]).PingDT = FClamp(M.ClientTimeStamp - ClientTimeStamp + (M.AverDT * Misc_BaseGRI(Level.GRI).NewNetExp_HSMult), 0, Misc_BaseGRI(Level.GRI).NewNetExp_ThresholdHS);
+			MGF.PingDT = FClamp(M.ClientTimeStamp - ClientTimeStamp + (M.AverDT * BRGI.NewNetExp_HSMult), 0, BRGI.NewNetExp_ThresholdHS);
 		}
 		else
 		{
-			NewNet_MiniGunFire(FireMode[Mode]).PingDT = M.ClientTimeStamp - ClientTimeStamp + 1.75*M.AverDT;
+			MGF.PingDT = M.ClientTimeStamp - ClientTimeStamp + 1.75*M.AverDT;
 		}
-        NewNet_MiniGunFire(FireMode[Mode]).bUseEnhancedNetCode = true;
+        MGF.bUseEnhancedNetCode = true;
     }
-    else if(NewNet_MiniGunAltFire(FireMode[Mode])!=None)
-    {
-		if (Misc_BaseGRI(Level.GRI).NewNetExp)
+    else
+	{
+		MGAF = NewNet_MiniGunAltFire(FM);
+		if(MGAF!=None)
 		{
-			NewNet_MiniGunAltFire(FireMode[Mode]).PingDT = FClamp(M.ClientTimeStamp - ClientTimeStamp + (M.AverDT * Misc_BaseGRI(Level.GRI).NewNetExp_HSMult), 0, Misc_BaseGRI(Level.GRI).NewNetExp_ThresholdHS);
+			if (BRGI.NewNetExp)
+			{
+				MGAF.PingDT = FClamp(M.ClientTimeStamp - ClientTimeStamp + (M.AverDT * BRGI.NewNetExp_HSMult), 0, BRGI.NewNetExp_ThresholdHS);
+			}
+			else
+			{
+				MGAF.PingDT = M.ClientTimeStamp - ClientTimeStamp + 1.75*M.AverDT;
+			}
+			MGAF.bUseEnhancedNetCode = true;
 		}
-		else
-		{
-			NewNet_MiniGunAltFire(FireMode[Mode]).PingDT = M.ClientTimeStamp - ClientTimeStamp + 1.75*M.AverDT;
-		}
-        NewNet_MiniGunAltFire(FireMode[Mode]).bUseEnhancedNetCode = true;
-    }
+	}
 
     ServerStartFire(Mode);
 }

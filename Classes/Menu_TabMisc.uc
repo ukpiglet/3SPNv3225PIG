@@ -111,8 +111,11 @@ function OnChange(GUIComponent C)
             class'Misc_Player'.default.bShowTeamInfo = !b;
         else if(c == Controls[7])
             class'Misc_Player'.default.bShowCombos = !b;
-        else if(c == Controls[14])	
+        else if(c == Controls[14])
+		{
             class'Misc_Player'.default.bExtendedInfo = b;
+			class'Misc_Player'.default.bHUDChanged = True;
+		}
 		else if(c == Controls[28])
             class'Misc_Player'.default.bTeamColoredDeathMessages = b;
         else if(c == Controls[16])
@@ -173,6 +176,7 @@ function OnChange(GUIComponent C)
 	    if(C == Controls[27]){  
 			class'Misc_Player'.default.bUsePlus=(moComboBox(Controls[27]).GetIndex()==1); 
 			class'Misc_Player'.default.bUseOld=(moComboBox(Controls[27]).GetIndex()==2); 
+			class'Misc_Player'.default.bHUDChanged = True;
 		}
 		if(C == Controls[30])
 		{

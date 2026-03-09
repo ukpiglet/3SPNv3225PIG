@@ -113,20 +113,21 @@ simulated function NewNet_ClientStartFire(int mode)
     local ReplicatedVector V;
     local vector Start;
     local float stamp;
- //   local bool b;
- //   local actor A;
- //   local vector HN,HL;
- //   local ReplicatedVector V2;
+	local Pawn P;
+	local controller C;
 
-    if ( Pawn(Owner).Controller.IsInState('GameEnded') || Pawn(Owner).Controller.IsInState('RoundEnded') )
+	P = Pawn(Owner);
+	C = P.Controller;
+    if ( C.IsInState('GameEnded') || C.IsInState('RoundEnded') )
         return;
+
     if (Role < ROLE_Authority)
     {
         if (AltReadyToFire(mode) && StartFire(Mode) )
         {
-            R.Pitch = Pawn(Owner).Controller.Rotation.Pitch;
-            R.Yaw = Pawn(Owner).Controller.Rotation.Yaw;
-            STart=Pawn(Owner).Location + Pawn(Owner).EyePosition();
+            R.Pitch = C.Rotation.Pitch;
+            R.Yaw = C.Rotation.Yaw;
+            STart=P.Location + P.EyePosition();
 
             V.X = Start.X;
             V.Y = Start.Y;
@@ -151,6 +152,7 @@ simulated function bool AltReadyToFire(int Mode)
 {
     local int alt;
     local float f;
+	local WeaponFire FMA, FMM;
 
     //There is a very slight descynchronization error on the server
     // with weapons due to differing deltatimes which accrues to a pretty big
@@ -166,9 +168,11 @@ simulated function bool AltReadyToFire(int Mode)
     else
         alt = 0;
 
-    if ( ((FireMode[alt] != FireMode[Mode]) && FireMode[alt].bModeExclusive && FireMode[alt].bIsFiring)
-		|| !FireMode[Mode].AllowFire()
-		|| (FireMode[Mode].NextFireTime > Level.TimeSeconds + FireMode[Mode].PreFireTime - f) )
+	FMM = FireMode[Mode];
+	FMA = FireMode[alt];
+    if ( ((FMA != FMM) && FMA.bModeExclusive && FMA.bIsFiring)
+		|| !FMM.AllowFire()
+		|| (FMM.NextFireTime > Level.TimeSeconds + FMM.PreFireTime - f) )
     {
         return false;
     }
@@ -178,6 +182,11 @@ simulated function bool AltReadyToFire(int Mode)
 
 function NewNet_ServerStartFire(byte Mode, float ClientTimeStamp, ReplicatedRotator R, ReplicatedVector V)
 {
+	local Misc_BaseGRI BGRI;
+	local WeaponFire FM;
+	local NewNet_SniperFire SF;
+	local Misc_Player MP;
+
 	if ( (Instigator != None) && (Instigator.Weapon != self) )
 	{
 		if ( Instigator.Weapon == None )
@@ -191,33 +200,37 @@ function NewNet_ServerStartFire(byte Mode, float ClientTimeStamp, ReplicatedRota
         foreach DynamicActors(class'TAM_Mutator', M)
 	        break;
 
-    if(Team_GameBase(Level.Game)!=None && Misc_Player(Instigator.Controller)!=None)
-      Misc_Player(Instigator.Controller).NotifyServerStartFire(ClientTimeStamp, M.ClientTimeStamp, M.AverDT);
+	MP = Misc_Player(Instigator.Controller);
+    if(Team_GameBase(Level.Game)!=None && MP!=None)
+      MP.NotifyServerStartFire(ClientTimeStamp, M.ClientTimeStamp, M.AverDT);
           
-	if (Misc_BaseGRI(Level.GRI).NewNetExp)
+	BGRI = Misc_BaseGRI(Level.GRI);
+	FM = FireMode[Mode];
+	SF = NewNet_SniperFire(FM);
+	if (BGRI.NewNetExp)
 	{
-		NewNet_SniperFire(FireMode[Mode]).PingDT = FClamp(M.ClientTimeStamp - ClientTimeStamp + (M.AverDT * Misc_BaseGRI(Level.GRI).NewNetExp_HSMult), 0, Misc_BaseGRI(Level.GRI).NewNetExp_ThresholdHS);
+		SF.PingDT = FClamp(M.ClientTimeStamp - ClientTimeStamp + (M.AverDT * BGRI.NewNetExp_HSMult), 0, BGRI.NewNetExp_ThresholdHS);
 	}
 	else
 	{
-		NewNet_SniperFire(FireMode[Mode]).PingDT = M.ClientTimeStamp - ClientTimeStamp + 1.75*M.AverDT;
+		SF.PingDT = M.ClientTimeStamp - ClientTimeStamp + 1.75*M.AverDT;
 	}
-	NewNet_SniperFire(FireMode[Mode]).bUseEnhancedNetCode = true;
-    if ( (FireMode[Mode].NextFireTime <= Level.TimeSeconds + FireMode[Mode].PreFireTime)
+	SF.bUseEnhancedNetCode = true;
+    if ( (FM.NextFireTime <= Level.TimeSeconds + FM.PreFireTime)
 		&& StartFire(Mode) )
     {
-        FireMode[Mode].ServerStartFireTime = Level.TimeSeconds;
-        FireMode[Mode].bServerDelayStartFire = false;
-        NewNet_SniperFire(FireMode[Mode]).SavedVec.X = V.X;
-        NewNet_SniperFire(FireMode[Mode]).SavedVec.Y = V.Y;
-        NewNet_SniperFire(FireMode[Mode]).SavedVec.Z = V.Z;
-        NewNet_SniperFire(FireMode[Mode]).SavedRot.Yaw = R.Yaw;
-        NewNet_SniperFire(FireMode[Mode]).SavedRot.Pitch = R.Pitch;
-        NewNet_SniperFire(FireMode[Mode]).bUseReplicatedInfo=IsReasonable(NewNet_SniperFire(FireMode[Mode]).SavedVec);
+        FM.ServerStartFireTime = Level.TimeSeconds;
+        FM.bServerDelayStartFire = false;
+        SF.SavedVec.X = V.X;
+        SF.SavedVec.Y = V.Y;
+        SF.SavedVec.Z = V.Z;
+        SF.SavedRot.Yaw = R.Yaw;
+        SF.SavedRot.Pitch = R.Pitch;
+        SF.bUseReplicatedInfo=IsReasonable(SF.SavedVec);
     }
-    else if ( FireMode[Mode].AllowFire() )
+    else if ( FM.AllowFire() )
     {
-        FireMode[Mode].bServerDelayStartFire = true;
+        FM.bServerDelayStartFire = true;
 	}
 	else
 		ClientForceAmmoUpdate(Mode, AmmoAmount(Mode));
@@ -227,18 +240,18 @@ function bool IsReasonable(Vector V)
 {
     local vector LocDiff;
     local float clErr;
+	local Pawn P;
 
-    if(Owner == none || Pawn(Owner) == none)
+	if(Owner == none)
+		return true;
+
+	P = Pawn(Owner);
+	if (P == none)
         return true;
 
-    LocDiff = V - (Pawn(Owner).Location + Pawn(Owner).EyePosition());
+    LocDiff = V - (P.Location + P.EyePosition());
     clErr = (LocDiff dot LocDiff);
 
-    /*if(clErr > 500.0*M.AverDT)
-	{
-		PlayerController(Pawn(Owner).Controller).ClientMessage("Exceeded error"@clErr);
-		Log(ClErr@(Pawn(Owner).Velocity dot Pawn(Owner).Velocity));
-	}*/
     return clErr < 850.0; // Epic default allows 850 units, why 750 here?
 }
 

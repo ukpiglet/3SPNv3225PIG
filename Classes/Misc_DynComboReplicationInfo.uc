@@ -40,6 +40,6 @@ simulated function Timer()
 
 defaultproperties
 {
-     NetUpdateFrequency=2.000000
-     NetPriority=0.500000
+     //NetUpdateFrequency=2.000000
+     //NetPriority=0.500000
 }

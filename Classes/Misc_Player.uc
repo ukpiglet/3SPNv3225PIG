@@ -20,6 +20,7 @@ var config bool bShowTeamInfo;          // show teams info on the HUD
 var config bool bExtendedInfo;          // show extra teammate info
 var config bool bUsePlus;               // use the + rather than height blob
 var config bool bUseOld;                // use the old style radar blobs
+var        bool bHUDChanged; 			// the hud settings have changed - so any calculations will for position etc may need to be re-done
 
 var config bool bMatchHUDToSkins;       // sets HUD color to brightskins color
 /* HUD related */
@@ -258,34 +259,45 @@ simulated static function bool UseNewNet()
 
 function Misc_PlayerDataManager_ServerLink GetPlayerDataManager_ServerLink()
 {
-	if(Team_GameBase(Level.Game)!=None && Team_GameBase(Level.Game).PlayerDataManager_ServerLink!=None)
-		return Team_GameBase(Level.Game).PlayerDataManager_ServerLink;
-	/*else if(ArenaMaster(Level.Game)!=None && ArenaMaster(Level.Game).PlayerDataManager_ServerLink!=None)
-		return ArenaMaster(Level.Game).PlayerDataManager_ServerLink*/
+	local Team_GameBase GB;
+
+	GB = Team_GameBase(Level.Game);
+	if(GB!=None && GB.PlayerDataManager_ServerLink!=None)
+		return GB.PlayerDataManager_ServerLink;
+
 	return None;
 }
 
 function ResetPlayerData()
 {
 	local int CurrentRound;
+	local Misc_PRI MPRI;
+	local Freon_PRI FPRI;
+	local Team_GameBase GB;
 
 	PlayerReplicationInfo.Score = 0;
 	PlayerReplicationInfo.Kills = 0;
 	PlayerReplicationInfo.Deaths = 0;
-	Misc_PRI(PlayerReplicationInfo).Rank = 0;
-	Misc_PRI(PlayerReplicationInfo).AvgPPR = 0;
-	Misc_PRI(PlayerReplicationInfo).StatsReceived = false;
+
+	MPRI = Misc_PRI(PlayerReplicationInfo);
 	
-	if(Freon_PRI(PlayerReplicationInfo)!=None) {
-		Freon_PRI(PlayerReplicationInfo).Thaws = 0;
-		Freon_PRI(PlayerReplicationInfo).Git = 0;
+	MPRI.Rank = 0;
+	MPRI.AvgPPR = 0;
+	MPRI.StatsReceived = false;
+	MPRI.PlayedRounds = 0;
+	FPRI = Freon_PRI(PlayerReplicationInfo);
+
+	if(FPRI!=None) {
+		FPRI.Thaws = 0;
+		FPRI.Git = 0;
 	}
 	
-	if(Team_GameBase(Level.Game)!=None)
-		CurrentRound = Team_GameBase(Level.Game).CurrentRound;
+	GB = Team_GameBase(Level.Game);
+	if(GB!=None)
+		CurrentRound = GB.CurrentRound;
 	else if(ArenaMaster(Level.Game)!=None)
 		CurrentRound = ArenaMaster(Level.Game).CurrentRound;
-	Misc_PRI(PlayerReplicationInfo).PlayedRounds = 0;
+
 }
 
 function LoadPlayerDataStats()
@@ -303,6 +315,7 @@ function LoadPlayerDataStats()
 function LoadPlayerData()
 {
 	local int CurrentRound;
+	local Freon_PRI FPRI;
 
 	LoadPlayerDataStats();
 
@@ -311,10 +324,11 @@ function LoadPlayerData()
 	PlayerReplicationInfo.Deaths = PlayerData.Current.Deaths;
 	PlayerReplicationInfo.Score  = PlayerData.Current.EndOfRoundScore;
 	
-	if(Freon_PRI(PlayerReplicationInfo)!=None) {
-		Freon_PRI(PlayerReplicationInfo).Thaws = PlayerData.Current.Thaws;
-		Freon_PRI(PlayerReplicationInfo).Git = PlayerData.Current.Git;
-		Freon_PRI(PlayerReplicationInfo).HealthGiven = PlayerData.Current.HealthGiven;
+	FPRI = Freon_PRI(PlayerReplicationInfo);
+	if(FPRI!=None) {
+		FPRI.Thaws = PlayerData.Current.Thaws;
+		FPRI.Git = PlayerData.Current.Git;
+		FPRI.HealthGiven = PlayerData.Current.HealthGiven;
 	}
 	
 	bRejoined = true; 					//player marked as having left and rejoined
@@ -334,6 +348,7 @@ function LoadPlayerData()
 function StorePlayerData()
 {
 	local int CurrentRound;
+	local Freon_PRI FPRI;
 
 	if(PlayerData==None)
 	{
@@ -348,10 +363,11 @@ function StorePlayerData()
 	PlayerData.Current.Deaths          = PlayerReplicationInfo.Deaths;
 	PlayerData.Current.EndOfRoundScore = PlayerReplicationInfo.Score;
 	
-	if(Freon_PRI(PlayerReplicationInfo)!=None) {
-		PlayerData.Current.Thaws = Freon_PRI(PlayerReplicationInfo).Thaws;
-		PlayerData.Current.Git = Freon_PRI(PlayerReplicationInfo).Git;
-		PlayerData.Current.HealthGiven = Freon_PRI(PlayerReplicationInfo).HealthGiven;
+	FPRI = Freon_PRI(PlayerReplicationInfo);
+	if(FPRI!=None) {
+		PlayerData.Current.Thaws = FPRI.Thaws;
+		PlayerData.Current.Git = FPRI.Git;
+		PlayerData.Current.HealthGiven = FPRI.HealthGiven;
 	}
 	
 	if(Team_GameBase(Level.Game)!=None)
@@ -399,6 +415,7 @@ function CheckInitialMenu()
 event PlayerTick(float DeltaTime)
 {
 	local float Rolloff;
+	local Misc_BaseGRI BRGI;
 	
     Super.PlayerTick(DeltaTime);
 
@@ -410,28 +427,30 @@ event PlayerTick(float DeltaTime)
 		if(ViewTarget!=Pawn)
 			SetViewTarget(Pawn);
 	}
-	
+
+	BRGI = Misc_BaseGRI(GameReplicationInfo);
+
 	if(!PlayerInitialized && PlayerReplicationInfo != None && GameReplicationInfo != None)
 	{
 		class'Misc_Player'.default.bAdminVisionInSpec = false;
 		class'Misc_Player'.default.bDrawTargetingLineInSpec = false;
 		class'Misc_Player'.default.bReportNewNetStats = false;
 		SetInitialColoredName();
-		if (class'Misc_Player'.default.NewClientReplication && Misc_BaseGRI(GameReplicationInfo).UTComp_MoveRep){
+		if (class'Misc_Player'.default.NewClientReplication && BRGI.UTComp_MoveRep){
 			SetNetUpdateRate(class'Misc_Player'.default.ClientReplRateBehavior);
 		}
 		PlayerInitialized = true;
 	}
 
     //enforce rolloff - edit to limit to once per second, otherwise it executes on *every frame*
-    if ( ((Level.TimeSeconds - LastUpdateTime) > 1) && Level.NetMode == NM_Client && Misc_BaseGRI(Level.GRI) != none ) 
+    if ( ((Level.TimeSeconds - LastUpdateTime) > 1) && Level.NetMode == NM_Client && BRGI != none )
     {
-        if ( AudioSubsystem != None && Misc_BaseGRI(Level.GRI).bLockRolloff) 
+        if ( AudioSubsystem != None && BRGI.bLockRolloff) 
         {
             Rolloff = float(AudioSubsystem.GetPropertyText(string('Rolloff')));
-            if ( Rolloff < Misc_BaseGRI(Level.GRI).RollOffMinValue )
+            if ( Rolloff < BRGI.RollOffMinValue )
             {
-                ConsoleCommand("Rolloff " @ Misc_BaseGRI(Level.GRI).RolloffMinValue);
+                ConsoleCommand("Rolloff " @ BRGI.RolloffMinValue);
             }
         }
     }
@@ -447,7 +466,7 @@ event PlayerTick(float DeltaTime)
         return;
     }
 	
-	if ( ( (Level.TimeSeconds - LastUpdateTime) > 20 ) && class'Misc_Player'.default.NewClientReplication && Misc_BaseGRI(GameReplicationInfo).UTComp_MoveRep){
+	if ( ( (Level.TimeSeconds - LastUpdateTime) > 20 ) && class'Misc_Player'.default.NewClientReplication && BRGI.UTComp_MoveRep){
 			SetNetUpdateRate(class'Misc_Player'.default.ClientReplRateBehavior);
 	}
 
@@ -478,7 +497,7 @@ simulated function ClientAddCeremonyRanking(int PlayerIndex, Team_GameBase.SEndC
 simulated function ClientStartCeremony(int PlayerCount, int WinningTeamIndex, string EndCeremonySound)
 {
 	local int i, i2;
-	local Pawn P;
+	local Misc_Pawn P;
 	local Sound LoadedEndCeremonySound;
 	
 	if(Level.NetMode == NM_DedicatedServer)
@@ -503,14 +522,14 @@ simulated function ClientStartCeremony(int PlayerCount, int WinningTeamIndex, st
 			P.Role = ROLE_Authority;
 			P.RemoteRole = ROLE_None;
 			
-			Misc_Pawn(P).Setup(class'xUtil'.static.FindPlayerRecord(EndCeremonyInfo[i].CharacterName), true);
+			P.Setup(class'xUtil'.static.FindPlayerRecord(EndCeremonyInfo[i].CharacterName), true);
 			i2 = Rand(EndCeremonyWeaponNames.Length);
-			Misc_Pawn(P).GiveWeapon(EndCeremonyWeaponNames[i2]);
-			Misc_Pawn(P).PendingWeapon = Weapon(Misc_Pawn(P).FindInventoryType(EndCeremonyWeaponClasses[i2]));
-			Misc_Pawn(P).ChangedWeapon();
-			Misc_Pawn(P).SetBrightSkin(EndCeremonyInfo[i].PlayerTeam);
-			Misc_Pawn(P).bNetNotify = false;
-			Misc_Pawn(P).SetAnimAction('None');
+			P.GiveWeapon(EndCeremonyWeaponNames[i2]);
+			P.PendingWeapon = Weapon(P.FindInventoryType(EndCeremonyWeaponClasses[i2]));
+			P.ChangedWeapon();
+			P.SetBrightSkin(EndCeremonyInfo[i].PlayerTeam);
+			P.bNetNotify = false;
+			P.SetAnimAction('None');
 
 			EndCeremonyPawns[i] = P;
 		}
@@ -1014,16 +1033,18 @@ state Spectating
 function ServerChangeTeam(int Team)
 {
   local int Adren;
+  local Team_GameBase GB;
 
-  if(Team_GameBase(Level.Game)!=None && Team_GameBase(Level.Game).TournamentModule!=None)
-    if(!Team_GameBase(Level.Game).TournamentModule.AllowChangeTeam(self, Team))
+	GB = Team_GameBase(Level.Game);
+  if(GB!=None && GB.TournamentModule!=None)
+    if(!GB.TournamentModule.AllowChangeTeam(self, Team))
       return;
 
   Adren = Adrenaline;
     Super.ServerChangeTeam(Team);
   Adrenaline = Adren;
 
-    if(Team_GameBase(Level.Game) != None && Team_GameBase(Level.Game).bRespawning)
+    if(GB != None && GB.bRespawning)
     {
         PlayerReplicationInfo.bOutOfLives = false;
         PlayerReplicationInfo.NumLives = 1;
@@ -1034,6 +1055,7 @@ function BecomeActivePlayer()
 {
    local bool bRespawning;
    local int TeamIdx;
+   local Team_GameBase GB;
 
 	if (Role < ROLE_Authority)
 		return;
@@ -1049,8 +1071,9 @@ function BecomeActivePlayer()
 	}
 
 	//level up when player of this ppr joins
-	if( Team_GameBase(Level.Game)!=None && Team_GameBase(Level.Game).AutoBalanceOnJoinsOver > 0 && PlayerData != None && PlayerData.AvgPPR > Team_GameBase(Level.Game).AutoBalanceOnJoinsOver)
-      Team_GameBase(Level.Game).ForceAutoBalance = true;
+	GB = Team_GameBase(Level.Game);
+	if( GB!=None && GB.AutoBalanceOnJoinsOver > 0 && PlayerData != None && PlayerData.AvgPPR > GB.AutoBalanceOnJoinsOver)
+      GB.ForceAutoBalance = true;
 	
 	PlayerReplicationInfo.bOnlySpectator = false;
 	Level.Game.NumSpectators--;
@@ -1107,8 +1130,8 @@ function BecomeActivePlayer()
 			}
 			else
 			{
-				if(Team_GameBase(Level.Game) != None)
-					bRespawning = Team_GameBase(Level.Game).bRespawning;
+				if(GB != None)
+					bRespawning = GB.bRespawning;
 				else if(ArenaMaster(Level.Game) != None)
 					bRespawning = ArenaMaster(Level.Game).bRespawning;
 				else
@@ -1156,7 +1179,11 @@ function bool CanDoCombo(class<Combo> ComboClass)
 
 function ServerDoCombo(class<Combo> ComboClass)
 {
-    if(class<ComboBerserk>(ComboClass) != None)
+    local TAM_TeamInfo TTI;
+    local TAM_TeamInfoRed TIR;
+    local TAM_TeamInfoBlue TIB;
+
+	if(class<ComboBerserk>(ComboClass) != None)
         ComboClass = class<Combo>(DynamicLoadObject("3SPNv3225PIG.Misc_ComboBerserk", class'Class'));
     else if(class<ComboSpeed>(ComboClass) != None && class<Misc_ComboSpeed>(ComboClass) == None)
         ComboClass = class<Combo>(DynamicLoadObject("3SPNv3225PIG.Misc_ComboSpeed", class'Class'));
@@ -1175,14 +1202,23 @@ function ServerDoCombo(class<Combo> ComboClass)
 
     if(xPawn(Pawn) != None)
     {
-        if(TAM_TeamInfo(PlayerReplicationInfo.Team) != None)
-            TAM_TeamInfo(PlayerReplicationInfo.Team).PlayerUsedCombo(self, ComboClass);
-        else if(TAM_TeamInfoRed(PlayerReplicationInfo.Team) != None)
-            TAM_TeamInfoRed(PlayerReplicationInfo.Team).PlayerUsedCombo(self, ComboClass);
-        else if(TAM_TeamInfoBlue(PlayerReplicationInfo.Team) != None)
-            TAM_TeamInfoBlue(PlayerReplicationInfo.Team).PlayerUsedCombo(self, ComboClass);
+        TTI = TAM_TeamInfo(PlayerReplicationInfo.Team);
+		if(TTI != None)
+            TTI.PlayerUsedCombo(self, ComboClass);
         else
-            log("Could not get TeamInfo for player:"@PlayerReplicationInfo.PlayerName, '3SPN');
+		{
+			TIR = TAM_TeamInfoRed(PlayerReplicationInfo.Team);
+			if(TIR != None)
+				TIR.PlayerUsedCombo(self, ComboClass);
+			else
+			{
+				TIB = TAM_TeamInfoBlue(PlayerReplicationInfo.Team);
+				if(TIB != None)
+					TIB.PlayerUsedCombo(self, ComboClass);
+				else
+					log("Could not get TeamInfo for player:"@PlayerReplicationInfo.PlayerName, '3SPN');
+			}
+		}
     }
 }
 
@@ -1335,6 +1371,7 @@ state GameEnded
 function BecomeSpectator()
 {
 	local Misc_PlayerDataManager_ServerLink PlayerDataManager_ServerLink;
+	local Team_GameBase GB;
 
 	if (Role < ROLE_Authority)
 		return;
@@ -1357,8 +1394,9 @@ function BecomeSpectator()
 	BroadcastLocalizedMessage(Level.Game.GameMessageClass, 14, PlayerReplicationInfo);
 
 	//level up when player of this ppr leaves
-	if(Team_GameBase(Level.Game)!=None && Team_GameBase(Level.Game).AutoBalanceOnJoinsOver > 0 && PlayerData != None && PlayerData.AvgPPR > Team_GameBase(Level.Game).AutoBalanceOnJoinsOver)
-      Team_GameBase(Level.Game).ForceAutoBalance = true;
+	GB = Team_GameBase(Level.Game);
+	if(GB!=None && GB.AutoBalanceOnJoinsOver > 0 && PlayerData != None && PlayerData.AvgPPR > GB.AutoBalanceOnJoinsOver)
+      GB.ForceAutoBalance = true;
 
 	ClientBecameSpectator();
 }
@@ -1642,8 +1680,11 @@ exec function CallTimeout()
 
 function ServerCallTimeout()
 {
-    if(Team_GameBase(Level.Game) != None)
-        Team_GameBase(Level.Game).CallTimeout(self);
+	local Team_GameBase GB;
+	GB= Team_GameBase(Level.Game);
+
+    if(GB != None)
+        GB.CallTimeout(self);
 }
 /* exec functions */
 
@@ -1652,6 +1693,9 @@ function ServerCallTimeout()
 simulated function Message( PlayerReplicationInfo PRI, coerce string Msg, name MsgType )
 {
 	local Class<LocalMessage> LocalMessageClass2;
+	local Misc_PRI MPRI;
+
+	MPRI = Misc_PRI(PRI);
 
 	switch( MsgType )
 	{
@@ -1659,24 +1703,24 @@ simulated function Message( PlayerReplicationInfo PRI, coerce string Msg, name M
 			if ( PRI == None )
 				return;
 
-            if(Misc_PRI(PRI)==None || Misc_PRI(PRI).GetColoredName()=="")
+            if(MPRI==None || MPRI.GetColoredName()=="")
                Msg = PRI.PlayerName$": "$Msg;
             else if(!PRI.bOnlySpectator && PRI.Team!=None && PRI.Team.TeamIndex == 0)
-               Msg = Misc_PRI(PRI).GetColoredName()$class'Misc_Util'.Static.MakeColorCode(class'Misc_Player'.default.RedMessageColor)$": "$Msg;
+               Msg = MPRI.GetColoredName()$class'Misc_Util'.Static.MakeColorCode(class'Misc_Player'.default.RedMessageColor)$": "$Msg;
 			else if(!PRI.bOnlySpectator && PRI.Team!=None && PRI.Team.TeamIndex == 1)
-			   Msg = Misc_PRI(PRI).GetColoredName()$class'Misc_Util'.Static.MakeColorCode(class'Misc_Player'.default.BlueMessageColor)$": "$Msg;
+			   Msg = MPRI.GetColoredName()$class'Misc_Util'.Static.MakeColorCode(class'Misc_Player'.default.BlueMessageColor)$": "$Msg;
 			else
-               Msg = Misc_PRI(PRI).GetColoredName()$class'Misc_Util'.Static.MakeColorCode(class'Misc_Player'.default.YellowMessageColor)$": "$Msg;
+               Msg = MPRI.GetColoredName()$class'Misc_Util'.Static.MakeColorCode(class'Misc_Player'.default.YellowMessageColor)$": "$Msg;
 			LocalMessageClass2 = class'SayMessagePlus';
             break;
 
 		case 'TeamSay':
             if ( PRI == None )
 				return;
-			if(Misc_PRI(PRI)==None || Misc_PRI(PRI).GetColoredName()=="")
+			if(MPRI==None || MPRI.GetColoredName()=="")
                Msg = PRI.PlayerName$"("$PRI.GetLocationName()$"): "$Msg;
 			else
-			   Msg = Misc_PRI(PRI).GetColoredName()$class'Misc_Util'.Static.MakeColorCode(class'Misc_Player'.default.GreenMessageColor)$"("$PRI.GetLocationName()$"): "$Msg;
+			   Msg = MPRI.GetColoredName()$class'Misc_Util'.Static.MakeColorCode(class'Misc_Player'.default.GreenMessageColor)$"("$PRI.GetLocationName()$"): "$Msg;
 			LocalMessageClass2 = class'TeamSayMessagePlus';
             break;
 

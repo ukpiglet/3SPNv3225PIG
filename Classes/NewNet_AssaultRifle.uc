@@ -98,6 +98,8 @@ simulated event NewNet_ClientStartFire(int Mode)
 
 function NewNet_ServerStartFire(byte Mode, float ClientTimeStamp)
 {
+	local Misc_BaseGRI BRGI;
+
     if(M==None)
         foreach DynamicActors(class'TAM_Mutator', M)
 	        break;
@@ -105,11 +107,12 @@ function NewNet_ServerStartFire(byte Mode, float ClientTimeStamp)
     if(Team_GameBase(Level.Game)!=None && Misc_Player(Instigator.Controller)!=None)
       Misc_Player(Instigator.Controller).NotifyServerStartFire(ClientTimeStamp, M.ClientTimeStamp, M.AverDT);
 	  
+	BRGI = Misc_BaseGRI(Level.GRI);
     if(NewNet_AssaultFire(FireMode[Mode])!=None)
     {
-		if (Misc_BaseGRI(Level.GRI).NewNetExp)
+		if (BRGI.NewNetExp)
 		{
-			NewNet_AssaultFire(FireMode[Mode]).PingDT = FClamp(M.ClientTimeStamp - ClientTimeStamp + (M.AverDT * Misc_BaseGRI(Level.GRI).NewNetExp_HSMult), 0, Misc_BaseGRI(Level.GRI).NewNetExp_ThresholdHS);
+			NewNet_AssaultFire(FireMode[Mode]).PingDT = FClamp(M.ClientTimeStamp - ClientTimeStamp + (M.AverDT * BRGI.NewNetExp_HSMult), 0, BRGI.NewNetExp_ThresholdHS);
 		}
 		else
 		{
@@ -119,9 +122,9 @@ function NewNet_ServerStartFire(byte Mode, float ClientTimeStamp)
     }
     else if(NewNet_AssaultGrenade(FireMode[Mode])!=None)
     {
-		if (Misc_BaseGRI(Level.GRI).NewNetExp)
+		if (BRGI.NewNetExp)
 		{
-			NewNet_AssaultGrenade(FireMode[Mode]).PingDT = FMin(M.ClientTimeStamp - ClientTimeStamp + (M.AverDT * Misc_BaseGRI(Level.GRI).NewNetExp_ProjMult), Misc_BaseGRI(Level.GRI).NewNetExp_ThresholdProj);
+			NewNet_AssaultGrenade(FireMode[Mode]).PingDT = FMin(M.ClientTimeStamp - ClientTimeStamp + (M.AverDT * BRGI.NewNetExp_ProjMult),BRGI.NewNetExp_ThresholdProj);
 		}
 		else
 		{

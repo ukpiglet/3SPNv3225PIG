@@ -145,6 +145,7 @@ simulated function bool AltReadyToFire(int Mode)
 {
     local int alt;
     local float f;
+	local WeaponFire FMA, FMM;
 
     //There is a very slight descynchronization error on the server
     // with weapons due to differing deltatimes which accrues to a pretty big
@@ -160,9 +161,11 @@ simulated function bool AltReadyToFire(int Mode)
     else
         alt = 0;
 
-    if ( ((FireMode[alt] != FireMode[Mode]) && FireMode[alt].bModeExclusive && FireMode[alt].bIsFiring)
-		|| !FireMode[Mode].AllowFire()
-		|| (FireMode[Mode].NextFireTime > Level.TimeSeconds + FireMode[Mode].PreFireTime - f) )
+	FMM = FireMode[Mode];
+	FMA = FireMode[alt];
+    if ( ((FMA != FMM) && FMA.bModeExclusive && FMA.bIsFiring)
+		|| !FMM.AllowFire()
+		|| (FMM.NextFireTime > Level.TimeSeconds + FMM.PreFireTime - f) )
     {
         return false;
     }
@@ -172,12 +175,19 @@ simulated function bool AltReadyToFire(int Mode)
 
 function NewNet_ServerStartFire(byte Mode, float ClientTimeStamp, ReplicatedRotator R, ReplicatedVector V)
 {
+	local Misc_BaseGRI BRGI;
+	local WeaponFire FM;
+	local NewNet_FlakFire FF;
+	local NewNet_FlakAltFire FAF;
+	local Misc_Player MP;
+
     if(M==None)
         foreach DynamicActors(class'TAM_Mutator', M)
 	        break;
 
-    if(Team_GameBase(Level.Game)!=None && Misc_Player(Instigator.Controller)!=None)
-      Misc_Player(Instigator.Controller).NotifyServerStartFire(ClientTimeStamp, M.ClientTimeStamp, M.AverDT);
+	MP = Misc_Player(Instigator.Controller);
+    if(Team_GameBase(Level.Game)!=None && MP!=None)
+      MP.NotifyServerStartFire(ClientTimeStamp, M.ClientTimeStamp, M.AverDT);
           
     if ( (Instigator != None) && (Instigator.Weapon != self) )
 	{
@@ -188,60 +198,64 @@ function NewNet_ServerStartFire(byte Mode, float ClientTimeStamp, ReplicatedRota
 		return;
 	}
 
+	BRGI = Misc_BaseGRI(Level.GRI);
+	FM = FireMode[Mode];
+	FF = NewNet_FlakFire(FM);
+	FAF = NewNet_FlakAltFire(FM);
 
-    if(NewNet_FlakFire(FireMode[Mode])!=None)
+    if(NewNet_FlakFire(FM)!=None)
     {
-		if (Misc_BaseGRI(Level.GRI).NewNetExp)
+		if (BRGI.NewNetExp)
 		{
-			NewNet_FlakFire(FireMode[Mode]).PingDT = FMin(M.ClientTimeStamp - ClientTimeStamp + (M.AverDT * Misc_BaseGRI(Level.GRI).NewNetExp_ProjMult), Misc_BaseGRI(Level.GRI).NewNetExp_ThresholdProj);
+			FF.PingDT = FMin(M.ClientTimeStamp - ClientTimeStamp + (M.AverDT * BRGI.NewNetExp_ProjMult), BRGI.NewNetExp_ThresholdProj);
 		}
 		else
 		{
-        	NewNet_FlakFire(FireMode[Mode]).PingDT = FMin(M.ClientTimeStamp - ClientTimeStamp + 1.75*M.AverDT, MAX_PROJECTILE_FUDGE_ALT);
+		FF.PingDT = FMin(M.ClientTimeStamp - ClientTimeStamp + 1.75*M.AverDT, MAX_PROJECTILE_FUDGE_ALT);
 		}
-        NewNet_FlakFire(FireMode[Mode]).bUseEnhancedNetCode = true;
-    }
-    else if(NewNet_FlakAltFire(FireMode[Mode])!=None)
-    {
-		if (Misc_BaseGRI(Level.GRI).NewNetExp)
+		FF.bUseEnhancedNetCode = true;
+	}
+	else if(FAF!=None)
+	{
+		if (BRGI.NewNetExp)
 		{
-			NewNet_FlakAltFire(FireMode[Mode]).PingDT = FMin(M.ClientTimeStamp - ClientTimeStamp + (M.AverDT * Misc_BaseGRI(Level.GRI).NewNetExp_ProjMult), Misc_BaseGRI(Level.GRI).NewNetExp_ThresholdProj);
+			FAF.PingDT = FMin(M.ClientTimeStamp - ClientTimeStamp + (M.AverDT * BRGI.NewNetExp_ProjMult), BRGI.NewNetExp_ThresholdProj);
 		}
 		else
 		{
-        	NewNet_FlakAltFire(FireMode[Mode]).PingDT = FMin(M.ClientTimeStamp - ClientTimeStamp + 1.75*M.AverDT, MAX_PROJECTILE_FUDGE);
+			FAF.PingDT = FMin(M.ClientTimeStamp - ClientTimeStamp + 1.75*M.AverDT, MAX_PROJECTILE_FUDGE);
 		}
-        NewNet_FlakAltFire(FireMode[Mode]).bUseEnhancedNetCode = true;
+        FAF.bUseEnhancedNetCode = true;
     }
 
-    if ( (FireMode[Mode].NextFireTime <= Level.TimeSeconds + FireMode[Mode].PreFireTime)
+    if ( (FM.NextFireTime <= Level.TimeSeconds + FM.PreFireTime)
 		&& StartFire(Mode) )
     {
-        FireMode[Mode].ServerStartFireTime = Level.TimeSeconds;
-        FireMode[Mode].bServerDelayStartFire = false;
+        FM.ServerStartFireTime = Level.TimeSeconds;
+        FM.bServerDelayStartFire = false;
 
-        if(NewNet_FlakFire(FireMode[Mode])!=None)
+        if(FF!=None)
         {
-            NewNet_FlakFire(FireMode[Mode]).SavedVec.X = V.X;
-            NewNet_FlakFire(FireMode[Mode]).SavedVec.Y = V.Y;
-            NewNet_FlakFire(FireMode[Mode]).SavedVec.Z = V.Z;
-            NewNet_FlakFire(FireMode[Mode]).SavedRot.Yaw = R.Yaw;
-            NewNet_FlakFire(FireMode[Mode]).SavedRot.Pitch = R.Pitch;
-            NewNet_FlakFire(FireMode[Mode]).bUseReplicatedInfo=IsReasonable(NewNet_FlakFire(FireMode[Mode]).SavedVec);
+            FF.SavedVec.X = V.X;
+            FF.SavedVec.Y = V.Y;
+            FF.SavedVec.Z = V.Z;
+            FF.SavedRot.Yaw = R.Yaw;
+            FF.SavedRot.Pitch = R.Pitch;
+            FF.bUseReplicatedInfo=IsReasonable(FF.SavedVec);
         }
-        else if(NewNet_FlakAltFire(FireMode[Mode])!=None)
+        else if(FAF!=None)
         {
-            NewNet_FlakAltFire(FireMode[Mode]).SavedVec.X = V.X;
-            NewNet_FlakAltFire(FireMode[Mode]).SavedVec.Y = V.Y;
-            NewNet_FlakAltFire(FireMode[Mode]).SavedVec.Z = V.Z;
-            NewNet_FlakAltFire(FireMode[Mode]).SavedRot.Yaw = R.Yaw;
-            NewNet_FlakAltFire(FireMode[Mode]).SavedRot.Pitch = R.Pitch;
-            NewNet_FlakAltFire(FireMode[Mode]).bUseReplicatedInfo=IsReasonable(NewNet_FlakAltFire(FireMode[Mode]).SavedVec);
+            FAF.SavedVec.X = V.X;
+            FAF.SavedVec.Y = V.Y;
+            FAF.SavedVec.Z = V.Z;
+            FAF.SavedRot.Yaw = R.Yaw;
+            FAF.SavedRot.Pitch = R.Pitch;
+            FAF.bUseReplicatedInfo=IsReasonable(FAF.SavedVec);
         }
     }
-    else if ( FireMode[Mode].AllowFire() )
+    else if ( FM.AllowFire() )
     {
-        FireMode[Mode].bServerDelayStartFire = true;
+        FM.bServerDelayStartFire = true;
 	}
 	else
 		ClientForceAmmoUpdate(Mode, AmmoAmount(Mode));
@@ -295,34 +309,47 @@ simulated event PostNetBeginPlay()
 
 function NewNet_OldServerStartFire(byte Mode, float ClientTimeStamp)
 {
+	local Misc_BaseGRI BGRI;
+	local WeaponFire FM;
+	local NewNet_FlakFire FF;
+	local NewNet_FlakAltFire FAF;
+
     if(M==None)
         foreach DynamicActors(class'TAM_Mutator', M)
 	        break;
 
-    if(NewNet_FlakFire(FireMode[Mode])!=None)
+	BGRI = Misc_BaseGRI(Level.GRI);
+	FM = FireMode[Mode];
+	FF = NewNet_FlakFire(FM);
+
+    if(FF!=None)
     {
-		if (Misc_BaseGRI(Level.GRI).NewNetExp)
+		if (BGRI.NewNetExp)
 		{
-			NewNet_FlakFire(FireMode[Mode]).PingDT = FMin(M.ClientTimeStamp - ClientTimeStamp + (M.AverDT * Misc_BaseGRI(Level.GRI).NewNetExp_ProjMult), Misc_BaseGRI(Level.GRI).NewNetExp_ThresholdProj);
+			FF.PingDT = FMin(M.ClientTimeStamp - ClientTimeStamp + (M.AverDT * BGRI.NewNetExp_ProjMult), BGRI.NewNetExp_ThresholdProj);
 		}
 		else
 		{
-        	NewNet_FlakFire(FireMode[Mode]).PingDT = FMin(M.ClientTimeStamp - ClientTimeStamp + 1.75*M.AverDT, MAX_PROJECTILE_FUDGE_ALT);
+		FF.PingDT = FMin(M.ClientTimeStamp - ClientTimeStamp + 1.75*M.AverDT, MAX_PROJECTILE_FUDGE_ALT);
 		}
-        NewNet_FlakFire(FireMode[Mode]).bUseEnhancedNetCode = true;
+        FF.bUseEnhancedNetCode = true;
     }
-    else if(NewNet_FlakAltFire(FireMode[Mode])!=None)
-    {
-		if (Misc_BaseGRI(Level.GRI).NewNetExp)
+    else
+	{
+		FAF = NewNet_FlakAltFire(FireMode[Mode]);
+		if(FAF!=None)
 		{
-			NewNet_FlakAltFire(FireMode[Mode]).PingDT = FMin(M.ClientTimeStamp - ClientTimeStamp + (M.AverDT * Misc_BaseGRI(Level.GRI).NewNetExp_ProjMult), Misc_BaseGRI(Level.GRI).NewNetExp_ThresholdProj);
+			if (BGRI.NewNetExp)
+			{
+				FAF.PingDT = FMin(M.ClientTimeStamp - ClientTimeStamp + (M.AverDT * BGRI.NewNetExp_ProjMult), BGRI.NewNetExp_ThresholdProj);
+			}
+			else
+			{
+				FAF.PingDT = FMin(M.ClientTimeStamp - ClientTimeStamp + 1.75*M.AverDT, MAX_PROJECTILE_FUDGE);
+			}
+			FAF.bUseEnhancedNetCode = true;
 		}
-		else
-		{
-        	NewNet_FlakAltFire(FireMode[Mode]).PingDT = FMin(M.ClientTimeStamp - ClientTimeStamp + 1.75*M.AverDT, MAX_PROJECTILE_FUDGE);
-		}
-        NewNet_FlakAltFire(FireMode[Mode]).bUseEnhancedNetCode = true;
-    }
+	}
 
     ServerStartFire(mode);
 }

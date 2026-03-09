@@ -1,0 +1,400 @@
+// HUD code for "No extended info. Use old Hud.". Not at all optimised. Slow.
+simulated function DrawPlayers(Canvas C)
+{
+    local int i;
+    local int Team;
+    local float xl;
+    local float yl;
+    local float MaxNamePos;
+    local int posx;
+    local int posy;
+    local float scale;
+    local string name;
+    local int listy;
+    local int space;
+    local int namey;
+    local int namex;
+    local int height;
+    local int width;
+
+    local int allies;
+    local int enemies;
+
+    local Misc_PRI PRI;
+	
+	local Actor Start;
+    local vector Diff;
+    local int zdiff, Scaling;
+
+    if(myOwner == None)
+        return;
+
+    if(PlayerOwner.PlayerReplicationInfo.Team != None)
+        Team = PlayerOwner.GetTeamNum();
+    else
+    {
+        if(Pawn(PlayerOwner.ViewTarget) == None || Pawn(PlayerOwner.ViewTarget).GetTeamNum() == 255)
+            return;
+        Team = Pawn(PlayerOwner.ViewTarget).GetTeamNum();
+    }
+
+    listy = 0.08 * HUDScale * C.ClipY;
+    space = 0.005 * HUDScale * C.ClipY;
+    scale = FMax(HUDScale, 0.75);
+    height = C.ClipY * 0.0255 * Scale;
+    width = C.ClipX * 0.13 * Scale;
+    namex = C.ClipX * 0.025 * Scale;
+    MaxNamePos = 0.99 * (width - namex);
+    C.Font = GetFontSizeIndex(C, -3 + int(Scale * 1.25));
+    C.StrLen("Test", xl, yl);
+    namey = (height * 0.6) - (yl * 0.5);
+
+    for(i = 0; i < MyOwner.GameReplicationInfo.PRIArray.Length; i++)
+    {
+        PRI = Misc_PRI(myOwner.GameReplicationInfo.PRIArray[i]);
+
+        if(!ShouldDrawPlayer(PRI))
+            continue;
+
+        if(!class'Misc_Player'.default.bShowTeamInfo)
+            continue;
+
+        if(PRI.Team.TeamIndex == Team)
+        {
+            if(allies > 9)
+                continue;
+
+            posy = listy + ((height + space) * allies);
+            posx = C.ClipX * 0.01;
+
+            // draw background
+            C.SetPos(posx, posy);
+
+            if(Freon_PawnReplicationInfo(PRI.PawnReplicationInfo) != None && Freon_PawnReplicationInfo(PRI.PawnReplicationInfo).bFrozen)
+                C.DrawColor = class'Freon_PRI'.default.FrozenColor * 0.6;
+            else
+                C.DrawColor = default.BlackColor;
+            C.DrawColor.A = 100;
+            C.DrawTile(TeamTex, width, height, 168, 211, 166, 44);
+
+            // draw disc
+            C.SetPos(posx, posy);
+            C.DrawColor = default.WhiteColor;
+            C.DrawTile(TeamTex, C.ClipX * 0.0195 * Scale, C.ClipY * 0.026 * Scale, 119, 258, 54, 55);
+
+            // draw name
+            if(class'TAM_ScoreBoard'.default.bEnableColoredNamesOnHUD)
+                name = PRI.GetColoredName();
+            else
+                name = PRI.PlayerName;
+
+            C.DrawColor = NameColor;
+            C.SetPos(posx + namex, posy + namey);
+            class'Misc_Util'.static.DrawTextClipped(C, name, MaxNamePos);
+
+            // draw health dot
+            C.DrawColor = GetHealthRampColor(PRI);
+            C.SetPos(posx + (0.0022 * Scale * C.ClipX), posy + (0.0035 * Scale * C.ClipY));
+            C.DrawTile(TeamTex, C.ClipX * 0.0165 * Scale, C.ClipY * 0.0185 * Scale, 340, 432, 78, 78);
+
+            // draw location dot
+            C.DrawColor = WhiteColor;
+            Draw2DLocationDot(C, PRI.PawnReplicationInfo.Position, (posx / C.ClipX) + (0.006 * Scale), (posy / C.ClipY) + (0.008 * Scale), 0.008 * Scale, 0.01 * Scale);
+
+			//draw height dot
+			if (Misc_BaseGRI(MyOwner.GameReplicationInfo).bHeightRadar){
+				if(PlayerOwner.Pawn == None){
+					if(PlayerOwner.ViewTarget != None)
+						Start = PlayerOwner.ViewTarget;
+					else
+						Start = PlayerOwner;
+				}
+				else
+					Start = PlayerOwner.Pawn;
+
+				Diff = PRI.PawnReplicationInfo.Position - Start.Location;
+				zdiff = int(Diff.Z / 150);
+				if (zdiff>5) zdiff = 5;
+				if (zdiff<-5) zdiff = -5;
+				C.SetPos(((posx / C.ClipX) + (0.006 * Scale))*C.ClipX,
+					((posy / C.ClipY) + (0.008 * Scale))* C.ClipY - height * zdiff/10);
+				Scaling = 24 * C.ClipX * (0.45 * HUDScale) / 2000;
+				C.DrawColor.R = 0;
+				C.DrawTile(LocationDot, Scaling, Scaling, 340, 432, 78, 78);
+            }
+			
+		
+            // friends shown
+            allies++;
+        }
+        else
+        {
+            if(enemies > 9)
+                continue;
+
+            posy = listy + ((height + space) * enemies);
+            posx = C.ClipX * 0.99;
+
+            // draw background
+            C.SetPos(posx - width, posy);
+            if(Freon_PawnReplicationInfo(PRI.PawnReplicationInfo) != None && Freon_PawnReplicationInfo(PRI.PawnReplicationInfo).bFrozen)
+                C.DrawColor = class'Freon_PRI'.default.FrozenColor * 0.6;
+            else
+                C.DrawColor = default.BlackColor;
+            C.DrawColor.A = 100;
+            C.DrawTile(TeamTex, width, height, 168, 211, 166, 44);
+
+            // draw disc
+            C.SetPos(posx - (C.ClipX * 0.0195 * Scale), posy);
+            C.DrawColor = default.WhiteColor;
+            C.DrawTile(TeamTex, C.ClipX * 0.0195 * Scale, C.ClipY * 0.026 * Scale, 119, 258, 54, 55);
+
+            // draw name
+            if(class'TAM_ScoreBoard'.default.bEnableColoredNamesOnHUD)
+                name = PRI.GetColoredName();
+            else
+                name = PRI.PlayerName;
+            C.TextSize(name, xl, yl);
+            xl = Min(xl, MaxNamePos);
+            C.DrawColor = NameColor;
+            C.SetPos(posx - xl - namex, posy + namey);
+            class'Misc_Util'.static.DrawTextClipped(C, name, MaxNamePos);
+
+            // draw health dot
+            if(Freon_PawnReplicationInfo(PRI.PawnReplicationInfo)!= None && Freon_PawnReplicationInfo(PRI.PawnReplicationInfo).bFrozen)
+                C.DrawColor = class'Freon_PRI'.default.FrozenColor;
+            else
+                C.DrawColor = HudColorTeam[PRI.Team.TeamIndex];
+
+            C.SetPos(posx - (0.0165 * Scale * C.ClipX), posy + (0.0035 * Scale * C.ClipY));
+            C.DrawTile(TeamTex, C.ClipX * 0.0165 * Scale, C.ClipY * 0.0185 * Scale, 340, 432, 78, 78);
+
+            // enemies shown
+            enemies++;
+        }
+    }
+}
+
+// HUD Code for "Extended info. Use old code". Not optimised. Slow.
+simulated function DrawPlayersExtended(Canvas C)
+{
+    local int i;
+    local int Team;
+    local float xl;
+    local float yl;
+    local float MaxNamePos;
+    local int posx;
+    local int posy;
+    local float scale;
+    local string name;
+    local int listy;
+    local int space;
+    local int namey;
+    local int namex;
+    local int height;
+    local int width;
+    local Misc_PRI pri;
+    local int health;
+
+    local int allies;
+    local int enemies;
+	
+	local Actor Start;
+    local vector Diff;
+    local int zdiff, Scaling;
+
+    if(myOwner == None)
+        return;
+
+    if(PlayerOwner.PlayerReplicationInfo.Team != None)
+        Team = PlayerOwner.GetTeamNum();
+    else
+    {
+        if(Pawn(PlayerOwner.ViewTarget) == None || Pawn(PlayerOwner.ViewTarget).GetTeamNum() == 255)
+            return;
+        Team = Pawn(PlayerOwner.ViewTarget).GetTeamNum();
+    }
+
+    listy = 0.08 * HUDScale * C.ClipY;
+    scale = 0.75;
+    height = C.ClipY * 0.02;
+    space = height + (0.0075 * C.ClipY);
+    namex = C.ClipX * 0.02;
+
+    C.Font = GetFontSizeIndex(C, -3);
+    C.StrLen("Test", xl, yl);
+    namey = (height * 0.6) - (yl * 0.5);
+
+    for(i = 0; i < MyOwner.GameReplicationInfo.PRIArray.Length; i++)
+    {
+        PRI = Misc_PRI(myOwner.GameReplicationInfo.PRIArray[i]);
+
+        if(!ShouldDrawPlayer(PRI))
+            continue;
+
+        if(!class'Misc_Player'.default.bShowTeamInfo)
+            continue;
+
+        if(PRI.Team.TeamIndex == Team)
+        {
+            if(allies > 9)
+                continue;
+
+            space = height + (0.0075 * C.ClipY);
+            width = C.ClipX * 0.14;
+            MaxNamePos = 0.78 * (width - namex);
+
+            posy = listy + ((height + space) * allies);
+            posx = C.ClipX * 0.01;
+
+            // draw backgrounds
+            C.SetPos(posx, posy);
+            if(Freon_PawnReplicationInfo(PRI.PawnReplicationInfo) != None && Freon_PawnReplicationInfo(PRI.PawnReplicationInfo).bFrozen)
+                C.DrawColor = class'Freon_PRI'.default.FrozenColor * 0.6;
+            else
+                C.DrawColor = default.BlackColor;
+            C.DrawColor.A = 100;
+            C.DrawTile(TeamTex, width + posx, height, 168, 211, 166, 44);
+            C.SetPos(posx * 2, posy + height * 1.1);
+            C.DrawTile(TeamTex, width, height, 168, 211, 166, 44);
+
+            // draw disc
+            C.SetPos(posx, posy);
+            C.DrawColor = default.WhiteColor;
+            C.DrawTile(TeamTex, C.ClipX * 0.0195 * Scale, C.ClipY * 0.026 * Scale, 119, 258, 54, 55);
+
+            // draw name
+            if(class'TAM_ScoreBoard'.default.bEnableColoredNamesOnHUD)
+                name = PRI.GetColoredName();
+            else
+                name = PRI.PlayerName;
+            C.DrawColor = NameColor;
+            C.SetPos(posx + namex, posy + namey);
+            class'Misc_Util'.static.DrawTextClipped(C, name, MaxNamePos);
+
+            // draw location
+            MaxNamePos = 0.80 * (width - namex);
+            name = PRI.GetLocationName();
+            C.StrLen(name, xl, yl);
+            if(xl > MaxNamePos)
+                name = left(name, MaxNamePos / xl * len(name));
+            C.SetPos(posx + namex, posy + (height * 1.1) + namey);
+
+            if(Freon_PawnReplicationInfo(PRI.PawnReplicationInfo)!= None && Freon_PawnReplicationInfo(PRI.PawnReplicationInfo).bFrozen)
+                C.DrawColor = class'Freon_PRI'.default.FrozenColor;
+            else
+                C.DrawColor = LocationColor;
+            C.DrawText(name);
+
+            // draw health dot
+            if(Freon_PawnReplicationInfo(PRI.PawnReplicationInfo) != None && Freon_PawnReplicationInfo(PRI.PawnReplicationInfo).bFrozen)
+                health = PRI.PawnReplicationInfo.Health;
+            else
+                health = PRI.PawnReplicationInfo.Health + PRI.PawnReplicationInfo.Shield;
+
+            C.DrawColor = GetHealthRampColor(PRI);
+
+            C.SetPos(posx + (0.0022 * Scale * C.ClipX), posy + (0.0035 * Scale * C.ClipY));
+            C.DrawTile(TeamTex, C.ClipX * 0.0165 * Scale, C.ClipY * 0.0185 * Scale, 340, 432, 78, 78);
+
+            // draw health
+            name = string(health);
+            C.StrLen(name, xl, yl);
+            C.SetPos(posx * 1.5 + width - xl, posy + namey);
+            C.DrawText(name);
+
+            // draw adrenaline
+            name = string(PRI.PawnReplicationInfo.Adrenaline);
+            C.StrLen(name, xl, yl);
+            C.SetPos(posx * 1.5 + width - xl, posy + (height * 1.1) + namey);
+            if(PRI.PawnReplicationInfo.Adrenaline<100)
+                C.DrawColor = AdrenColor;
+            else
+                C.DrawColor = FullAdrenColor;
+
+            C.DrawText(name);
+
+            // draw location dot
+            C.DrawColor = WhiteColor;
+            Draw2DLocationDot(C, PRI.PawnReplicationInfo.Position, (posx / C.ClipX) + (0.006 * Scale), (posy / C.ClipY) + (0.008 * Scale), 0.008 * Scale, 0.01 * Scale);
+
+			//draw height dot
+			if (Misc_BaseGRI(MyOwner.GameReplicationInfo).bHeightRadar){
+
+				if(PlayerOwner.Pawn == None){
+					if(PlayerOwner.ViewTarget != None)
+						Start = PlayerOwner.ViewTarget;
+					else
+						Start = PlayerOwner;
+				}
+				else
+					Start = PlayerOwner.Pawn;
+
+				Diff = PRI.PawnReplicationInfo.Position - Start.Location;
+				zdiff = int(Diff.Z / 150);
+				if (zdiff>5) zdiff = 5;
+				if (zdiff<-5) zdiff = -5;
+				C.SetPos(((posx / C.ClipX) + (0.006 * Scale))*C.ClipX,
+					((posy / C.ClipY) + (0.008 * Scale))* C.ClipY - height * zdiff/10);
+				Scaling = 24 * C.ClipX * (0.45 * HUDScale) / 2000;
+				C.DrawColor.R = 0;
+				C.DrawTile(LocationDot, Scaling, Scaling, 340, 432, 78, 78);
+            }
+			
+			
+            // friends shown
+            allies++;
+        }
+        else
+        {
+            if(enemies > 9)
+                continue;
+
+            space = (0.005 * C.ClipY);
+            width = C.ClipX * 0.11;
+            MaxNamePos = 0.99 * (width - namex);
+
+            posy = listy + ((height + space) * enemies);
+            posx = C.ClipX * 0.99;
+
+            // draw background
+            C.SetPos(posx - width, posy);
+            if(Freon_PawnReplicationInfo(PRI.PawnReplicationInfo) != None && Freon_PawnReplicationInfo(PRI.PawnReplicationInfo).bFrozen)
+                C.DrawColor = class'Freon_PRI'.default.FrozenColor * 0.6;
+            else
+                C.DrawColor = default.BlackColor;
+            C.DrawColor.A = 100;
+            C.DrawTile(TeamTex, width, height, 168, 211, 166, 44);
+
+            // draw disc
+            C.SetPos(posx - (C.ClipX * 0.0195 * Scale), posy);
+            C.DrawColor = default.WhiteColor;
+            C.DrawTile(TeamTex, C.ClipX * 0.0195 * Scale, C.ClipY * 0.026 * Scale, 119, 258, 54, 55);
+
+            // draw name
+            if(class'TAM_ScoreBoard'.default.bEnableColoredNamesOnHUD)
+                name = PRI.GetColoredName();
+            else
+                name = PRI.PlayerName;
+
+            C.TextSize(name, xl, yl);
+            xl = Min(xl, MaxNamePos);
+            C.DrawColor = NameColor;
+            C.SetPos(posx - xl - namex, posy + namey);
+            class'Misc_Util'.static.DrawTextClipped(C, name, MaxNamePos);
+
+            // draw health dot
+            if(Freon_PawnReplicationInfo(PRI.PawnReplicationInfo)!= None && Freon_PawnReplicationInfo(PRI.PawnReplicationInfo).bFrozen)
+                C.DrawColor = class'Freon_PRI'.default.FrozenColor;
+            else
+                C.DrawColor = HudColorTeam[PRI.Team.TeamIndex];
+            C.SetPos(posx - (0.016 * Scale * C.ClipX), posy + (0.0035 * Scale * C.ClipY));
+            C.DrawTile(TeamTex, C.ClipX * 0.0165 * Scale, C.ClipY * 0.0185 * Scale, 340, 432, 78, 78);
+
+            // enemies shown
+            enemies++;
+        }
+    }
+}
+
+/// End of Old stuff after this point - left in because some people might like it. It's crap.

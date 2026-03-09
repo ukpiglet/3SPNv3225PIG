@@ -98,18 +98,22 @@ function Killed(Controller Killer, Controller Killed, Pawn KilledPawn, class<Dam
 
 function InitGameReplicationInfo()
 {
-    Super.InitGameReplicationInfo();
+	local Freon_GRI FGRI;
 
-    if(Freon_GRI(GameReplicationInfo) == None)
-        return;
+	Super.InitGameReplicationInfo();
 
-    Freon_GRI(GameReplicationInfo).AutoThawTime = AutoThawTime;
-    Freon_GRI(GameReplicationInfo).ThawSpeed = ThawSpeed;
-    Freon_GRI(GameReplicationInfo).bTeamHeal = bTeamHeal;
-    Freon_GRI(GameReplicationInfo).ThawPointAward = ThawPointAward;
-	Freon_GRI(GameReplicationInfo).bFullThaws = bFullThaws;
-	Freon_GRI(GameReplicationInfo).bShowThawMoments = bShowThawMoments;
-	Freon_GRI(GameReplicationInfo).bEnemyBioThaws = bEnemyBioThaws;
+	FGRI = Freon_GRI(GameReplicationInfo);
+
+	if(FGRI == None)
+		return;
+
+	FGRI.AutoThawTime = AutoThawTime;
+	FGRI.ThawSpeed = ThawSpeed;
+	FGRI.bTeamHeal = bTeamHeal;
+	FGRI.ThawPointAward = ThawPointAward;
+	FGRI.bFullThaws = bFullThaws;
+	FGRI.bShowThawMoments = bShowThawMoments;
+	FGRI.bEnemyBioThaws = bEnemyBioThaws;
 }
 
 function StartNewRound()
@@ -126,14 +130,18 @@ function ShowPathTo(PlayerController P, int TeamNum)
 	local class<WillowWhisp>	WWclass;
 	local float BestDist, Dist;
 	local int myteam, i;
+	local vector MyLocation, temp;
 	
 	myteam = P.GetTeamNum();
+	MyLocation = P.Pawn.Location;
 
-	BestDist = 99999;
+	BestDist = 99999999;
     for(i = 0; i < FrozenPawns.Length; i++)
     {
 		if (FrozenPawns[i] != none && FrozenPawns[i].GetTeamNum() == myteam){
-			Dist = VSize(FrozenPawns[i].Location - P.Pawn.Location);
+			//Dist = VSize(FrozenPawns[i].Location - MyLocation);    //This may be slower due to vsize including a square root.
+			temp = FrozenPawns[i].Location - MyLocation;
+			Dist = temp Dot temp;
 			if (Dist < BestDist){
 				BestDist = Dist;
 				Best = FrozenPawns[i];
@@ -144,7 +152,7 @@ function ShowPathTo(PlayerController P, int TeamNum)
 	if ( (Best != None) && (P.FindPathToward(Best, false) != None) )
 	{
 		WWclass = class<WillowWhisp>(DynamicLoadObject(PathWhisps[TeamNum], class'Class'));
-		Spawn(WWclass, P,, P.Pawn.Location);
+		Spawn(WWclass, P,, MyLocation);
 	}
 }
 

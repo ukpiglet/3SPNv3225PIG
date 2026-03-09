@@ -37,7 +37,7 @@ function bool OnClick(GUIComponent C)
 {
     if(C == InfoButton) // More info
     {
-		PlayerOwner().ClientTravel("https://miasma.wpengine.com/", TRAVEL_Absolute, false);
+		PlayerOwner().ClientTravel("http://miasma.rocks/freon", TRAVEL_Absolute, false);
 		Misc_Player(PlayerOwner()).FindPlayerInput();
     }
 		
@@ -119,7 +119,7 @@ defaultproperties
      InfoText(6)="þ"
      InfoText(7)="You can always access the 3SPN configuration menu later by pressing [Menu3SPNKey] or typing 'menu3spn' in the console."
      InfoText(8)="þ"
-     InfoText(61)="Send bug reports and feedback to ukpiglet@btinternet.com"
+     InfoText(61)="Send bug reports and feedback to piglet@miasma.rocks"
      InfoText(68)="þ"
      InfoText(69)="Thanks goes to:"
      InfoText(70)=" "

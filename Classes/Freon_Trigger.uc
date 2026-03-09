@@ -19,7 +19,9 @@ var bool  bTeamHeal;
 
 function PostBeginPlay()
 {
-    Super.PostBeginPlay();
+    local Freon_GRI FGRI; 
+
+	Super.PostBeginPlay();
 
     PawnOwner = Freon_Pawn(Owner);
     
@@ -29,9 +31,10 @@ function PostBeginPlay()
         return;
     }
 
-    AutoThawTime = Freon_GRI(Level.GRI).AutoThawTime;
-    ThawSpeed = FMax(Freon_GRI(Level.GRI).ThawSpeed, 0.5);
-    bTeamHeal = Freon_GRI(Level.GRI).bTeamHeal;
+	FGRI = Freon_GRI(Level.GRI);
+    AutoThawTime = FGRI.AutoThawTime;
+    ThawSpeed = FMax(FGRI.ThawSpeed, 0.5);
+    bTeamHeal = FGRI.bTeamHeal;
 
     //Team = PawnOwner.GetTeamNum();
     if(PawnOwner.GetTeamNum() == 255)
@@ -136,29 +139,33 @@ function Timer()
 
     local int MostHealth;
     local float HealthGain;
+	local Team_GameBase GB;
+	Local Freon_Pawn T;
 
     local float Touchers;
 
     local float AverageDistance;
 
-	if(Team_GameBase(Level.Game).bEndOfRound || Team_GameBase(Level.Game).EndOfRoundTime>0)
+	GB = Team_GameBase(Level.Game);
+	if(GB.bEndOfRound || GB.EndOfRoundTime>0)
 		return;
 		
     if(bTeamHeal && Toucher.Length > 0)
     {
 		for(i = Toucher.Length -1; i > -1; i--)
 		{
-			if (Toucher[i] != None)
+			T = Toucher[i];
+			if (T != None)
 			{
-				if(Toucher[i].Health > MostHealth)
-					MostHealth = Toucher[i].Health;
+				if(T.Health > MostHealth)
+					MostHealth = T.Health;
 
-				if(Toucher[i].bThawFast)
+				if(T.bThawFast)
 					Touchers += FastThawModifier;
 				else
 					Touchers += 1.0;
 
-				AverageDistance += VSize(PawnOwner.Location - Toucher[i].Location);
+				AverageDistance += VSize(PawnOwner.Location - T.Location);
 			}
 			else{
 				Toucher.Remove(i, 1);
@@ -203,6 +210,10 @@ state PawnFrozen
 
         local int MostHealth, LiveTouchers;
         local float HealthGain, ThisGain;
+		local Freon_Pawn T;
+		local Freon F;
+		local Controller C;
+		local PlayerController PC;
 
         local float Touchers;
 
@@ -217,30 +228,35 @@ state PawnFrozen
 		if(Team_GameBase(Level.Game).bEndOfRound || Team_GameBase(Level.Game).EndOfRoundTime>0)
 			return;
 
+		C = PawnOwner.Controller;
+		PC = PlayerController(C);
+
 		for(i = Toucher.Length -1; i > -1; i--)
 		{
-			if (Toucher[i] != None)
+			T = Toucher[i];
+			if (T != None)
 			{
-				if(Toucher[i].Health > MostHealth)
-					MostHealth = Toucher[i].Health;
+				if(T.Health > MostHealth)
+					MostHealth = T.Health;
 
-				if(Toucher[i].bThawFast)
+				if(T.bThawFast)
 					Touchers += FastThawModifier;
 				else
 					Touchers += 1.0;
 
-				AverageDistance += VSize(PawnOwner.Location - Toucher[i].Location);
+				AverageDistance += VSize(PawnOwner.Location - T.Location);
 
 				LiveTouchers++;
 
-				if(LiveTouchers == 1 && PlayerController(PawnOwner.Controller) != None)
-					PlayerController(PawnOwner.Controller).ReceiveLocalizedMessage(class'Freon_ThawMessage', 2, Toucher[i].PlayerReplicationInfo);
+				if(LiveTouchers == 1 && PC != None)
+					PC.ReceiveLocalizedMessage(class'Freon_ThawMessage', 2, T.PlayerReplicationInfo);
 			}
 			else{
 				Toucher.Remove(i, 1);
 			}
 		}
 
+		F = Freon(Level.Game);
 		if (LiveTouchers > 0)
 		{
 			AverageDistance /= LiveTouchers;
@@ -251,14 +267,14 @@ state PawnFrozen
 				ThisGain = (100.0 / Max(0.0001,ThawSpeed)) * 0.25 * Touchers;
 
 			//adjust for self-kill
-			if (PawnOwner.LastKiller == PawnOwner.Controller){
-				ThisGain = ThisGain * Freon(Level.Game).SelfKillThawScale;
+			if (PawnOwner.LastKiller == C){
+				ThisGain = ThisGain * F.SelfKillThawScale;
 			}
 
 			HealthGain += ThisGain;
 
-			if (Freon(Level.Game).bFullThaws){
-				Freon(Level.Game).RewardFullThawers(Toucher, (HealthGain/Touchers));
+			if (F.bFullThaws){
+				F.RewardFullThawers(Toucher, (HealthGain/Touchers));
 			}
 		}
 		else
@@ -279,11 +295,11 @@ state PawnFrozen
         {
             PawnOwner.DecimalHealth = 0.0;
 
-            if(PlayerController(PawnOwner.Controller) != None)
-                PlayerController(PawnOwner.Controller).ClientPlaySound(ThawSound);
+            if(PC != None)
+                PC.ClientPlaySound(ThawSound);
             PawnOwner.PlaySound(ThawSound, SLOT_Interact, PawnOwner.TransientSoundVolume * 1.5,, PawnOwner.TransientSoundRadius * 1.5);
 			
-			if (Freon(Level.Game).bThawPuff){
+			if (F.bThawPuff){
 				PawnOwner.Spawn(class'ThawEffect');
 				PawnOwner.PlaySound(sound'WeaponSounds.BExplosion5', SLOT_None, 2 * PawnOwner.TransientSoundVolume);
 			}

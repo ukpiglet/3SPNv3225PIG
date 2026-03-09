@@ -26,8 +26,8 @@ function SetMyPawn(xPawn P)
         Position = vect(0,0,0);
         bInvis = false;
 
-        NetUpdateFrequency = default.NetUpdateFrequency * 0.1;
-        NetPriority = default.NetPriority * 0.1;
+        //NetUpdateFrequency = default.NetUpdateFrequency * 0.1;
+        //NetPriority = default.NetPriority * 0.1;
 
         MyPawn = None;
         SetTimer(0.0, false);
@@ -42,8 +42,8 @@ function SetMyPawn(xPawn P)
         Position = MyPawn.Location;
         bInvis = MyPawn.bInvis;
 
-        NetUpdateFrequency = default.NetUpdateFrequency;
-        NetPriority = default.NetPriority;
+        //NetUpdateFrequency = default.NetUpdateFrequency;
+        //NetPriority = default.NetPriority;
 
         NetUpdateTime = Level.TimeSeconds - 5;
 
@@ -68,6 +68,6 @@ event Timer()
 
 defaultproperties
 {
-     NetUpdateFrequency=3.000000
-     NetPriority=0.500000
+     //NetUpdateFrequency=3.000000
+     //NetPriority=0.500000
 }
