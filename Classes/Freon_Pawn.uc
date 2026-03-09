@@ -189,7 +189,7 @@ function Died(Controller Killer, class<DamageType> DamageType, vector HitLocatio
 {
     local Freon_PRI xPRI;
     local Freon Freon;
-    local Controller Gitter;
+    local Misc_Player Gitter;
 
 	//piglet - test weapon activate on death (but not client side
 	if (Role == ROLE_Authority)
@@ -201,17 +201,16 @@ function Died(Controller Killer, class<DamageType> DamageType, vector HitLocatio
 			Weapon.HolderDied();
 		}
 	
-	
     if(bGivesGit)
     {
         if(Killer!=None)
-            Gitter = Killer;
+            Gitter = Misc_Player(Killer);
         else if(LastHitBy!=None)
-            Gitter = LastHitBy;
+            Gitter = Misc_Player(LastHitBy);
         else
             Gitter = None;
 
-        if(Gitter!=None && Misc_Player(Gitter)!=None && self.Controller!=Gitter)
+        if(Gitter!=None && self.Controller!=Gitter)
         {
             xPRI = Freon_PRI(Gitter.PlayerReplicationInfo);
             if(xPRI!=None)
@@ -223,21 +222,21 @@ function Died(Controller Killer, class<DamageType> DamageType, vector HitLocatio
                 {
                     if(xPRI.Git==Freon.MaxGitsAllowed)
                     {
-                        Misc_Player(Gitter).ClientMessage("Warning:"@Class'GameInfo'.static.MakeColorCode(Freon.KillGitterMsgColour)$Freon.KillGitterMsg);
+                        Gitter.ClientMessage("Warning:"@Class'GameInfo'.static.MakeColorCode(Freon.KillGitterMsgColour)$Freon.KillGitterMsg);
                     }
                     else if(xPRI.Git>Freon.MaxGitsAllowed)
                     {
-                        Misc_Player(Gitter).BroadcastAnnouncement(class'Message_Git');
-                        if(Misc_Player(Gitter).Pawn!=None)
-                            Misc_Player(Gitter).Pawn.Suicide();
+                        Gitter.BroadcastAnnouncement(class'Message_Git');
+                        if(Gitter.Pawn!=None)
+                            Gitter.Pawn.Suicide();
                     }
                 }
                 else
                 {
                     if(Freon.iAdrenGitters != 0 && xPRI.Git%Freon.iAdrenGitters == 0) 
                     {
-                        if(Misc_Player(Gitter)!=None)
-                            Misc_Player(Gitter).BroadcastAnnouncement(class'Message_Git');
+                        if(Gitter!=None)
+                            Gitter.BroadcastAnnouncement(class'Message_Git');
                         Gitter.Adrenaline = Max(0,Gitter.Adrenaline-Freon.AdrenGitLose);
                     }
                 }
@@ -357,18 +356,20 @@ function FillWeaponData()
 {
     local Inventory inv;
     local int i;
+	local Weapon W;
 
     for(inv = Inventory; inv != None; inv = inv.Inventory)
     {
-        if(Weapon(inv) == None)
+        W = Weapon(inv);
+		if(W == None)
             continue;
 
         i = MyWD.Length;
         MyWD.Length = i + 1;
 
         MyWD[i].WeaponName = string(inv.Class);
-        MyWD[i].Ammo[0] = Weapon(inv).AmmoCharge[0];
-        MyWD[i].Ammo[1] = Weapon(inv).AmmoCharge[1];
+        MyWD[i].Ammo[0] = W.AmmoCharge[0];
+        MyWD[i].Ammo[1] = W.AmmoCharge[1];
     }
 }
 
@@ -593,6 +594,7 @@ State Frozen
 
     function TakeDamage( int Damage, Pawn InstigatedBy, Vector HitLocation, Vector Momentum, class<DamageType> DamageType )
     {
+		local Freon F;
 		local Freon_Pawn FP;
       		
         if ( DamageType == None )
@@ -617,10 +619,10 @@ State Frozen
 
         if(DamageType.default.bCausedByWorld)
         {
-			//if(DamageType == class'FellLava'){
 			if(DamageType.IsA('FellLava')){
 				Thaw();
-				if (!Freon(Level.Game).bAllowSelfKillThaw && LastKiller != None && LastKiller == Controller && Level.TimeSeconds - TimeKilled <= Freon(Level.Game).SelfKillLavaThawtime){
+				F = Freon(Level.Game);
+				if (!F.bAllowSelfKillThaw && LastKiller != None && LastKiller == Controller && Level.TimeSeconds - TimeKilled <= F.SelfKillLavaThawtime){
 					FP = Freon_Pawn(Controller.Pawn);
 					FP.DeactivateSpawnProtection();
 					FP.Health = 1;
@@ -695,10 +697,13 @@ State Frozen
 	
 	event PlayHit (float Damage, Pawn InstigatedBy, Vector HitLocation, Class<DamageType> DamageTypeClass, Vector Momentum)
 	{
+		local Team_GameBase GB;
+
 		if(!bDeleteMe && !Level.bLevelChange && (Level.Game != None)){
 			//if(!Freon_GRI(Level.GRI).bLiveRound && ( ((Class<DamTypeShieldImpact>(DamageTypeClass) != None) && (Damage >= 60)) || (Class<DamTypeShieldImpact>(DamageTypeClass) == None)))
 			
-			if((Team_GameBase(Level.Game).bEndOfRound || Team_GameBase(Level.Game).EndOfRoundTime>0) && (Shatters(DamageTypeClass))){
+			GB = Team_GameBase(Level.Game);
+			if((GB.bEndOfRound || GB.EndOfRoundTime > 0) && Shatters(DamageTypeClass)){
 				Shattered ();
 			}
 			else if ((Level.TimeSeconds - LastPainTime) > 0.1f)
@@ -745,35 +750,22 @@ State Frozen
 		Super.Died (None, ShatteredDamageTypeClass, Location);
 	}
 
-	event GibbedBy (Actor Other){
+	event GibbedBy (Actor Other)
+	{
+		local Pawn P;
 		if (Role == ROLE_Authority)
 		{
-			if (Pawn(Other) != None)
+			Health = 0;
+			P = Pawn(Other);
+			if (P != None)
 			{
-				if
-				(
-					(Pawn(Other).Weapon != None)
-					&&
-					Pawn(Other).Weapon.IsA ('Translauncher')
-				)
-				{
-					Health = 0;
-
-					Super.Died (None, Pawn(Other).Weapon.GetDamageType (), Location);
-				}
+				if (P.Weapon != None && P.Weapon.IsA ('Translauncher') )
+					Super.Died (None, P.Weapon.GetDamageType (), Location);
 				else
-				{
-					Health = 0;
-
 					Super.Died (None, ShatteredDamageTypeClass, Location);
-				}
 			}
 			else
-			{
-				Health = 0;
-
 				Super.Died (None, ShatteredDamageTypeClass, Location);
-			}
 		}
 	}
 }

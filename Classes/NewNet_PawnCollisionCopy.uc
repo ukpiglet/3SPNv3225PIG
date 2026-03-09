@@ -283,10 +283,8 @@ function AddHistory()
 function RemoveOutdatedHistory()
 {
     while(PawnHistory.Length > 0 && PawnHistory[0].TimeStamp + MAX_HISTORY_LENGTH < M.ClientTimeStamp )
-       PawnHistory.Remove(0,1);
-	
-	while(LocCurveX.Points.Length > 0 &&  LocCurveX.Points[0].InVal + MAX_HISTORY_LENGTH < M.ClientTimeStamp)
 	{
+		PawnHistory.Remove(0,1);
 		LocCurveX.Points.Remove(0,1);
 		LocCurveY.Points.Remove(0,1);
 		LocCurveZ.Points.Remove(0,1);

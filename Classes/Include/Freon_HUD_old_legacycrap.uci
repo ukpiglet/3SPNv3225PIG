@@ -1,4 +1,38 @@
 // HUD code for "No extended info. Use old Hud.". Not at all optimised. Slow.
+
+function Draw2DLocationDot(Canvas C, vector Loc, float OffsetX, float OffsetY, float ScaleX, float ScaleY)
+{
+    local rotator Dir;
+    local float Angle, Scaling;
+    local Actor Start;
+
+    if(PlayerOwner.Pawn == None)
+    {
+        if(PlayerOwner.ViewTarget != None)
+            Start = PlayerOwner.ViewTarget;
+        else
+			if(Freon_Player(PlayerOwner) != None && Freon_Player(PlayerOwner).FrozenPawn != None)
+				Start = Freon_Player(PlayerOwner).FrozenPawn;
+			else
+				Start = PlayerOwner;
+    }
+    else
+    {
+        Start = PlayerOwner.Pawn;
+    }
+	
+    Dir = rotator(Loc - Start.Location);
+    Angle = ((Dir.Yaw - Start.Rotation.Yaw) & 65535) * 6.2832 / 65536;
+    C.Style = ERenderStyle.STY_Alpha;
+    C.SetPos(OffsetX * C.ClipX + ScaleX * C.ClipX * sin(Angle),
+            OffsetY * C.ClipY - ScaleY * C.ClipY * cos(Angle));
+
+    Scaling = 24 * C.ClipX * (0.45 * HUDScale) / 1600;
+
+    C.DrawTile(LocationDot, Scaling, Scaling, 340, 432, 78, 78);
+}
+
+
 simulated function DrawPlayers(Canvas C)
 {
     local int i;

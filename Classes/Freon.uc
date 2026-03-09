@@ -65,27 +65,8 @@ function Killed(Controller Killer, Controller Killed, Pawn KilledPawn, class<Dam
 	
 	if(Killed != None && Killed.PlayerReplicationInfo != None)
 	{
-	/*
-		if(bRespawning && Freon(Level.Game)==None)  //surely this can never happen as this *is* Freon!
-		{
-			Killed.PlayerReplicationInfo.bOutOfLives = false;
-			Killed.PlayerReplicationInfo.NumLives = 1;
-
-			if(PlayerController(Killed)!=None)
-				PlayerController(Killed).ClientReset();
-			Killed.Reset();
-			if(PlayerController(Killed)!=None)
-				PlayerController(Killed).GotoState('Spectating');
-
-			RestartPlayer(Killed);
-			return;
-		}
-		else
-		{
-*/
-			Killed.PlayerReplicationInfo.bOutOfLives = true;
-			Killed.PlayerReplicationInfo.NumLives = 0;
-//		}
+		Killed.PlayerReplicationInfo.bOutOfLives = true;
+		Killed.PlayerReplicationInfo.NumLives = 0;
 
 		if(Killed.GetTeamNum() != 255 && !(bEndOfRound || EndOfRoundTime>0))   //Shatter (or any end of round death) should not increase team deaths, nor trigger alone sound
 		{
@@ -284,6 +265,7 @@ function string SwapDefaultCombo(string ComboName)
 function PawnFroze(Freon_Pawn Frozen)
 {
     local int i;
+	local Misc_Player P;
 
     for(i = 0; i < FrozenPawns.Length; i++)
     {
@@ -294,8 +276,9 @@ function PawnFroze(Freon_Pawn Frozen)
     FrozenPawns[FrozenPawns.Length] = Frozen;
     Frozen.Spree = 0;
 
-    if(Misc_Player(Frozen.Controller) != None)
-        Misc_Player(Frozen.Controller).Spree = 0;
+	P = Misc_Player(Frozen.Controller);
+    if(P != None)
+       P.Spree = 0;
 }
 
 //
@@ -309,8 +292,14 @@ function RestartFrozenPlayer(Controller aPlayer, vector Loc, rotator Rot, Naviga
     local vector ViewDir;
     local float BestDist, Dist;
     local TeamInfo BotTeam, OtherTeam;
+	local bool bStandalone;
 
-    if ( (!bPlayersVsBots || (Level.NetMode == NM_Standalone)) && bBalanceTeams && (Bot(aPlayer) != None) && (!bCustomBots || (Level.NetMode != NM_Standalone)) )
+	bStandalone = Level.NetMode == NM_Standalone;
+
+	if ( bBalanceTeams
+     && Bot(aPlayer) != None
+     && (!bPlayersVsBots || bStandalone)
+     && (!bCustomBots || !bStandalone) )
     {
         BotTeam = aPlayer.PlayerReplicationInfo.Team;
         if ( BotTeam == Teams[0] )
@@ -418,6 +407,12 @@ function PlayerThawed(Freon_Pawn Thawed, optional float Health, optional float S
     local bool bGivesGit;
     local int TeamNum;
     local NavigationPoint startSpot;
+	local Pawn P;
+	local Weapon W;
+	local TeamInfo MyTeam;
+	local TAM_TeamInfoRed TTIR;
+	local TAM_TeamInfoBlue TTIB;
+	local TAM_TeamInfo TTI;
 
     if(bEndOfRound || Thawed.Controller == None)
         return;
@@ -496,17 +491,18 @@ function PlayerThawed(Freon_Pawn Thawed, optional float Health, optional float S
 	if (C == None)	//can be destroyed by RestartFrozenPlayer()
 		return;
 	
-    if(C.Pawn != None)
+	P = C.Pawn;
+    if(P != None)
     {
-        C.Pawn.SetLocation(Pos);
-        C.Pawn.SetRotation(Rot);
-        C.Pawn.AddVelocity(Vel);
-        C.Pawn.LastHitBy = LastHitBy;
+        P.SetLocation(Pos);
+        P.SetRotation(Rot);
+        P.AddVelocity(Vel);
+        P.LastHitBy = LastHitBy;
 
         if(!dying)
         {
             // redistribute ammo
-            for(inv = C.Pawn.Inventory; inv != None; inv = inv.Inventory)
+            for(inv = P.Inventory; inv != None; inv = inv.Inventory)
             {
                 if(Weapon(inv) == None)
                     return;
@@ -515,16 +511,17 @@ function PlayerThawed(Freon_Pawn Thawed, optional float Health, optional float S
                 {
                     if(WD[i].WeaponName ~= string(inv.Class))
                     {
-                        Weapon(inv).AmmoCharge[0] = WD[i].Ammo[0];
-                        Weapon(inv).AmmoCharge[1] = WD[i].Ammo[1];
+                        W = Weapon(inv);
+						W.AmmoCharge[0] = WD[i].Ammo[0];
+                        W.AmmoCharge[1] = WD[i].Ammo[1];
 						
 						// Special shield gun alt fire fix...from Sol
                         // This happens because there are client side timers that need to be reactived.
                         // Only stop/start fire sets the timers.
-                        if(Weapon(inv).IsA('ShieldGun')) 
+                        if(W.IsA('ShieldGun'))
                         {
-                            Weapon(inv).StopFire(1);
-                            Weapon(inv).AddAmmo(100 - Weapon(inv).AmmoAmount(1), 1);
+                            W.StopFire(1);
+                            W.AddAmmo(100 - Weapon(inv).AmmoAmount(1), 1);
                         }
                         break;
                     }
@@ -533,20 +530,20 @@ function PlayerThawed(Freon_Pawn Thawed, optional float Health, optional float S
 
             if(Health != 0.0)
             {
-                C.Pawn.Health = Max(MinHealthOnThaw,Health);
+                P.Health = Max(MinHealthOnThaw,Health);
             }
             else
             {
-                C.Pawn.Health = MinHealthOnThaw;
+                P.Health = MinHealthOnThaw;
             }
-            C.Pawn.ShieldStrength = Shield;
+            P.ShieldStrength = Shield;
         }
 
-        if(Freon_Pawn(C.Pawn)!=None)
-            Freon_Pawn(C.Pawn).bGivesGit = bGivesGit;
+        if(Freon_Pawn(P)!=None)
+            Freon_Pawn(P).bGivesGit = bGivesGit;
 
         if(dying || bSpawnProtectionOnThaw==False && Misc_Pawn(C.Pawn)!=None)
-            Misc_Pawn(C.Pawn).DeactivateSpawnProtection();
+            Misc_Pawn(P).DeactivateSpawnProtection();
     }
 
     if(PlayerController(C) != None)
@@ -556,12 +553,22 @@ function PlayerThawed(Freon_Pawn Thawed, optional float Health, optional float S
     if(Team == 255)
         return;
 
-    if(TAM_TeamInfo(Teams[Team]) != None && TAM_TeamInfo(Teams[Team]).ComboManager != None)
-        TAM_TeamInfo(Teams[Team]).ComboManager.PlayerSpawned(C);
-    else if(TAM_TeamInfoRed(Teams[Team]) != None && TAM_TeamInfoRed(Teams[Team]).ComboManager != None)
-        TAM_TeamInfoRed(Teams[Team]).ComboManager.PlayerSpawned(C);
-    else if(TAM_TeamInfoBlue(Teams[Team]) != None && TAM_TeamInfoBlue(Teams[Team]).ComboManager != None)
-        TAM_TeamInfoBlue(Teams[Team]).ComboManager.PlayerSpawned(C);
+	MyTeam = Teams[Team];
+	TTIR = TAM_TeamInfoRed(MyTeam);
+    if(TTIR != None && TTIR.ComboManager != None)
+        TTIR.ComboManager.PlayerSpawned(C);
+    else
+	{
+		TTIB = TAM_TeamInfoBlue(MyTeam);
+		if(TTIB != None && TTIB.ComboManager != None)
+			TTIB.ComboManager.PlayerSpawned(C);
+		else
+		{
+			TTI = TAM_TeamInfo(MyTeam);
+			if(TTI != None && TTI.ComboManager != None)
+				TTI.ComboManager.PlayerSpawned(C);
+		}
+	}
 
     if(!dying && C.Pawn != None)
     {
@@ -595,6 +602,7 @@ function RewardFullThawers(array<Freon_Pawn> Thawers, float HealthGain){
 function PlayerThawedByTouch(Freon_Pawn Thawed, array<Freon_Pawn> Thawers, optional float Health, optional float Shield)
 {
     local Controller C;
+	local PlayerController PC;
     local int i;
 	local Freon_PRI xPRI;
 
@@ -606,8 +614,9 @@ function PlayerThawedByTouch(Freon_Pawn Thawed, array<Freon_Pawn> Thawers, optio
 
     if( C != None )	//can be destroyed in PlayerThawed() - but still continue and award points as they did the thaw!
     {   
-		if(PlayerController(C) != None)
-			PlayerController(C).ReceiveLocalizedMessage(class'Freon_ThawMessage', 0, Thawers[0].PlayerReplicationInfo);
+		PC = PlayerController(C);
+		if(PC != None)
+			PC.ReceiveLocalizedMessage(class'Freon_ThawMessage', 0, Thawers[0].PlayerReplicationInfo);
 
 		if(C.PlayerReplicationInfo == None)
 			return;
@@ -626,8 +635,9 @@ function PlayerThawedByTouch(Freon_Pawn Thawed, array<Freon_Pawn> Thawers, optio
 				SpecialEvent(xPRI, "Thaw"); //allow stats for thawing
 			}
 
-			if(C != None && PlayerController(Thawers[i].Controller) != None)
-				PlayerController(Thawers[i].Controller).ReceiveLocalizedMessage(class'Freon_ThawMessage', 1, C.PlayerReplicationInfo);
+			PC = PlayerController(Thawers[i].Controller); //Sorry reuse variable
+			if(C != None && PC != None)
+				PC.ReceiveLocalizedMessage(class'Freon_ThawMessage', 1, C.PlayerReplicationInfo);
 		}
 	}
 }
@@ -654,6 +664,7 @@ function WholeThaw(Freon_Pawn Thawer){
 	local Freon_PRI xPRI;
     local class<LocalMessage> Message;
 	local int Thaws;
+	local Misc_Player MP;
 	
 	xPRI = Freon_PRI(Thawer.PlayerReplicationInfo);
 	if (xPRI != None)
@@ -681,8 +692,9 @@ function WholeThaw(Freon_Pawn Thawer){
 
 		if(Message!=None)
 		{
-		   if(Misc_Player(Thawer.Controller)!=None)
-			   Misc_Player(Thawer.Controller).BroadcastAnnouncement(Message);
+		   MP = Misc_Player(Thawer.Controller);
+		   if(MP!=None)
+			   MP.BroadcastAnnouncement(Message);
 		}
 	}
 }
@@ -692,12 +704,11 @@ function WholeThaw(Freon_Pawn Thawer){
 
 function GiveReward(Freon_Pawn Thawer){
 
-
 	if (bChargeLowGun)
 		RewardButChargeLowIfNeeded(Thawer);
 	else
 		RewardHeldGunOnly(Thawer);
-	
+
 }
 
 function RewardHeldGunOnly(Freon_Pawn Thawer){
@@ -801,8 +812,9 @@ function ReTrigger(Controller ThawedController){
 
 	local Controller C;
 	local float distance;
-	local Freon_Pawn P;
-	local Freon_Pawn ThawedPawn;
+	local Freon_Pawn P, ThawedPawn;
+	local Freon_Player FP;
+	local Freon_Bot FB;
 	local int ThawedTeam;
 	local bool bProtected;
 
@@ -819,16 +831,16 @@ function ReTrigger(Controller ThawedController){
 		if(C != ThawedController && C.GetTeamNum() == ThawedTeam){  //ignore self!
 		
 			//get the pawn of the contoller
-			if((C.IsA('Freon_Player') && Freon_Player(C).FrozenPawn!=None) || (C.IsA('Freon_Bot') && Freon_Bot(C).FrozenPawn!=None)){
-				if(Freon_Player(C)!=None){
-					P = Freon_Player(C).FrozenPawn;
-				}
-				else{
-					P = Freon_Bot(C).FrozenPawn;
-				}
-			}
-			else{		
-				P = Freon_Pawn(C.Pawn);
+			FP = Freon_Player(C);
+			if(FP != None && FP.FrozenPawn!=None)
+				P = FP.FrozenPawn;
+			else
+			{
+				FB = Freon_Bot(C);
+				if (FB != None && FB.FrozenPawn!=None)
+					P = FB.FrozenPawn;
+				else
+					P = Freon_Pawn(C.Pawn);
 			}
 			
 			if (P != None){
@@ -841,9 +853,6 @@ function ReTrigger(Controller ThawedController){
 						ThawedPawn.DeactivateSpawnProtection();
 						if (PlayerController(ThawedController) != None)
 							PlayerController(ThawedController).ReceiveLocalizedMessage(class'Message_SpawnProtection', 0);
-						//if (NoTriggerProtectionMsg && PlayerController(ThawedPawn.Controller) != None){
-						//	PlayerController(ThawedPawn.Controller).ReceiveLocalizedMessage(class'Message_SpawnProtection', 0);
-						//}
 						bProtected=False;
 					}
 				}

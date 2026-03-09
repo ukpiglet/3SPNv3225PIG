@@ -1513,6 +1513,24 @@ function NewDraw2DLocationDot(Canvas C, vector Loc, int CenterX, int CenterY, in
     C.DrawTile(LocationDot, dotSize, dotSize, 340, 432, 78, 78);
 }
 
+
+function FastDraw2DHeightDot(Canvas C, vector Loc, int CenterX, int CenterY, int OutsideDiameter, Vector MyLocation, Float HeightDotSize, Float HalfHeightDotSize)
+{
+    local int posCenterY;
+	local int zdiff;
+
+	zdiff = int((Loc.Z - MyLocation.Z) / 176);
+	zdiff = Clamp(zdiff, -5, 5);
+
+    posCenterY = CenterY - (OutsideDiameter * 0.1 * zdiff);
+
+    C.SetPos(CenterX - HalfHeightDotSize, posCenterY - HalfHeightDotSize); //adjust for dot size
+
+    C.Style = ERenderStyle.STY_Alpha;
+    C.DrawTile(LocationDot, HeightDotSize, HeightDotSize, 340, 432, 78, 78);
+}
+
+
 function NewDraw2DHeightDot(Canvas C, vector Loc, int CenterX, int CenterY, int OutsideDiameter)
 {
     local Actor Start;
