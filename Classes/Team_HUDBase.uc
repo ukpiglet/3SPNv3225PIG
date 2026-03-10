@@ -16,6 +16,7 @@ var Color NameColor;
 var Color LocationColor;
 var Color AdrenColor;
 var Color FullAdrenColor;
+var color HeightDotColor;
 
 struct StatsListStruct
 {
@@ -1607,5 +1608,6 @@ defaultproperties
      LocationColor=(G=130,R=175,A=255)
      AdrenColor=(B=201,G=200,R=181,A=255)
      FullAdrenColor=(G=78,R=229,A=255)
+	 HeightDotColor=(B=239,G=255,R=0,A=255)
      CurrentStatsList=1
 }

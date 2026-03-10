@@ -20,6 +20,7 @@ var config bool bShowTeamInfo;          // show teams info on the HUD
 var config bool bExtendedInfo;          // show extra teammate info
 var config bool bUsePlus;               // use the + rather than height blob
 var config bool bUseOld;                // use the old style radar blobs
+var config int MaxHUDPlayerCount;		// max number of players to show each side of HUD
 var        bool bHUDChanged; 			// the hud settings have changed - so any calculations will for position etc may need to be re-done
 
 var config bool bMatchHUDToSkins;       // sets HUD color to brightskins color
@@ -3397,4 +3398,5 @@ defaultproperties
 	SavedMovesWarningInterval=10
 	MaxSavedMoves=250
 	bEnableWidescreenFix=false
+	MaxHUDPlayerCount=9
 }

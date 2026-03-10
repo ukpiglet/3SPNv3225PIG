@@ -20,7 +20,7 @@ function Draw2DLocationDot(Canvas C, vector Loc, float OffsetX, float OffsetY, f
     {
         Start = PlayerOwner.Pawn;
     }
-	
+
     Dir = rotator(Loc - Start.Location);
     Angle = ((Dir.Yaw - Start.Rotation.Yaw) & 65535) * 6.2832 / 65536;
     C.Style = ERenderStyle.STY_Alpha;

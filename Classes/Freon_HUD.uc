@@ -17,7 +17,7 @@ var Texture ThawBarMat;
 //Global or Friends
 var float oldClipy, oldClipX;
 var Misc_BaseGRI BGRI;
-var int ZAStartListY, widthA, ZAheight, halfRadarSize, ZAradarCenterX, ZAnamey, heightPlusSpaceA, radarSize, posxA, namexA;
+var int ZAStartListY, widthA, ZAheight, halfRadarSize, ZAradarCenterX, ZAnamey, heightPlusSpaceA, radarSize, posxA, namexA, MaxHUDPlayerCount;
 var float heightOffset, CU, startX, healthBlob, halfHealthBlob, dotSize, HalfdotSize, dotLength, MaxNamePosA, HeightDotSize, HalfHeightDotSize;
 var color FrozenColorBack;
 
@@ -234,19 +234,22 @@ simulated function bool ShouldDrawPlayer(Misc_PRI PRI)
     return true;
 }
 
-
-function FastDraw2DLocationDot(Canvas C, vector Loc, int CenterX, int CenterY, int dotSize, int HalfdotSize, int length, Vector MyLocation, Vector MyLocationX, Vector MyLocationY)
+function FastDraw2DLocationDot(Canvas C, vector Loc, int CenterX, int CenterY, int dotSize, int HalfdotSize, int length, vector MyLocation, vector MyLocationX, vector MyLocationY)
 {
     local vector Dir;
-    local float Forward, Side;
+    local float Forward, Side, Scale;
     local int posCenterX, posCenterY;
 
-    Dir = Normal(Loc - MyLocation);
-	Forward = Dir Dot MyLocationX;
-    Side = Dir Dot MyLocationY;
+    Dir = Loc - MyLocation;
+    Dir.Z = 0;
 
-    posCenterX = CenterX + length * Side;
-    posCenterY = CenterY - length * Forward;
+    Forward = Dir Dot MyLocationX;
+    Side    = Dir Dot MyLocationY;
+
+    Scale = length / Sqrt(Forward*Forward + Side*Side);
+
+    posCenterX = CenterX + Side * Scale;
+    posCenterY = CenterY - Forward * Scale;
 
     C.SetPos(posCenterX - HalfdotSize, posCenterY - HalfdotSize);
 
@@ -293,6 +296,8 @@ simulated function DrawPlayersExtendedZAxis(Canvas C, bool ExtendedInfo)
 	//Determine whether calculations need to be re-done. Calculations typically done only once on first HUD frame of the map, and then these values used for the rest of the game.
 	if (class'Misc_Player'.default.bHUDChanged || oldClipy != C.ClipY || oldClipX != C.ClipX)
 	{
+		MaxHUDPlayerCount = class'Misc_Player'.default.MaxHUDPlayerCount -1;	// counting from zero due to point of check
+		if (MaxHUDPlayerCount == -1) return;
 		oldClipy = C.ClipY;
 		oldClipX = C.ClipX;
 		class'Misc_Player'.default.bHUDChanged = False;
@@ -344,7 +349,10 @@ simulated function DrawPlayersExtendedZAxis(Canvas C, bool ExtendedInfo)
 		HDHeight = C.ClipY * 0.0185 * Scale;
 		HDHeightOffset = 0.0035 * Scale * C.ClipY;
 		discSizeSquash = C.ClipY * 0.026 * Scale;
+
 	}
+
+	if (MaxHUDPlayerCount == -1) return;
 
 	// Things to calculate every frame - but only before looping, so it's only done once rather than for every loop iteration
 	// Calculate base point for direction and height indicators
@@ -370,7 +378,7 @@ simulated function DrawPlayersExtendedZAxis(Canvas C, bool ExtendedInfo)
     // loop this twice, once for each team, allies first
     for(i = 0; i < MyOwner.GameReplicationInfo.PRIArray.Length; i++)
     {
-        if(allies > 9)
+        if(allies > MaxHUDPlayerCount)
             break;
 
         PRI = Misc_PRI(myOwner.GameReplicationInfo.PRIArray[i]);
@@ -503,7 +511,7 @@ simulated function DrawPlayersExtendedZAxis(Canvas C, bool ExtendedInfo)
 				}			
 			else
 				if (BGRI.bHeightRadar){
-					C.DrawColor.R = 0;
+					C.DrawColor = HeightDotColor;
 					FastDraw2DHeightDot(C, PRI.PawnReplicationInfo.Position, ZAradarCenterX, radarCenterY, radarSize, MyLocation,  HeightDotSize, HalfHeightDotSize);
 				}
 		}		
@@ -526,7 +534,7 @@ simulated function DrawPlayersExtendedZAxis(Canvas C, bool ExtendedInfo)
     //
     for(i = 0; i < MyOwner.GameReplicationInfo.PRIArray.Length; i++)
     {
-        if(enemies > 9)
+        if(enemies > MaxHUDPlayerCount)
             break;
 
         PRI = Misc_PRI(myOwner.GameReplicationInfo.PRIArray[i]);
