@@ -11,21 +11,20 @@ function bool AllowOpen(string MenuClass)
 
 function InitComponent(GUIController MyController, GUIComponent MyOwner)
 {
-    local int i;
-	local GameReplicationInfo GRI;
+    local int i, RedScore, BlueScore;
+	local Misc_Player MP;
 
     Super.InitComponent(MyController, MyOwner);
 	
 	if(Controls.Length==0)
 		return;
 
-	GRI = PlayerOwner().Level.GRI;
-	if(GRI!=None)
+    MP = Misc_Player(PlayerOwner());
+    if(MP != None)
 	{
-		if(GRI.Teams[0]!=None)
-			moEditBox(Controls[3]).SetText(string(GRI.Teams[0].Score));
-		if(GRI.Teams[1]!=None)
-			moEditBox(Controls[5]).SetText(string(GRI.Teams[1].Score));
+		MP.GetTeamScore(RedScore, BlueScore);
+		moNumericEdit(Controls[3]).SetComponentValue(RedScore);
+		moNumericEdit(Controls[5]).SetComponentValue(BlueScore);
 	}
 	
     moCheckBox(Controls[6]).Checked(class'Misc_Player'.default.bAdminVisionInSpec);
@@ -80,7 +79,7 @@ function bool OnClick(GUIComponent C)
 		
 	if(C==Controls[1])
 	{
-		MP.SetTeamScore(int(GUIEditBox(Controls[3]).TextStr), int(GUIEditBox(Controls[5]).TextStr));
+		MP.SetTeamScore(moNumericEdit(Controls[3]).GetValue(), moNumericEdit(Controls[5]).GetValue());
 	}
 	
     return true;
@@ -140,17 +139,16 @@ defaultproperties
      End Object
      Controls(2)=GUILabel'3SPNv3225PIG.Menu_TabTournamentAdmin.RedScoreLabel'
 
-     Begin Object Class=GUIEditBox Name=RedScoreEditBox
+     Begin Object Class=moNumericEdit Name=RedScoreEditBox
          WinTop=0.100000
          WinLeft=0.250000
          WinWidth=0.100000
          WinHeight=0.037500
-         OnActivate=RedScoreEditBox.InternalActivate
-         OnDeActivate=RedScoreEditBox.InternalDeactivate
-         OnKeyType=RedScoreEditBox.InternalOnKeyType
-         OnKeyEvent=RedScoreEditBox.InternalOnKeyEvent
+		 Caption=""
+         MinValue=0
+         MaxValue=99
      End Object
-     Controls(3)=GUIEditBox'3SPNv3225PIG.Menu_TabTournamentAdmin.RedScoreEditBox'
+     Controls(3)=RedScoreEditBox
 
      Begin Object Class=GUILabel Name=BlueScoreLabel
          Caption="Blue Score:"
@@ -162,17 +160,16 @@ defaultproperties
      End Object
      Controls(4)=GUILabel'3SPNv3225PIG.Menu_TabTournamentAdmin.BlueScoreLabel'
 
-     Begin Object Class=GUIEditBox Name=BlueScoreEditBox
+     Begin Object Class=moNumericEdit Name=BlueScoreEditBox
          WinTop=0.160000
          WinLeft=0.250000
          WinWidth=0.100000
          WinHeight=0.037500
-         OnActivate=BlueScoreEditBox.InternalActivate
-         OnDeActivate=BlueScoreEditBox.InternalDeactivate
-         OnKeyType=BlueScoreEditBox.InternalOnKeyType
-         OnKeyEvent=BlueScoreEditBox.InternalOnKeyEvent
+		 Caption=""
+		 MinValue=0
+         MaxValue=99
      End Object
-     Controls(5)=GUIEditBox'3SPNv3225PIG.Menu_TabTournamentAdmin.BlueScoreEditBox'
+     Controls(5)=BlueScoreEditBox
 
      Begin Object Class=moCheckBox Name=AdminVisionCheck
          Caption="Enable Wall Hack When Spectating."

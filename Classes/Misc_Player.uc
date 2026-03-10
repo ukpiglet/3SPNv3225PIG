@@ -386,18 +386,33 @@ function StorePlayerData()
 function SetTeamScore(int RedScore, int BlueScore)
 {
 	local TeamGame TeamGame;
-	
-    if((PlayerReplicationInfo==None || !PlayerReplicationInfo.bAdmin) && Level.NetMode!=NM_Standalone)
+
+	if((PlayerReplicationInfo==None || !PlayerReplicationInfo.bAdmin) && Level.NetMode!=NM_Standalone)
 		return;
 
 	TeamGame = TeamGame(Level.Game);
 	if(TeamGame == None)
 		return;
-	
+
 	if(TeamGame.Teams[0]!=None)
 		TeamGame.Teams[0].Score = RedScore;
 	if(TeamGame.Teams[1]!=None)
 		TeamGame.Teams[1].Score = BlueScore;
+}
+
+
+function GetTeamScore(out int RedScore, out int BlueScore)
+{
+	local TeamGame TeamGame;
+
+	TeamGame = TeamGame(Level.Game);
+	if(TeamGame == None)
+		return;
+
+	if(TeamGame.Teams[0]!=None)
+		RedScore = TeamGame.Teams[0].Score;
+	if(TeamGame.Teams[1]!=None)
+		BlueScore = TeamGame.Teams[1].Score;
 }
 
 function CheckInitialMenu()

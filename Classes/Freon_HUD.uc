@@ -17,7 +17,7 @@ var Texture ThawBarMat;
 //Global or Friends
 var float oldClipy, oldClipX;
 var Misc_BaseGRI BGRI;
-var int ZAStartListY, widthA, ZAheight, halfRadarSize, ZAradarCenterX, ZAnamey, heightPlusSpaceA, radarSize, posxA, namexA, MaxHUDPlayerCount;
+var int ZAStartListY, widthA, ZAheight, halfRadarSize, ZAradarCenterX, ZAnamey, heightPlusSpaceA, radarSize, posxA, namexA, MaxHUDPlayerCount, HeightStep;
 var float heightOffset, CU, startX, healthBlob, halfHealthBlob, dotSize, HalfdotSize, dotLength, MaxNamePosA, HeightDotSize, HalfHeightDotSize;
 var color FrozenColorBack;
 
@@ -319,6 +319,7 @@ simulated function DrawPlayersExtendedZAxis(Canvas C, bool ExtendedInfo)
 
 		HeightDotSize = radarSize * 0.25; // 25% diameter
 		HalfHeightDotSize = HeightDotSize * 0.5;
+		HeightStep = radarSize * 0.1;
 
 		heightPlusSpaceE = ZAheight + int(0.005 * C.ClipY);
 		posxA = int(CU*0.5); //set posxA for allies to left side
@@ -512,7 +513,7 @@ simulated function DrawPlayersExtendedZAxis(Canvas C, bool ExtendedInfo)
 			else
 				if (BGRI.bHeightRadar){
 					C.DrawColor = HeightDotColor;
-					FastDraw2DHeightDot(C, PRI.PawnReplicationInfo.Position, ZAradarCenterX, radarCenterY, radarSize, MyLocation,  HeightDotSize, HalfHeightDotSize);
+					FastDraw2DHeightDot(C, PRI.PawnReplicationInfo.Position, ZAradarCenterX, radarCenterY, radarSize, MyLocation,  HeightDotSize, HalfHeightDotSize, HeightStep);
 				}
 		}		
         //

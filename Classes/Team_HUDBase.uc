@@ -1450,28 +1450,31 @@ simulated function DisplayLocalMessages( Canvas C )
 
 function DrawStatsList(Canvas C, int Index, float xPos)
 {
-    local float y, xl, yl;
-    local int i;
+	local float y, xl, yl;
+	local int i;
+	local StatsListStruct SL;
 
-    if(Len(StatsLists[Index].ListName)==0)
-        return;
+	SL = StatsLists[Index];
 
-    y = 0.35;
-    C.Font = PlayerController(Owner).MyHUD.GetFontSizeIndex(C, -3);
-    C.DrawColor = default.WhiteColor;
-    C.DrawScreenText(StatsLists[Index].ListName, xPos, y, DP_LowerMiddle);
-    C.StrLen(StatsLists[Index].ListName, xl, yl);
-    y += yl*2 / C.ClipY;
+	if(Len(SL.ListName)==0)
+		return;
 
-    C.DrawColor = default.WhiteColor * 0.7;
-    for(i=0; i<StatsLists[Index].RowNames.Length; ++i)
-    {
-        C.DrawScreenText((i+1)$". "$StatsLists[Index].RowNames[i], xPos-0.1, y, DP_LowerLeft);
-        C.DrawScreenText(StatsLists[Index].RowValues[i], xPos+0.1, y, DP_LowerRight);
+	y = 0.35;
+	C.Font = PlayerController(Owner).MyHUD.GetFontSizeIndex(C, -3);
+	C.DrawColor = default.WhiteColor;
+	C.DrawScreenText(SL.ListName, xPos, y, DP_LowerMiddle);
+	C.StrLen(SL.ListName, xl, yl);
+	y += yl*2 / C.ClipY;
 
-        C.StrLen(StatsLists[Index].RowNames[i], xl, yl);
-        y += yl / C.ClipY;
-    }
+	C.DrawColor = default.WhiteColor * 0.7;
+	for(i=0; i<SL.RowNames.Length; ++i)
+	{
+		C.DrawScreenText((i+1)$". "$SL.RowNames[i], xPos-0.1, y, DP_LowerLeft);
+		C.DrawScreenText(SL.RowValues[i], xPos+0.1, y, DP_LowerRight);
+
+		C.StrLen(SL.RowNames[i], xl, yl);
+		y += yl / C.ClipY;
+	}
 }
 
 
@@ -1515,19 +1518,19 @@ function NewDraw2DLocationDot(Canvas C, vector Loc, int CenterX, int CenterY, in
 }
 
 
-function FastDraw2DHeightDot(Canvas C, vector Loc, int CenterX, int CenterY, int OutsideDiameter, Vector MyLocation, Float HeightDotSize, Float HalfHeightDotSize)
+function FastDraw2DHeightDot(Canvas C, vector Loc, int CenterX, int CenterY, int OutsideDiameter, Vector MyLocation, Float HeightDotSize, Float HalfHeightDotSize, int Step)
 {
     local int posCenterY;
 	local int zdiff;
+	const HeightScale = 0.005681818; // 1 / 176
 
-	zdiff = int((Loc.Z - MyLocation.Z) / 176);
-	zdiff = Clamp(zdiff, -5, 5);
+	zdiff = Clamp(int((Loc.Z - MyLocation.Z) * HeightScale), -5, 5);
 
-    posCenterY = CenterY - (OutsideDiameter * 0.1 * zdiff);
-
-    C.SetPos(CenterX - HalfHeightDotSize, posCenterY - HalfHeightDotSize); //adjust for dot size
+   // posCenterY = CenterY - (OutsideDiameter * 0.1 * zdiff);
+    posCenterY = CenterY - (Step * zdiff);
 
     C.Style = ERenderStyle.STY_Alpha;
+	C.SetPos(CenterX - HalfHeightDotSize, posCenterY - HalfHeightDotSize); //adjust for dot size
     C.DrawTile(LocationDot, HeightDotSize, HeightDotSize, 340, 432, 78, 78);
 }
 
