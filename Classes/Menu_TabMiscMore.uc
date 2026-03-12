@@ -2,8 +2,11 @@ class Menu_TabMiscMore extends UT2k3TabPanel;
 
 var automated moCheckBox EnableWidescreenFixes;
 var automated moCheckBox PlayOwnLandings;
-var automated moNumericEdit nu_MaxHUDPlayerCount;
+//var automated moNumericEdit nu_MaxHUDPlayerCount;
+//var automated moCheckBox ch_DirectionFromView;
+
 var automated GUISectionBackground sb_Section1;
+
 
 function bool AllowOpen(string MenuClass)
 {
@@ -30,13 +33,15 @@ function InitComponent(GUIController MyController, GUIComponent MyOwner)
 	
     EnableWidescreenFixes.Checked(class'Misc_Player'.default.bEnableWidescreenFix);
     PlayOwnLandings.Checked(class'Misc_Pawn'.default.bPlayOwnLandings);
-	nu_MaxHUDPlayerCount.SetComponentValue(class'Misc_Player'.default.MaxHUDPlayerCount);
-
+	//nu_MaxHUDPlayerCount.SetComponentValue(class'Misc_Player'.default.MaxHUDPlayerCount);
+	//ch_DirectionFromView.SetComponentValue(class'Freon_Player'.default.bDirectionFromView,true);
+	
 	class'Menu_Menu3SPN'.default.SettingsDirty = OldDirty;
 	
 	sb_Section1.ManageComponent(EnableWidescreenFixes);
 	sb_Section1.ManageComponent(PlayOwnLandings);
-	sb_Section1.ManageComponent(nu_MaxHUDPlayerCount);
+	//sb_Section1.ManageComponent(nu_MaxHUDPlayerCount);
+	//sb_Section1.ManageComponent(ch_DirectionFromView);
 
 }
 
@@ -59,10 +64,17 @@ function InternalOnChange( GUIComponent C )
                 Misc_Pawn(PlayerOwner().Pawn).SaveConfig();
             }            
 			break;
+/*
 		case nu_MaxHUDPlayerCount:
 			class'Misc_Player'.default.MaxHUDPlayerCount = nu_MaxHUDPlayerCount.GetValue();
 			class'Misc_Player'.default.bHUDChanged = True;
 			break;
+
+		case ch_DirectionFromView:
+			class'Freon_Player'.default.bDirectionFromView = ch_DirectionFromView.IsChecked();
+			class'Misc_Player'.default.bHUDChanged = True;
+			break;
+*/
 	}
 	
     Misc_Player(PlayerOwner()).ReloadDefaults();
@@ -84,26 +96,26 @@ defaultproperties
 
     Begin Object Class=moCheckBox Name=WidescreenFixCheck
          Caption="Enable Widescreen fixes:"
-         OnCreateComponent=WidescreenFixCheck.InternalOnCreateComponent
+		 Hint="(Not useful in patches later than v3369)."
          WinTop=0.010000
          WinLeft=0.100000
          WinWidth=0.350000
 		 TabOrder=1
          OnChange=Menu_TabMiscMore.InternalOnChange
      End Object
-     EnableWidescreenFixes=moCheckBox'3SPNv3225PIG.Menu_TabMiscMore.WidescreenFixCheck'
+     EnableWidescreenFixes=WidescreenFixCheck
 	
      Begin Object Class=moCheckBox Name=PlayOwnLandingsCheckBox
          Caption="Play Own Landing Sounds:"
-         OnCreateComponent=PlayOwnLandingsCheckBox.InternalOnCreateComponent
          WinTop=0.055000
          WinLeft=0.100000
          WinWidth=0.350000
 		 TabOrder=2
          OnChange=Menu_TabMiscMore.InternalOnChange
      End Object
-     PlayOwnLandings=moCheckBox'3SPNv3225PIG.Menu_TabMiscMore.PlayOwnLandingsCheckBox'	
+     PlayOwnLandings=PlayOwnLandingsCheckBox
  
+ /*
 	Begin Object class=moNumericEdit Name=MaxHUDPlayerCount
 		WinWidth=0.450000
 		WinLeft=0.517383
@@ -122,4 +134,11 @@ defaultproperties
 	End Object
 	nu_MaxHUDPlayerCount=MaxHUDPlayerCount
 
+     Begin Object Class=moCheckBox Name=DirectionFromView
+		Caption="Use view direction on radar when frozen"
+		Hint="When checked, direction is from view. Otherwise, direction is from frozen player rotation."
+		OnChange=InternalOnChange
+     End Object
+     ch_DirectionFromView=DirectionFromView
+*/
 }

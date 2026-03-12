@@ -3414,4 +3414,5 @@ defaultproperties
 	MaxSavedMoves=250
 	bEnableWidescreenFix=false
 	MaxHUDPlayerCount=9
+
 }

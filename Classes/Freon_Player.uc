@@ -1,8 +1,10 @@
 class Freon_Player extends Misc_Player;
 
 var Freon_Pawn FrozenPawn;
-
-
+var config bool bDirectionFromView;		// When frozen, use client view to inform radar blobs rather than the frozen pawn itself.
+var config bool bShowLiveTeammates;
+var config bool bShowOnlyFrozen;
+var config bool bShowWithAdren;
 
 replication
 {
@@ -10,6 +12,17 @@ replication
         ClientSendStatsFreon, ClientListBestFreon;
 }
 
+/*
+function DisplayDebug(Canvas Canvas, float XPos, float YPos)
+{
+	YPos += XPos * 2;
+	Canvas.SetPos(4, YPos);
+	Canvas.DrawText("----- Freon_Player INFO -----");
+	YPos += XPos;
+	Canvas.SetPos(4, YPos);
+	Canvas.DrawText("Freon_Player Location: "$Location$" Rotation: "$Rotation, false);
+}
+*/
 
 //Otherwise:  Freon_Player (Function Engine.PlayerController.ClientVoiceMessage:002C) Accessed None 'Player'
 function ClientVoiceMessage (PlayerReplicationInfo Sender, PlayerReplicationInfo Recipient, name messagetype, byte MessageID)
@@ -519,4 +532,8 @@ defaultproperties
      SoundHitVolume=1.026164
      SoundAloneVolume=1.300000
      PlayerReplicationInfoClass=Class'3SPNv3225PIG.Freon_PRI'
+	 bDirectionFromView=True
+	 bShowLiveTeammates=False
+	 bShowOnlyFrozen=False
+	 bShowWithAdren=False
 }

@@ -6,7 +6,8 @@ var Menu_TabBrightskins BSTab;
 var Menu_TabMisc MiscTab;
 var Menu_TabInfo InfoTab;
 var Menu_TabRanks StatsTab;
-var Menu_TabMiscMore Misc2Tab;
+//var Menu_TabMiscMore Misc2Tab;
+var Menu_TabHUD MiscHUD;
 var UT2k3TabPanel AdminTab;
 var Menu_TabTournamentAdmin TournamentAdminTab;
 
@@ -29,9 +30,10 @@ function InitComponent(GUIController MyController, GUIComponent MyOwner)
 		
     TabC = GUITabControl(Controls[2]);
 	InfoTab = Menu_TabInfo(TabC.AddTab("Info", "3SPNv3225PIG.Menu_TabInfo",, "General Information", DefaultToInfoTab));
+	MiscHUD = Menu_TabHUD(TabC.AddTab("HUD", "3SPNv3225PIG.Menu_Tabhud",, "HUD configuration", !DefaultToInfoTab));
 	//StatsTab = Menu_TabRanks(TabC.AddTab("Ranks", "3SPNv3225PIG.Menu_TabRanks",, "Ranks", false));
-    MiscTab = Menu_TabMisc(TabC.AddTab("Miscellaneous", "3SPNv3225PIG.Menu_TabMisc",, "Miscellaneous player options", !DefaultToInfoTab));
-	Misc2Tab = Menu_TabMiscMore(TabC.AddTab("More Misc", "3SPNv3225PIG.Menu_TabMiscMore",, "More Misc configuration", false));
+    MiscTab = Menu_TabMisc(TabC.AddTab("Miscellaneous", "3SPNv3225PIG.Menu_TabMisc",, "Miscellaneous player options", false));
+	//Misc2Tab = Menu_TabMiscMore(TabC.AddTab("More Misc", "3SPNv3225PIG.Menu_TabMiscMore",, "More Misc configuration", false));
     BSTab = Menu_TabBrightskins(TabC.AddTab("Brightskins & Models", "3SPNv3225PIG.Menu_TabBrightskins",, "Brightskins configuration", false));
 	NamesTab = Menu_TabColoredNames(TabC.AddTab("Colored Names", "3SPNv3225PIG.Menu_TabColoredNames",, "Colored Names", false));
 
@@ -41,8 +43,12 @@ function InitComponent(GUIController MyController, GUIComponent MyOwner)
 	//	log("Count not open tab Menu_TabRanks", '3SPN');
     if(MiscTab == None)
         log("Could not open tab Menu_TabMisc", '3SPN');
-	if(Misc2Tab == None)
-        log("Could not open tab Menu_TabDamage", '3SPN');
+	//if(Misc2Tab == None)
+    //  log("Could not open tab Menu_TabDamage", '3SPN');
+
+	if(MiscHUD == None)
+        log("Could not open tab Menu_TabHUD", '3SPN');
+
     if(BSTab == None)
         log("Could not open tab Menu_TabBrightskins", '3SPN');
 	if(NamesTab == None)

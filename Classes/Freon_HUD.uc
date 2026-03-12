@@ -20,10 +20,15 @@ var Misc_BaseGRI BGRI;
 var int ZAStartListY, widthA, ZAheight, halfRadarSize, ZAradarCenterX, ZAnamey, heightPlusSpaceA, radarSize, posxA, namexA, MaxHUDPlayerCount, HeightStep;
 var float heightOffset, CU, startX, healthBlob, halfHealthBlob, dotSize, HalfdotSize, dotLength, MaxNamePosA, HeightDotSize, HalfHeightDotSize;
 var color FrozenColorBack;
+var bool bDirectionFromView, bShowLiveTeammates, bShowOnlyFrozen, bShowWithAdren;
+
+
 
 //Enemies:
 var int namexE, widthE, posxE, heightPlusSpaceE;
 var float scale, MaxNamePosE, discSize, discSizeSquash, HDxoffset, HDWidth, HDHeight, HDHeightOffset;
+
+var localized string liveTeammates;
 
 // Note: This class is held in variable PlayerController.myHUD
 
@@ -260,22 +265,16 @@ function FastDraw2DLocationDot(Canvas C, vector Loc, int CenterX, int CenterY, i
 // Optimised for speed by Piglet, without too much change in function.
 simulated function DrawPlayersExtendedZAxis(Canvas C, bool ExtendedInfo)
 {
-    local int i;
-    local int HUDOwnerTeam; //team for the HUDOwner
-    local float xl;
-    local float yl;
-    local int posy;
+    local int i, drawnAllies, drawnEnemies, allies, enemies, liveAllies, radarCenterY, health, posy, HUDOwnerTeam;
+    local float xl, yl;
     local string name;
     local Misc_PRI pri;
-    local int health;
-	local int radarCenterY;
-    local int allies;
-    local int enemies;
-	local Freon_PawnReplicationInfo FPRI;
+    local Freon_PawnReplicationInfo FPRI;
 	local color HealthRampColor;
-	local Freon_Player FP;
-	local Actor Start;
 	local vector MyLocation, MyLocationX, MyLocationY, MyLocationZ;
+	local rotator MyRotation;
+	local pawn P;
+	local array <Misc_PRI> MyAllies, MyEnemies;
 	
     if(myOwner == None)
         return;
@@ -350,6 +349,10 @@ simulated function DrawPlayersExtendedZAxis(Canvas C, bool ExtendedInfo)
 		HDHeight = C.ClipY * 0.0185 * Scale;
 		HDHeightOffset = 0.0035 * Scale * C.ClipY;
 		discSizeSquash = C.ClipY * 0.026 * Scale;
+		bDirectionFromView = class'Freon_Player'.default.bDirectionFromView;
+		bShowLiveTeammates = class'Freon_Player'.default.bShowLiveTeammates;
+		bShowOnlyFrozen = class'Freon_Player'.default.bShowOnlyFrozen;
+		bShowWithAdren = class'Freon_Player'.default.bShowWithAdren;
 
 	}
 
@@ -357,42 +360,98 @@ simulated function DrawPlayersExtendedZAxis(Canvas C, bool ExtendedInfo)
 
 	// Things to calculate every frame - but only before looping, so it's only done once rather than for every loop iteration
 	// Calculate base point for direction and height indicators
-    if (PlayerOwner.Pawn != None)				// Live
-        Start = PlayerOwner.Pawn;
-    else
+	P = PlayerOwner.Pawn;
+    if (P != None)									// Alive
 	{
-		FP = Freon_Player(PlayerOwner);			// Frozen
-		if (FP != None && FP.FrozenPawn != None)
-			Start = FP.FrozenPawn;				// Piglet: Want to know how to change this to the rotation of the 3rd person view of the frozen player
-		else
-			if (PlayerOwner.ViewTarget != None)	// Spectating
-				Start = PlayerOwner.ViewTarget;
+		MyLocation = P.Location;
+		MyRotation = P.Rotation;
+	}
+    else
+		if (bDirectionFromView || PlayerOwner.ViewTarget == None)  // From own viewpoint // should never be none, but added for safety!
+		{
+			MyLocation = PlayerOwner.CalcViewLocation;
+			MyRotation = PlayerOwner.CalcViewRotation;
+		}
+		else														// From perspective of who you're viewing: own Frozen pawn, or who you're spectating
+		{
+			MyLocation = PlayerOwner.ViewTarget.Location;
+			MyRotation = PlayerOwner.ViewTarget.Rotation;
+		}
+
+	GetAxes(MyRotation, MyLocationX, MyLocationY, MyLocationZ); //save away current rotation
+
+	// Split into teams:
+	for(i = 0; i < MyOwner.GameReplicationInfo.PRIArray.Length; i++)
+    {
+		PRI = Misc_PRI(myOwner.GameReplicationInfo.PRIArray[i]);
+		if(PRI == None || !ShouldDrawPlayer(PRI))
+            continue;
+
+		if (PRI.Team.TeamIndex == HUDOwnerTeam)
+		{
+			FPRI = Freon_PawnReplicationInfo(PRI.PawnReplicationInfo);
+
+			if (!FPRI.bFrozen)
+				liveAllies++;
+
+			if (bShowOnlyFrozen && !FPRI.bFrozen)
+				if (!(bShowWithAdren && FPRI.Adrenaline > 99))
+						continue;
+
+			if (allies > MaxHUDPlayerCount)
+			{
+				if (enemies > MaxHUDPlayerCount && bShowLiveTeammates)
+					continue;	// Don't need this one, but carry on looking in case there are any more live teammates to count
+				else
+					break;		// Don't need to carry on looking for anything as have all the info needed
+			}
 			else
-				Start = PlayerOwner;			// Dead
+			{
+				MyAllies[allies] = PRI;
+				allies++;
+			}
+		}
+		else
+		{
+			if (enemies > MaxHUDPlayerCount)
+			{
+				if (allies > MaxHUDPlayerCount)
+					break;
+				else
+					continue;
+			}
+			else
+			{
+				MyEnemies[enemies] = PRI;
+				enemies++;
+			}
+		}
 	}
 
-    MyLocation = Start.Location;
-	GetAxes(Start.Rotation, MyLocationX, MyLocationY, MyLocationZ); //save away current rotation
+	// Number of players!
+	if (bShowLiveTeammates)
+	{
+		C.DrawColor = default.BlackColor;
+		C.SetPos(namexA, ZAStartListY);
+		C.DrawColor.A = 100;
+		C.DrawTile(TeamTex, widthA, ZAheight, 168, 211, 166, 44);
+		name = liveTeammates@liveAllies;
+        C.DrawColor = NameColor;
+        C.SetPos(namexA, ZAStartListY + ZAnamey);
+        class'Misc_Util'.static.DrawTextClipped(C, name, MaxNamePosA);
+		drawnAllies++;
+	}
+
     //
     // draw own team / allies
     //
     // loop this twice, once for each team, allies first
-    for(i = 0; i < MyOwner.GameReplicationInfo.PRIArray.Length; i++)
+    for(i = 0; i < MyAllies.Length; i++)
     {
-        if(allies > MaxHUDPlayerCount)
-            break;
-
-        PRI = Misc_PRI(myOwner.GameReplicationInfo.PRIArray[i]);
+		PRI = MyAllies[i];
 		FPRI = Freon_PawnReplicationInfo(PRI.PawnReplicationInfo);
 
-        if(!ShouldDrawPlayer(PRI))
-            continue;
-
-        if(PRI.Team.TeamIndex != HUDOwnerTeam)
-            continue; // allies first
-
-        posy = ZAStartListY + (heightPlusSpaceA * allies);	// Vertical alignment of drawing
-
+        posy = ZAStartListY + (heightPlusSpaceA * drawnAllies);	// Vertical alignment of drawing
 		HealthRampColor = GetHealthRampColor(PRI);
 
         //draw the text areas if they are showing team info
@@ -445,15 +504,13 @@ simulated function DrawPlayersExtendedZAxis(Canvas C, bool ExtendedInfo)
 				//
 				// health text
 				//
-				if(FPRI != None &&
-				   FPRI.bFrozen)
+				if(FPRI != None && FPRI.bFrozen)
 				{
-					health = PRI.PawnReplicationInfo.Health;
-					health = PRI.PawnReplicationInfo.Health;
+					health = FPRI.Health;
 				}
 				else
 				{
-					health = PRI.PawnReplicationInfo.Health + PRI.PawnReplicationInfo.Shield;
+					health = FPRI.Health + FPRI.Shield;
 				}
 
 				name = string(health);
@@ -465,12 +522,12 @@ simulated function DrawPlayersExtendedZAxis(Canvas C, bool ExtendedInfo)
 				//
 				// draw adrenaline amount text
 				//
-				if(PRI.PawnReplicationInfo.Adrenaline<100)
+				if(FPRI.Adrenaline<100)
 					C.DrawColor = AdrenColor;
 				else
 					C.DrawColor = FullAdrenColor;
 
-				name = string(PRI.PawnReplicationInfo.Adrenaline);
+				name = string(FPRI.Adrenaline);
 				C.StrLen(name, xl, yl);
 				C.SetPos(startX - xl, posy + heightOffset + ZAnamey);
 				C.DrawText(name);
@@ -505,50 +562,38 @@ simulated function DrawPlayersExtendedZAxis(Canvas C, bool ExtendedInfo)
 				C.SetPos(ZAradarCenterX - halfHealthBlob, radarCenterY - halfHealthBlob);
 
 				// player height is 88 use two player heights 176
-				if(PRI.PawnReplicationInfo.Position.Z > (PlayerOwner.ViewTarget.Location.Z + 176))
+				if(FPRI.Position.Z > (PlayerOwner.ViewTarget.Location.Z + 176))
 					C.DrawTile(Hudzaxis, healthBlob, healthBlob, 80, 1, 78, 78); //plus
-				else if (PRI.PawnReplicationInfo.Position.Z < (PlayerOwner.ViewTarget.Location.Z - 176))
+				else if (FPRI.Position.Z < (PlayerOwner.ViewTarget.Location.Z - 176))
 					C.DrawTile(Hudzaxis, healthBlob, healthBlob, 160, 1, 78, 78); //minus
 				}			
 			else
 				if (BGRI.bHeightRadar){
 					C.DrawColor = HeightDotColor;
-					FastDraw2DHeightDot(C, PRI.PawnReplicationInfo.Position, ZAradarCenterX, radarCenterY, radarSize, MyLocation,  HeightDotSize, HalfHeightDotSize, HeightStep);
+					FastDraw2DHeightDot(C, FPRI.Position, ZAradarCenterX, radarCenterY, radarSize, MyLocation,  HeightDotSize, HalfHeightDotSize, HeightStep);
 				}
 		}		
         //
         // draw location dot
         //
         // don't draw location dot when viewing spec players own HUD entry
-        if(PlayerOwner.ViewTarget == None ||
-           PRI != Misc_PRI(Pawn(PlayerOwner.ViewTarget).PlayerReplicationInfo))
+        if(PlayerOwner.ViewTarget == None || PRI != Misc_PRI(Pawn(PlayerOwner.ViewTarget).PlayerReplicationInfo))
         {
             C.DrawColor = WhiteColor;
-            FastDraw2DLocationDot(C, PRI.PawnReplicationInfo.Position, ZAradarCenterX, radarCenterY, dotSize, HalfdotSize, dotLength, MyLocation, MyLocationX, MyLocationY);
+            FastDraw2DLocationDot(C, FPRI.Position, ZAradarCenterX, radarCenterY, dotSize, HalfdotSize, dotLength, MyLocation, MyLocationX, MyLocationY);
 		}
-        // friends shown
-        allies++;
+		drawnAllies++;
     }
 
     //
     // enemies
     //
-    for(i = 0; i < MyOwner.GameReplicationInfo.PRIArray.Length; i++)
+    for(i = 0; i < MyEnemies.Length; i++)
     {
-        if(enemies > MaxHUDPlayerCount)
-            break;
-
-        PRI = Misc_PRI(myOwner.GameReplicationInfo.PRIArray[i]);
+		PRI = MyEnemies[i];
 		FPRI = Freon_PawnReplicationInfo(PRI.PawnReplicationInfo);
 
-        if(!ShouldDrawPlayer(PRI))
-            continue;
-
-        if(PRI.Team.TeamIndex == HUDOwnerTeam)
-            continue;
-
-
-        posy = ZAStartListY + (heightPlusSpaceE * enemies);
+        posy = ZAStartListY + (heightPlusSpaceE * drawnEnemies);
 
         //draw the text areas if they are showing team info
         if(class'Misc_Player'.default.bShowTeamInfo)
@@ -595,9 +640,7 @@ simulated function DrawPlayersExtendedZAxis(Canvas C, bool ExtendedInfo)
         }
         C.SetPos(posxE - HDxoffset, posy + HDHeightOffset);
         C.DrawTile(TeamTex, HDWidth, HDHeight, 340, 432, 78, 78);
-
-        // enemies shown
-        enemies++;
+		drawnEnemies++;
     }
 }
 
@@ -608,11 +651,12 @@ simulated function DrawPlayersExtendedZAxis(Canvas C, bool ExtendedInfo)
 
 defaultproperties
 {
-     FrozenBeacon=Texture'3SPNv3225PIG.textures.Flake'
-     DeathBeacon=Texture'3SPNv3225PIG.textures.Death'
-     SuicideBeacon=Texture'3SPNv3225PIG.textures.Suicide'
-     ThawBarWidth=50.000000
-     ThawBarHeight=10.000000
-     ThawBackMat=Texture'InterfaceContent.Menu.BorderBoxD'
-     ThawBarMat=Texture'ONSInterface-TX.HealthBar'
+	FrozenBeacon=Texture'3SPNv3225PIG.textures.Flake'
+	DeathBeacon=Texture'3SPNv3225PIG.textures.Death'
+	SuicideBeacon=Texture'3SPNv3225PIG.textures.Suicide'
+	ThawBarWidth=50.000000
+	ThawBarHeight=10.000000
+	ThawBackMat=Texture'InterfaceContent.Menu.BorderBoxD'
+	ThawBarMat=Texture'ONSInterface-TX.HealthBar'
+	liveTeammates="Live Teammates:"
 }

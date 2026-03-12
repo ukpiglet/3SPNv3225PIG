@@ -563,6 +563,7 @@ State Frozen
     event Landed( vector HitNormal )
     {
         Velocity = vect(0,0,0);
+		Acceleration = vect(0,0,0);   // Stop "sliding"?
         SetPhysics(PHYS_Walking);
         LastHitBy = None;
         PlaySound(default.ImpactSounds[Rand(6)], SLOT_Pain, 1.5 * TransientSoundVolume);

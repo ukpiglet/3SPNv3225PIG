@@ -1526,7 +1526,6 @@ function FastDraw2DHeightDot(Canvas C, vector Loc, int CenterX, int CenterY, int
 
 	zdiff = Clamp(int((Loc.Z - MyLocation.Z) * HeightScale), -5, 5);
 
-   // posCenterY = CenterY - (OutsideDiameter * 0.1 * zdiff);
     posCenterY = CenterY - (Step * zdiff);
 
     C.Style = ERenderStyle.STY_Alpha;

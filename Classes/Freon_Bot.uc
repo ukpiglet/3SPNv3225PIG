@@ -110,12 +110,15 @@ state RestFormation
 	}
 }
 
+/*
 function DisplayDebug(Canvas Canvas, out float YL, out float YPos){
 	Canvas.DrawText("Piglet DisplayDebug", false);
 
 	YPos += 2*YL;
 	super.DisplayDebug(Canvas, YL, YPos);
 }
+
+*/
 
 function bool WeaponFireAgain(float RefireRate, bool bFinishedFire)
 {
