@@ -121,10 +121,6 @@ var config float NewNetExp_ThresholdProj;
 var config float NewNetExp_ThresholdHS;
 var config float NewNetExp_ProjMult;
 var config float NewNetExp_HSMult;
-var config bool UTComp_MoveRep;
-var config float MinNetUpdateRate;
-var config float MaxNetUpdateRate;
-
 var TAM_Mutator MutTAM;
 /* newnet */
 
@@ -209,7 +205,6 @@ var config bool AlwaysRestartServerWhenEmpty;
 var config bool bKeepMomentumOnLanding;
 var config bool bLockRolloff;
 var config float RolloffMinValue;
-var config int MaxSavedMoves;
 
 var Sound OvertimeSound;
 
@@ -323,9 +318,6 @@ function InitGameReplicationInfo()
 	Misc_BaseGRI(GameReplicationInfo).NewNetExp_ThresholdHS = NewNetExp_ThresholdHS;
 	Misc_BaseGRI(GameReplicationInfo).NewNetExp_ProjMult = NewNetExp_ProjMult;
 	Misc_BaseGRI(GameReplicationInfo).NewNetExp_HSMult = NewNetExp_HSMult;
-	Misc_BaseGRI(GameReplicationInfo).UTComp_MoveRep = UTComp_MoveRep;
-	Misc_BaseGRI(GameReplicationInfo).MinNetUpdateRate = MinNetUpdateRate;
-	Misc_BaseGRI(GameReplicationInfo).MaxNetUpdateRate = MaxNetUpdateRate;
 	Misc_BaseGRI(GameReplicationInfo).AutoBalanceAvgPPRWeight = AutoBalanceAvgPPRWeight;
 	Misc_BaseGRI(GameReplicationInfo).BotsPPR = BotsPPR;
 	Misc_BaseGRI(GameReplicationInfo).StartUsingCurrPPRAfterRounds = StartUsingCurrPPRAfterRounds;
@@ -333,7 +325,6 @@ function InitGameReplicationInfo()
     Misc_BaseGRI(GameReplicationInfo).bLockRolloff = bLockRolloff;
     Misc_BaseGRI(GameReplicationInfo).RollOffMinValue = RollOffMinValue;	
 	Misc_BaseGRI(GameReplicationInfo).bKeepMomentumOnLanding = bKeepMomentumOnLanding;
-	Misc_BaseGRI(GameReplicationInfo).MaxSavedMoves = MaxSavedMoves;
 }
 
 function GetServerDetails(out ServerResponseLine ServerState)
@@ -438,11 +429,7 @@ static function FillPlayInfo(PlayInfo PI)
 	PI.AddSetting("3SPN", "NewNetExp_HSMult", "Hitscan multiplier (Requires NewNetExp)", 0, Weight++, "Text", "8;-4.0:4.0",, True);
 	PI.AddSetting("3SPN", "NewNetExp_ThresholdProj", "Projectile threshold (Requires NewNetExp)", 0, Weight++, "Text", "8;0.0:0.3",, True);
 	PI.AddSetting("3SPN", "NewNetExp_ThresholdHS", "Hitscan threshold (Requires NewNetExp)", 0, Weight++, "Text", "8;0.0:0.3",, True);
-	
-	PI.AddSetting("3SPN", "UTComp_MoveRep", "UTComp movement replication path", 0, Weight++, "Check",,, True);
-	PI.AddSetting("3SPN", "MinNetUpdateRate", "Minimum allowed update rate (Requires UTComp_MoveRep)", 0, Weight++, "Text", "8;20.0:120.0",, True);
-	PI.AddSetting("3SPN", "MaxNetUpdateRate", "Maximum allowed update rate (Requires UTComp_MoveRep)", 0, Weight++, "Text", "8;100.0:500.0",, True);
-	
+
     PI.AddSetting("3SPN", "EndCeremonyEnabled", "Enable End Ceremony", 0, Weight++, "Check");
     PI.AddSetting("3SPN", "RoundCanTie", "Rounds Can Tie", 0, Weight++, "Check");
     PI.AddSetting("3SPN", "bSpawnProtectionOnRez", "Enable Spawn Protection After Resurrection", 0, Weight++, "Check");
@@ -482,8 +469,6 @@ static function FillPlayInfo(PlayInfo PI)
 	PI.AddSetting("3SPN", "bLockRolloff", "Lock Rolloff", 0, Weight++, "Check",,, True);
     PI.AddSetting("3SPN", "RolloffMinValue", "Minimum value for Audio Rolloff", 0, Weight++, "Text", "8;0.0:1.0");
 	PI.AddSetting("3SPN", "bKeepMomentumOnLanding", "Keep momentum on landing (gliding)", 0, Weight++, "Check",,, True);
-	PI.AddSetting("3SPN", "MaxSavedMoves", "Max saved player moves (warping fix)", 0, Weight++, "Text", "3;100:333");
-	
 
     //serverlink menu entry
     Weight = 1;
@@ -550,10 +535,6 @@ static event string GetDescriptionText(string PropName)
 	  case "NewNetExp_ProjMult":					return "Multiple of tickrate to add to the player latency for projectiles";
 	  case "NewNetExp_HSMult":					return "Multiple of tickrate to add to the player latency for hitscan";
 	  
-	  case "UTComp_MoveRep":				return "Enable movement replication rate control by Daeod";
-	  case "MinNetUpdateRate":				return "The minimum updates per second allowed";
-	  case "MaxNetUpdateRate":				return "The maximum updates per second allowed";
-	  
       case "EndCeremonyEnabled":            return "Enable End Ceremony";
       case "AllowPersistentStatsWithBots":  return "Allow Persistent Stats With Bots";
       case "AllowPersistentStatsIfMoreThan":  return "Allow Persistent Stats With at least this many players";
@@ -606,7 +587,7 @@ static event string GetDescriptionText(string PropName)
 	  case "bLockRolloff":              return "Lock the sound rolloff value";
       case "RolloffMinValue":           return "Minimum value for sound rolloff (0.4)";
 	  case "bKeepMomentumOnLanding":    return "No slow down when landing from jump/dodge";
-	  case "MaxSavedMoves": 			return "Max saved moves for player (warping fix)";
+
     }
 
     return Super.GetDescriptionText(PropName);
@@ -4118,15 +4099,11 @@ defaultproperties
 	NewNetExp_ThresholdHS=0.2
 	NewNetExp_ProjMult=-2.0
 	NewNetExp_HSMult=1.0
-	UTComp_MoveRep=True
-	MinNetUpdateRate=90
-    MaxNetUpdateRate=250
 	misc_util_class=class'Misc_Util'
 	bPigletBalance=True
 	bDebug=False
 	bLockRolloff=true
     RollOffMinValue=0.4
 	bKeepMomentumOnLanding=false
-	MaxSavedMoves=333 // default is 100, good up to 200fps
 }
 

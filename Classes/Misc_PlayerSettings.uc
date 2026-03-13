@@ -48,8 +48,6 @@ struct MiscSettings
 	var float SoundHitVolume;
 	var float SoundAloneVolume;
 	var bool AutoSyncSettings;
-	var bool NewClientReplication;
-	var int ClientReplRateBehavior;
 	var bool bEnableWidescreenFix;
 	var bool bPlayOwnLandings;
 };

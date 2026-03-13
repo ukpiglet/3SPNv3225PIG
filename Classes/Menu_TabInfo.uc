@@ -38,7 +38,6 @@ function bool OnClick(GUIComponent C)
     if(C == InfoButton) // More info
     {
 		PlayerOwner().ClientTravel("http://miasma.rocks/freon", TRAVEL_Absolute, false);
-		Misc_Player(PlayerOwner()).FindPlayerInput();
     }
 		
 	return true;

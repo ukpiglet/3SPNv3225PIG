@@ -58,10 +58,6 @@ var float NewNetExp_ThresholdHS;
 var float NewNetExp_ProjMult;
 var float NewNetExp_HSMult;
 
-var bool UTComp_MoveRep;
-var float MinNetUpdateRate;
-var float MaxNetUpdateRate;
-
 var int StartUsingCurrPPRAfterRounds;
 var float AutoBalanceAvgPPRWeight;
 var float BotsPPR;
@@ -69,8 +65,6 @@ var float BotsPPR;
 var bool bLockRolloff;
 var float RolloffMinValue;
 var bool bKeepMomentumOnLanding;
-var int MaxSavedMoves;
-
 var Team_GameBase.EServerLinkStatus ServerLinkStatus; //enum type dependson Team_GameBase
 
 replication
@@ -84,9 +78,8 @@ replication
         FlagTextureEnabled, FlagTextureName, FlagTextureShowAcronym, SoundAloneName,
         SoundSpawnProtectionName, 
         ScoreboardCommunityName, ScoreboardRedTeamName, ScoreboardBlueTeamName, UseZAxisRadar, bHeightRadar,
-        ServerLinkStatus, bUseChatIcon, NewNetExp, NewNetExp_ThresholdProj, NewNetExp_ThresholdHS, NewNetExp_ProjMult, NewNetExp_HSMult, UTComp_MoveRep, MinNetUpdateRate, MaxNetUpdateRate, 
-		AutoBalanceAvgPPRWeight, BotsPPR, StartUsingCurrPPRAfterRounds, bLockRolloff, RollOffMinValue, bKeepMomentumOnLanding, MaxSavedMoves
-		; //, MaxAdrenaline;
+        ServerLinkStatus, bUseChatIcon, NewNetExp, NewNetExp_ThresholdProj, NewNetExp_ThresholdHS, NewNetExp_ProjMult, NewNetExp_HSMult, 
+		AutoBalanceAvgPPRWeight, BotsPPR, StartUsingCurrPPRAfterRounds, bLockRolloff, RollOffMinValue, bKeepMomentumOnLanding;
 		
 		
 

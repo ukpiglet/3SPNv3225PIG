@@ -7,7 +7,6 @@ var automated GUISectionBackground sb_SectionHUD, sb_SectionNet, sb_SectionSound
 var automated moCheckBox ch_EnableEnhancedNetCode, ch_DisableOwnFootsteps, ch_AutoScreenShot, ch_DisableSpeed, ch_DisableBooster, ch_DisableBerserk, ch_DisableInvis;
 var automated moCheckBox ch_PlayOwnLandings, ch_DisableEndCeremonySound, ch_UseHitSounds, ch_AutoSyncSettings;
 var automated moSlider sl_SoundHitVolume, sl_SoundAloneVolume;
-var automated moComboBox cb_NewClientReplication, cb_NetUpdateRate;
 
 //Buttons
 var automated GUIButton btn_LoadSettingsButton, btn_SaveSettingsButton, btn_TimeoutButton;
@@ -62,31 +61,7 @@ function InitComponent(GUIController MyController, GUIComponent MyOwner)
 
 // Net
 	ch_EnableEnhancedNetCode.SetComponentValue(class'Misc_Player'.default.bEnableEnhancedNetCode,true);
-
-	cb_NewClientReplication.AddItem("Default");
-	cb_NewClientReplication.AddItem("Adjustable");
-	cb_NewClientReplication.ReadOnly(True);
-
-	cb_NetUpdateRate.AddItem("Minimum Rate");
-	cb_NetUpdateRate.AddItem("Medium Rate");
-	cb_NetUpdateRate.AddItem("Maximum Rate");
-	cb_NetUpdateRate.ReadOnly(True);
-
-	if( class'Misc_Player'.default.NewClientReplication )
-	{
-		cb_NewClientReplication.SetIndex(1);
-	}
-	else
-	{
-		cb_NewClientReplication.SetIndex(0);
-		cb_NetUpdateRate.DisableMe();
-	}
-
-	cb_NetUpdateRate.SetIndex(class'Misc_Player'.default.ClientReplRateBehavior);
-
 	sb_SectionNet.ManageComponent(ch_EnableEnhancedNetCode);
-	sb_SectionNet.ManageComponent(cb_NewClientReplication);
-	sb_SectionNet.ManageComponent(cb_NetUpdateRate);
 
 // Net/Misc
 	ch_AutoSyncSettings.SetComponentValue(class'Misc_Player'.default.AutoSyncSettings,true);
@@ -133,11 +108,6 @@ function InitComponent(GUIController MyController, GUIComponent MyOwner)
 		if(!GRI.EnableNewNet)
 			ch_EnableEnhancedNetCode.DisableMe();
 
-		if(!GRI.UTComp_MoveRep)
-		{
-			cb_NetUpdateRate.DisableMe();
-			cb_NewClientReplication.DisableMe();
-		}
 	}
 	else
 	{
@@ -273,24 +243,6 @@ function InternalOnChange( GUIComponent C )
 
 		case ch_AutoSyncSettings:
 			class'Misc_Player'.default.AutoSyncSettings = ch_AutoSyncSettings.IsChecked();
-			break;
-
-		case cb_NewClientReplication:
-			if( cb_NewClientReplication.GetIndex() == 0)
-			{
-				class'Misc_Player'.default.NewClientReplication = False;
-				cb_NetUpdateRate.DisableMe();
-			}
-			else
-			{
-				cb_NetUpdateRate.EnableMe();
-				class'Misc_Player'.default.NewClientReplication = True;
-			}
-			break;
-
-		case cb_NetUpdateRate:
-			class'Misc_Player'.default.ClientReplRateBehavior = cb_NetUpdateRate.GetIndex();
-			Misc_Player(PlayerOwner()).SetNetUpdateRate(cb_NetUpdateRate.GetIndex());
 			break;
 
 	}
@@ -451,27 +403,11 @@ defaultproperties
 	End Object
 	ch_EnableEnhancedNetCode=EnableEnhancedNetCode
 
-	Begin Object Class=moComboBox Name=NewClientReplication
-		Caption="Client Tickrate:"
-		Hint="Adjustable allows you to set higher net update rates, and includes the eyeheight fix."
-		OnChange=InternalOnChange
-		TabOrder=13
-	End Object
-	cb_NewClientReplication=NewClientReplication
-
-	Begin Object Class=moComboBox Name=NetUpdateRate
-		Caption="Net Update Rate:"
-		Hint="Configures NetUpdateRate. Minimum is MinNetUpdateRate. Medium is half way between. Maximum is MaxNetUpdateRate."
-		OnChange=InternalOnChange
-		TabOrder=14
-	End Object
-	cb_NetUpdateRate=NetUpdateRate
-
 	Begin Object Class=moCheckBox Name=AutoScreenShot
 		Caption="Take End-game Screenshot:"
 		Hint="Take End-game Screenshot at end of each map."
 		OnChange=InternalOnChange
-		TabOrder=15
+		TabOrder=13
 	End Object
 	ch_AutoScreenShot=AutoScreenShot
 
@@ -479,7 +415,7 @@ defaultproperties
 		Caption="Sync Settings With Server:"
 		Hint="Sync Settings With Server."
 		OnChange=InternalOnChange
-		TabOrder=16
+		TabOrder=14
 	End Object
 	ch_AutoSyncSettings=AutoSyncSettings
 
@@ -488,7 +424,7 @@ defaultproperties
 		Caption="Disable Speed:"
 		Hint="Disable Speed combo."
 		OnChange=InternalOnChange
-		TabOrder=17
+		TabOrder=15
 	End Object
 	ch_DisableSpeed=DisableSpeed
 
@@ -496,7 +432,7 @@ defaultproperties
 		Caption="Disable Booster:"
 		Hint="Disable Booster combo."
 		OnChange=InternalOnChange
-		TabOrder=18
+		TabOrder=16
 	End Object
 	ch_DisableBooster=DisableBooster
 
@@ -504,7 +440,7 @@ defaultproperties
 		Caption="Disable Berserk:"
 		Hint="Disable Berserk combo."
 		OnChange=InternalOnChange
-		TabOrder=19
+		TabOrder=17
 	End Object
 	ch_DisableBerserk=DisableBerserk
 
@@ -512,7 +448,7 @@ defaultproperties
 		Caption="Disable Invisibility:"
 		Hint="Disable Invisibility combo."
 		OnChange=InternalOnChange
-		TabOrder=20
+		TabOrder=18
 	End Object
 	ch_DisableInvis=DisableInvis
 
@@ -521,7 +457,7 @@ defaultproperties
 		Caption="Disable Own Footsteps:"
 		Hint="Disable Own Footsteps."
 		OnChange=InternalOnChange
-		TabOrder=21
+		TabOrder=19
 	End Object
 	ch_DisableOwnFootsteps=DisableOwnFootsteps
 
@@ -529,7 +465,7 @@ defaultproperties
 		Caption="Play Own Landing Sounds:"
 		Hint="Play Own Landing Sounds."
 		OnChange=InternalOnChange
-		TabOrder=22
+		TabOrder=20
 	End Object
 	ch_PlayOwnLandings=PlayOwnLandings
 
@@ -537,7 +473,7 @@ defaultproperties
 		Caption="Disable End Ceremony Sounds:"
 		Hint="Disable End Ceremony Sounds."
 		OnChange=InternalOnChange
-		TabOrder=23
+		TabOrder=21
 	End Object
 	ch_DisableEndCeremonySound=DisableEndCeremonySound
 
@@ -545,7 +481,7 @@ defaultproperties
 		Caption="Disable Hitsounds:"
 		Hint="Disable Hitsounds."
 		OnChange=InternalOnChange
-		TabOrder=24
+		TabOrder=22
 	End Object
 	ch_UseHitSounds=UseHitSounds
 
@@ -554,7 +490,7 @@ defaultproperties
 		Hint="HitSound Volume."
 		MaxValue=2
 		OnChange=InternalOnChange
-		TabOrder=25
+		TabOrder=23
 	End Object
 	sl_SoundHitVolume=SoundHitVolume
 
@@ -563,7 +499,7 @@ defaultproperties
 		Hint="Alone Volume."
 		MaxValue=2
 		OnChange=InternalOnChange
-		TabOrder=26
+		TabOrder=24
 	End Object
 	sl_SoundAloneVolume=SoundAloneVolume
 
@@ -576,7 +512,7 @@ defaultproperties
 		WinWidth=0.250000
 		WinHeight=0.080000
 		OnClick=OnClick
-		TabOrder=27
+		TabOrder=25
 	End Object
 	btn_LoadSettingsButton=LoadSettingsButton
 
@@ -588,7 +524,7 @@ defaultproperties
 		WinWidth=0.250000
 		WinHeight=0.080000
 		OnClick=OnClick
-		TabOrder=28
+		TabOrder=26
 	End Object
 	btn_SaveSettingsButton=SaveSettingsButton
 
@@ -600,7 +536,7 @@ defaultproperties
 		WinWidth=0.400000
 		WinHeight=0.080000
 		OnClick=OnClick
-		TabOrder=29
+		TabOrder=27
 	End Object
 	btn_TimeoutButton=TimeoutButton
 }

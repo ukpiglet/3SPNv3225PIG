@@ -78,55 +78,6 @@ event EncroachedBy( actor Other ){
 		Super.EncroachedBy(Other);
 }
 
-// New EyeHeight algo from Deaod
-event UpdateEyeHeight( float DeltaTime )
-{
-    local vector Delta;
-    if (class'Misc_Player'.default.NewClientReplication == false) {
-        super.UpdateEyeHeight(DeltaTime);
-        return;
-    }
-    if ( Controller == None )
-    {
-        EyeHeight = 0;
-        return;
-    }
-    if ( Level.NetMode == NM_DedicatedServer )
-    {
-        Eyeheight = BaseEyeheight;
-        return;
-    }
-    if ( bTearOff )
-    {
-        EyeHeight = Default.BaseEyeheight;
-        bUpdateEyeHeight = false;
-        return;
-    }
-    if (Controller.WantsSmoothedView()) {
-        Delta = Location - OldLocation;
-		
-		// remove lifts from the equation.
-        if (Base != none)
-            Delta -= DeltaTime * Base.Velocity;
-			
-        // Step detection heuristic
-        if (IgnoreZChangeTicks == 0 && Abs(Delta.Z) > DeltaTime * GroundSpeed)
-            EyeHeightOffset += FClamp(Delta.Z, -MAXSTEPHEIGHT, MAXSTEPHEIGHT);
-    }
-	
-    OldLocation = Location;
-    OldPhysics2 = Physics;
-    if (IgnoreZChangeTicks > 0) IgnoreZChangeTicks--;
-	
-	if (Controller.WantsSmoothedView())
-		EyeHeightOffset += BaseEyeHeight - OldBaseEyeHeight;
-
-    OldBaseEyeHeight = BaseEyeHeight;
-    EyeHeightOffset *= Exp(-9.0 * DeltaTime);
-    EyeHeight = BaseEyeHeight - EyeHeightOffset;
-    Controller.AdjustView(DeltaTime);
-}
-
 simulated function Destroyed()
 {
     if(InvisEmitter != None)
