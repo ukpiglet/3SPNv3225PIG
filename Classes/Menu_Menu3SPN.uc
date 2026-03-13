@@ -3,11 +3,9 @@ class Menu_Menu3SPN extends UT2k3GUIPage;
 var GUITabControl TabC;
 var Menu_TabColoredNames NamesTab;
 var Menu_TabBrightskins BSTab;
-var Menu_TabMisc MiscTab;
 var Menu_TabInfo InfoTab;
-var Menu_TabRanks StatsTab;
-//var Menu_TabMiscMore Misc2Tab;
-var Menu_TabHUD MiscHUD;
+//var Menu_TabRanks StatsTab;
+var Menu_TabNewMisc NewMiscHUD;
 var UT2k3TabPanel AdminTab;
 var Menu_TabTournamentAdmin TournamentAdminTab;
 
@@ -30,27 +28,22 @@ function InitComponent(GUIController MyController, GUIComponent MyOwner)
 		
     TabC = GUITabControl(Controls[2]);
 	InfoTab = Menu_TabInfo(TabC.AddTab("Info", "3SPNv3225PIG.Menu_TabInfo",, "General Information", DefaultToInfoTab));
-	MiscHUD = Menu_TabHUD(TabC.AddTab("HUD", "3SPNv3225PIG.Menu_Tabhud",, "HUD configuration", !DefaultToInfoTab));
-	//StatsTab = Menu_TabRanks(TabC.AddTab("Ranks", "3SPNv3225PIG.Menu_TabRanks",, "Ranks", false));
-    MiscTab = Menu_TabMisc(TabC.AddTab("Miscellaneous", "3SPNv3225PIG.Menu_TabMisc",, "Miscellaneous player options", false));
-	//Misc2Tab = Menu_TabMiscMore(TabC.AddTab("More Misc", "3SPNv3225PIG.Menu_TabMiscMore",, "More Misc configuration", false));
-    BSTab = Menu_TabBrightskins(TabC.AddTab("Brightskins & Models", "3SPNv3225PIG.Menu_TabBrightskins",, "Brightskins configuration", false));
+	NewMiscHUD = Menu_TabNewMisc(TabC.AddTab("Miscellaneous", "3SPNv3225PIG.Menu_TabNewMisc",, "Miscellaneous player options", !DefaultToInfoTab));
+	BSTab = Menu_TabBrightskins(TabC.AddTab("Brightskins & Models", "3SPNv3225PIG.Menu_TabBrightskins",, "Brightskins configuration", false));
 	NamesTab = Menu_TabColoredNames(TabC.AddTab("Colored Names", "3SPNv3225PIG.Menu_TabColoredNames",, "Colored Names", false));
 
 	if(InfoTab == None)
 		log("Count not open tab Menu_TabInfo", '3SPN');
+
 	//if(StatsTab == None)
 	//	log("Count not open tab Menu_TabRanks", '3SPN');
-    if(MiscTab == None)
-        log("Could not open tab Menu_TabMisc", '3SPN');
-	//if(Misc2Tab == None)
-    //  log("Could not open tab Menu_TabDamage", '3SPN');
 
-	if(MiscHUD == None)
-        log("Could not open tab Menu_TabHUD", '3SPN');
+	if(NewMiscHUD == None)
+        log("Could not open tab Menu_TabNewMisc", '3SPN');
 
     if(BSTab == None)
         log("Could not open tab Menu_TabBrightskins", '3SPN');
+
 	if(NamesTab == None)
 		log("Could not open tab Menu_ColoredNames", '3SPN');
 	
@@ -116,8 +109,8 @@ defaultproperties
          ImageStyle=ISTY_Stretched
          ImageRenderStyle=MSTY_Normal
          WinTop=0.100000
-         WinLeft=0.100000
-         WinWidth=0.800000
+         WinLeft=0.0250000
+         WinWidth=0.950000
          WinHeight=0.800000
          RenderWeight=0.000003
      End Object
@@ -148,7 +141,7 @@ defaultproperties
      Controls(2)=GUITabControl'3SPNv3225PIG.Menu_Menu3SPN.Tabs'
 
      WinTop=0.089000
-     WinLeft=0.100000
-     WinWidth=0.800000
+     WinLeft=0.025000
+     WinWidth=0.950000
      WinHeight=0.775000
 }
