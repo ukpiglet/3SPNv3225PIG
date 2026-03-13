@@ -47,7 +47,7 @@ struct MiscSettings
 	var bool bDisableEndCeremonySound;
 	var float SoundHitVolume;
 	var float SoundAloneVolume;
-	var bool AutoSyncSettings;
+	//var bool AutoSyncSettings;
 	var bool bEnableWidescreenFix;
 	var bool bPlayOwnLandings;
 };

@@ -10,7 +10,7 @@ var UT2k3TabPanel AdminTab;
 var Menu_TabTournamentAdmin TournamentAdminTab;
 
 var bool DefaultToInfoTab;
-var bool SettingsDirty;
+//var bool SettingsDirty;
 var bool bAdmin;
 
 function bool AllowOpen(string MenuClass)
@@ -68,7 +68,7 @@ function InitComponent(GUIController MyController, GUIComponent MyOwner)
 
 function InternalOnClose(optional bool bCanceled)
 {
-    local Misc_Player MP;
+    //local Misc_Player MP;
 
     if(BSTab.RedSpinnyDude != None)
     {
@@ -88,6 +88,7 @@ function InternalOnClose(optional bool bCanceled)
         BSTab.YellowSpinnyDude = None;
     }
 	
+/*
 	if(class'Misc_Player'.default.AutoSyncSettings && default.SettingsDirty)
 	{
 		MP = Misc_Player(PlayerOwner());
@@ -95,6 +96,9 @@ function InternalOnClose(optional bool bCanceled)
 			MP.SaveSettings();
 		default.SettingsDirty = false;
 	}
+*/
+
+
 }
 
 defaultproperties

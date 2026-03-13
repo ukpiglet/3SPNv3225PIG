@@ -37,9 +37,9 @@ function bool AllowOpen(string MenuClass)
 
 event Opened(GUIComponent Sender)
 {
-	local bool OldDirty;
+	//local bool OldDirty;
 
-	OldDirty = class'Menu_Menu3SPN'.default.SettingsDirty;
+	//OldDirty = class'Menu_Menu3SPN'.default.SettingsDirty;
 
 	if(class'Misc_Player'.default.CurrentSelectedColoredName<class'Misc_Player'.default.ColoredName.Length)
 	{
@@ -53,17 +53,17 @@ event Opened(GUIComponent Sender)
 
 	super.Opened(Sender);
 
-	class'Menu_Menu3SPN'.default.SettingsDirty = OldDirty;	
+	//class'Menu_Menu3SPN'.default.SettingsDirty = OldDirty;	
 }
 
 function InitComponent(GUIController MyController, GUIComponent MyOwner)
 {
      local int i;
-	 local bool OldDirty;
+	 //local bool OldDirty;
 
      Super.InitComponent(myController,MyOwner);	 
 	 
-	 OldDirty = class'Menu_Menu3SPN'.default.SettingsDirty;
+	 //OldDirty = class'Menu_Menu3SPN'.default.SettingsDirty;
 	 
      for(i=0; i<class'Misc_Player'.default.ColoredName.Length; i++)
          co_SavedNames.AddItem(Misc_Player(PlayerOwner()).FindColoredName(i));
@@ -96,7 +96,7 @@ function InitComponent(GUIController MyController, GUIComponent MyOwner)
 	else if(class'Misc_DeathMessage'.default.bDrawColoredNamesInDeathMessages)
 		co_DeathSelect.SetIndex(1);
 		
-	 class'Menu_Menu3SPN'.default.SettingsDirty = OldDirty;
+	// class'Menu_Menu3SPN'.default.SettingsDirty = OldDirty;
 }
 
 function InitSliderAndLetters()
@@ -225,7 +225,7 @@ function InternalOnChange( GUIComponent C )
     class'Misc_Player'.Static.StaticSaveConfig();	
     class'TAM_ScoreBoard'.Static.StaticSaveConfig();
     class'Misc_DeathMessage'.Static.StaticSaveConfig();
-	class'Menu_Menu3SPN'.default.SettingsDirty = true;
+	//class'Menu_Menu3SPN'.default.SettingsDirty = true;
 }
 
 function bool InternalOnClick( GUIComponent Sender )
@@ -290,7 +290,7 @@ function bool InternalOnClick( GUIComponent Sender )
 	
 	Misc_Player(PlayerOwner()).ReloadDefaults();
 	class'Misc_Player'.Static.StaticSaveConfig();
-	class'Menu_Menu3SPN'.default.SettingsDirty = true;
+	//class'Menu_Menu3SPN'.default.SettingsDirty = true;
 
 	return true;
 }

@@ -5,11 +5,12 @@ var automated moNumericEdit nu_MaxHUDPlayerCount;
 var automated moCheckBox ch_ComboCheck, ch_DeathsCheck, ch_ExtendCheck, ch_MatchCheck, ch_TeamCheck, ch_DirectionFromView, ch_ShowOnlyFrozen, ch_ShowWithAdren, ch_ShowLiveTeammates;
 var automated GUISectionBackground sb_SectionHUD, sb_SectionNet, sb_SectionSound, sb_SectionCombo;
 var automated moCheckBox ch_EnableEnhancedNetCode, ch_DisableOwnFootsteps, ch_AutoScreenShot, ch_DisableSpeed, ch_DisableBooster, ch_DisableBerserk, ch_DisableInvis;
-var automated moCheckBox ch_PlayOwnLandings, ch_DisableEndCeremonySound, ch_UseHitSounds, ch_AutoSyncSettings;
+var automated moCheckBox ch_PlayOwnLandings, ch_DisableEndCeremonySound, ch_UseHitSounds; //, ch_AutoSyncSettings;
 var automated moSlider sl_SoundHitVolume, sl_SoundAloneVolume;
 
 //Buttons
-var automated GUIButton btn_LoadSettingsButton, btn_SaveSettingsButton, btn_TimeoutButton;
+//var automated GUIButton btn_LoadSettingsButton, btn_SaveSettingsButton, btn_TimeoutButton;
+var automated GUIButton btn_TimeoutButton;
 
 function InitComponent(GUIController MyController, GUIComponent MyOwner)
 {
@@ -64,11 +65,12 @@ function InitComponent(GUIController MyController, GUIComponent MyOwner)
 	sb_SectionNet.ManageComponent(ch_EnableEnhancedNetCode);
 
 // Net/Misc
-	ch_AutoSyncSettings.SetComponentValue(class'Misc_Player'.default.AutoSyncSettings,true);
+	//ch_AutoSyncSettings.SetComponentValue(class'Misc_Player'.default.AutoSyncSettings,true);
 	ch_AutoScreenShot.SetComponentValue(class'Misc_Player'.default.bAutoScreenShot,true);
 
 	sb_SectionNet.ManageComponent(ch_AutoScreenShot);
-	sb_SectionNet.ManageComponent(ch_AutoSyncSettings);
+	sb_SectionNet.ManageComponent(btn_TimeoutButton);
+	//sb_SectionNet.ManageComponent(ch_AutoSyncSettings);
 
 // Combo
 	ch_DisableSpeed.SetComponentValue(class'Misc_Player'.default.bDisableSpeed,true);
@@ -107,7 +109,6 @@ function InitComponent(GUIController MyController, GUIComponent MyOwner)
 
 		if(!GRI.EnableNewNet)
 			ch_EnableEnhancedNetCode.DisableMe();
-
 	}
 	else
 	{
@@ -122,6 +123,7 @@ function bool OnClick(GUIComponent C)
 		Misc_Player(PlayerOwner()).CallTimeout();
 		Controller.CloseMenu();
 	}
+/*
 	else if(C == btn_LoadSettingsButton) // Load Settings
 	{
 		Misc_Player(PlayerOwner()).LoadSettings();
@@ -132,7 +134,8 @@ function bool OnClick(GUIComponent C)
 		Misc_Player(PlayerOwner()).SaveSettings();
 		Controller.CloseMenu();
 	}
-
+*/
+	
 	return true;
 }
 
@@ -240,11 +243,11 @@ function InternalOnChange( GUIComponent C )
 		case sl_SoundAloneVolume:
 			class'Misc_Player'.default.SoundAloneVolume = sl_SoundAloneVolume.GetValue();
 			break;
-
+/*
 		case ch_AutoSyncSettings:
 			class'Misc_Player'.default.AutoSyncSettings = ch_AutoSyncSettings.IsChecked();
 			break;
-
+*/
 	}
 
 	class'Misc_Player'.default.bHUDChanged = True; // not necessarily true - but it doesn't hurt to let it recalculate stuff for one frame!
@@ -253,7 +256,7 @@ function InternalOnChange( GUIComponent C )
 	Misc_Player(PlayerOwner()).ReloadDefaults();
 	class'Freon_Player'.Static.StaticSaveConfig();
 	class'Misc_Pawn'.Static.StaticSaveConfig();
-	class'Menu_Menu3SPN'.default.SettingsDirty = true;
+//class'Menu_Menu3SPN'.default.SettingsDirty = true;
 }
 
 
@@ -410,7 +413,17 @@ defaultproperties
 		TabOrder=13
 	End Object
 	ch_AutoScreenShot=AutoScreenShot
+	
+	
+	Begin Object Class=GUIButton Name=TimeoutButton
+		Caption="Attempt Timeout"
+		StyleName="SquareMenuButton"
+		OnClick=OnClick
+		TabOrder=14
+	End Object
+	btn_TimeoutButton=TimeoutButton
 
+/*
 	Begin Object Class=moCheckBox Name=AutoSyncSettings
 		Caption="Sync Settings With Server:"
 		Hint="Sync Settings With Server."
@@ -418,6 +431,7 @@ defaultproperties
 		TabOrder=14
 	End Object
 	ch_AutoSyncSettings=AutoSyncSettings
+*/
 
 // Combo things
 	Begin Object Class=moCheckBox Name=DisableSpeed
@@ -504,6 +518,7 @@ defaultproperties
 	sl_SoundAloneVolume=SoundAloneVolume
 
 // Buttons
+/*
 	Begin Object Class=GUIButton Name=LoadSettingsButton
 		Caption="Load Settings"
 		StyleName="SquareMenuButton"
@@ -527,16 +542,5 @@ defaultproperties
 		TabOrder=26
 	End Object
 	btn_SaveSettingsButton=SaveSettingsButton
-
-	Begin Object Class=GUIButton Name=TimeoutButton
-		Caption="Attempt Timeout"
-		StyleName="SquareMenuButton"
-		WinTop=0.955000
-		WinLeft=0.550000
-		WinWidth=0.400000
-		WinHeight=0.080000
-		OnClick=OnClick
-		TabOrder=27
-	End Object
-	btn_TimeoutButton=TimeoutButton
+*/
 }

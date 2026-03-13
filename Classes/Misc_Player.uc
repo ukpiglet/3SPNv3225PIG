@@ -155,7 +155,7 @@ var AudioSubsystem AudioSubsystem;
 var class<Combo> NecroComboClass;
 
 /* persistent settings */
-var config bool AutoSyncSettings;
+//var config bool AutoSyncSettings;
 
 var float LastSettingsLoadTimeSeconds;
 var float LastSettingsSaveTimeSeconds;
@@ -175,8 +175,8 @@ replication
         /*ClientLockWeapons,*/ ClientKillBases, ClientSendAssaultStats,
         ClientSendBioStats, ClientSendShockStats, ClientSendLinkStats,
         ClientSendMiniStats, ClientSendFlakStats, ClientSendRocketStats,
-        ClientSendSniperStats, ClientSendComboStats, ClientSendMiscStats,
-		ClientSettingsResult, ClientLoadSettings; // why use 2 blocks for the same thing?
+        ClientSendSniperStats, ClientSendComboStats, ClientSendMiscStats;
+		//ClientSettingsResult, ClientLoadSettings; // why use 2 blocks for the same thing?
 
     reliable if(bNetDirty && Role == ROLE_Authority)
         HitDamage, bSeeInvis;
@@ -187,7 +187,8 @@ replication
     reliable if(Role < ROLE_Authority)
         ServerSetMapString, ServerCallTimeout,
 		SetNetCodeDisabled, SetTeamScore,
-		ServerLoadSettings, ServerSaveSettings, ServerReportNewNetStats;
+		ServerReportNewNetStats;
+		//ServerLoadSettings, ServerSaveSettings, ServerReportNewNetStats;
 }
 
 simulated function PostBeginPlay()
@@ -403,11 +404,10 @@ function CheckInitialMenu()
 {
 	if(Level.NetMode!=NM_DedicatedServer && class'Misc_Player'.default.ShowInitialMenu==0)
 	{
-		if(PlayerReplicationInfo==None || PlayerReplicationInfo.PlayerName==class'GameInfo'.Default.DefaultPlayerName)
-			return;
-	
-		class'Misc_Player'.default.ShowInitialMenu=1;
-		LoadSettings();
+		class'Menu_Menu3SPN'.default.DefaultToInfoTab=True;
+		Menu3SPN();
+		class'Menu_Menu3SPN'.default.DefaultToInfoTab=False;
+		class'Misc_Player'.default.ShowInitialMenu = 2;
 		class'Misc_Player'.static.StaticSaveConfig();
 	}
 }
@@ -2026,12 +2026,13 @@ simulated function ReloadDefaults()
 		ColorName[i] = class'Misc_Player'.default.ColorName[i];
 	ColoredName =  class'Misc_Player'.default.ColoredName;
 
-	AutoSyncSettings = class'Misc_Player'.default.AutoSyncSettings;
+//	AutoSyncSettings = class'Misc_Player'.default.AutoSyncSettings;
     bEnableWidescreenFix = class'Misc_Player'.default.bEnableWidescreenFix;
 }
 
 /* settings */
 
+/*
 function ClientSettingsResult(int result, string PlayerName)
 {
 	class'Message_PlayerSettingsResult'.default.PlayerName = PlayerName;
@@ -2095,7 +2096,7 @@ function ClientLoadSettings(string PlayerName, Misc_PlayerSettings.BrightSkinsSe
 	class'Misc_Player'.default.bDisableEndCeremonySound = Misc.bDisableEndCeremonySound;
 	class'Misc_Player'.default.SoundHitVolume = Misc.SoundHitVolume;
 	class'Misc_Player'.default.SoundAloneVolume = Misc.SoundAloneVolume;
-	class'Misc_Player'.default.AutoSyncSettings = Misc.AutoSyncSettings;
+//	class'Misc_Player'.default.AutoSyncSettings = Misc.AutoSyncSettings;
     class'Misc_Player'.default.bEnableWidescreenFix = Misc.bEnableWidescreenFix;
 
 	ReloadDefaults();
@@ -2237,11 +2238,13 @@ function SaveSettings()
 	Misc.bDisableEndCeremonySound = class'Misc_Player'.default.bDisableEndCeremonySound;
 	Misc.SoundHitVolume = class'Misc_Player'.default.SoundHitVolume;
 	Misc.SoundAloneVolume = class'Misc_Player'.default.SoundAloneVolume;
-	Misc.AutoSyncSettings = class'Misc_Player'.default.AutoSyncSettings;
+//	Misc.AutoSyncSettings = class'Misc_Player'.default.AutoSyncSettings;
 	Misc.bEnableWidescreenFix = class'Misc_Player'.default.bEnableWidescreenFix;
 
 	ServerSaveSettings(BrightSkins, ColoredNames, Misc);
 }
+*/
+
 
 function ServerReportNewNetStats(bool enable)
 {
@@ -2384,7 +2387,7 @@ defaultproperties
     ColorName(18)=(R=255,G=255,B=255,A=255)
     ColorName(19)=(R=255,G=255,B=255,A=255)
 	
-	AutoSyncSettings=True
+	//AutoSyncSettings=True
 	LastSettingsLoadTimeSeconds=-100
 	LastSettingsSaveTimeSeconds=-100
 	bEnableWidescreenFix=false

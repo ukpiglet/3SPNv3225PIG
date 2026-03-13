@@ -17,26 +17,26 @@ function bool AllowOpen(string MenuClass)
 
 event Opened(GUIComponent Sender)
 {
-	local bool OldDirty;
-	OldDirty = class'Menu_Menu3SPN'.default.SettingsDirty;
+	//local bool OldDirty;
+	//OldDirty = class'Menu_Menu3SPN'.default.SettingsDirty;
 	super.Opened(Sender);
-	class'Menu_Menu3SPN'.default.SettingsDirty = OldDirty;	
+	//class'Menu_Menu3SPN'.default.SettingsDirty = OldDirty;	
 }
 
 function InitComponent(GUIController MyController, GUIComponent MyOwner)
 {
-	local bool OldDirty;
+	//local bool OldDirty;
 
 	Super.InitComponent(myController,MyOwner);	 
 	 
-	OldDirty = class'Menu_Menu3SPN'.default.SettingsDirty;
+	//OldDirty = class'Menu_Menu3SPN'.default.SettingsDirty;
 	
     EnableWidescreenFixes.Checked(class'Misc_Player'.default.bEnableWidescreenFix);
     PlayOwnLandings.Checked(class'Misc_Pawn'.default.bPlayOwnLandings);
 	//nu_MaxHUDPlayerCount.SetComponentValue(class'Misc_Player'.default.MaxHUDPlayerCount);
 	//ch_DirectionFromView.SetComponentValue(class'Freon_Player'.default.bDirectionFromView,true);
 	
-	class'Menu_Menu3SPN'.default.SettingsDirty = OldDirty;
+	//class'Menu_Menu3SPN'.default.SettingsDirty = OldDirty;
 	
 	sb_Section1.ManageComponent(EnableWidescreenFixes);
 	sb_Section1.ManageComponent(PlayOwnLandings);
@@ -79,7 +79,7 @@ function InternalOnChange( GUIComponent C )
 	
     Misc_Player(PlayerOwner()).ReloadDefaults();
     class'Misc_Player'.Static.StaticSaveConfig();	
-	class'Menu_Menu3SPN'.default.SettingsDirty = true;
+	//class'Menu_Menu3SPN'.default.SettingsDirty = true;
 }
 
 defaultproperties

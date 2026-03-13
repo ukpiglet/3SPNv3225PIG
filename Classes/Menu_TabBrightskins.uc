@@ -22,7 +22,7 @@ function InitComponent(GUIController MyController, GUIComponent MyOwner)
 {
     local Misc_Player P;
     local int i;
-	local bool OldDirty;
+	//local bool OldDirty;
 
     Super.InitComponent(MyController, MyOwner);
 
@@ -30,7 +30,7 @@ function InitComponent(GUIController MyController, GUIComponent MyOwner)
     if(P == None)
         return;
 		
-	OldDirty = class'Menu_Menu3SPN'.default.SettingsDirty;
+	//OldDirty = class'Menu_Menu3SPN'.default.SettingsDirty;
     
     moCheckBox(Controls[1]).Checked(!class'Misc_Player'.default.bUseBrightSkins);
     moCheckBox(Controls[2]).Checked(!class'Misc_Player'.default.bUseTeamColors);
@@ -136,7 +136,7 @@ function InitComponent(GUIController MyController, GUIComponent MyOwner)
     OnChange(Controls[1]);
     //OnChange(Controls[2]);	
 	
-	class'Menu_Menu3SPN'.default.SettingsDirty = OldDirty;
+	//class'Menu_Menu3SPN'.default.SettingsDirty = OldDirty;
 }
 
 function HideSpinnyDudes(bool bHide)
@@ -407,7 +407,7 @@ function OnChange(GUIComponent c)
 
 	Misc_Player(PlayerOwner()).ReloadDefaults();
 	class'Misc_Player'.static.StaticSaveConfig();
-	class'Menu_Menu3SPN'.default.SettingsDirty = true;
+	//class'Menu_Menu3SPN'.default.SettingsDirty = true;
 
 	UpdateSpinnyDudes();
 }
@@ -482,7 +482,7 @@ function bool OnClick(GUIComponent C)
 
 	Misc_Player(PlayerOwner()).ReloadDefaults();
 	class'Misc_Player'.static.StaticSaveConfig();
-	class'Menu_Menu3SPN'.default.SettingsDirty = true;
+	//class'Menu_Menu3SPN'.default.SettingsDirty = true;
 	
 	UpdateSpinnyDudes();	
 	
