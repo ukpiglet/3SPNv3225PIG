@@ -1447,6 +1447,7 @@ exec function Admin( string CommandLine )
 	local int CLL;
 
 	if (PlayerReplicationInfo.bAdmin){
+
 		CLL = len(CommandLine);
 
 		if (left(CommandLine, 9) ~= "forceres " && CLL > 9)
@@ -1457,6 +1458,7 @@ exec function Admin( string CommandLine )
 			if (C != None){
 					DoResOn(C);
 			}
+
 			return;
 		}
 		else{ 
@@ -1482,21 +1484,32 @@ exec function Admin( string CommandLine )
 function Controller getController(string who){
 	local controller C, NextC;
 	local PlayerController PC;
-			
-	for (C = Level.ControllerList; C != None; C = NextC){
-		NextC = C.NextController;
+	local int i_who;
 
-		if ( C.PlayerReplicationInfo != None){ 
-			if (IsNumeric(who) && C.PlayerReplicationInfo.PlayerID == int(who)
-			||	MaskedCompare(C.PlayerReplicationInfo.PlayerName, who))
+	// Check for player ID only, if it's a number
+	i_who = int(who);
+	if (string(i_who) == who)
+	{
+		for (C = Level.ControllerList; C != None; C = NextC)
+		{
+			NextC = C.NextController;
+			if ( C.PlayerReplicationInfo != None && C.PlayerReplicationInfo.PlayerID == i_who)
 				return C;
+		}
+	}
+	else
+	{
+		for (C = Level.ControllerList; C != None; C = NextC)
+		{
+			NextC = C.NextController;
+			if ( C.PlayerReplicationInfo != None &&	MaskedCompare(C.PlayerReplicationInfo.PlayerName, who))
+					return C;
 
 			PC = PlayerController(C);
 			if (PC != None && PC.GetPlayerIdHash() == who)
 				return C;
 		}
 	}
-
 	return none;
 }
 
@@ -1544,26 +1557,35 @@ function DoResOn(Controller C)
 	local int i;
     local class<Combo> ComboClass;
 
+	log(name@"DoResOn");
+
 	if(C != None)
 	{
+		log(name@"DoResOn C != None");
 		if(NecroComboClass == None)
 		{
-			for(i = 0; i < ArrayCount(xPlayer(C).ComboNameList); i++)
+			log(name@"DoResOn NecroComboClass == None");
+
+			for(i = 0; i < ArrayCount(ComboNameList); i++)
 			{
-				ComboClass = class<Combo>(DynamicLoadObject(xPlayer(C).ComboNameList[i], class'Class', true));
+				ComboClass = class<Combo>(DynamicLoadObject(ComboNameList[i], class'Class', true));
 				if( (ComboClass != None) &&
 					(ComboClass.default.keys[0] == 1) && (ComboClass.default.keys[1] == 1) &&
 					(ComboClass.default.keys[2] == 2) && (ComboClass.default.keys[3] == 2) )
 				{
 					NecroComboClass = ComboClass;
+					log(name@"DoResOn NecroComboClass found");
 					break;
 				}
 			}
 		}
 
+		log(name@"DoResOn for player: NecroComboClass hopefully found"@(NecroComboClass != None)@(xPawn(C.Pawn) != None)@(C.Adrenaline));
 		if(NecroComboClass != None && xPawn(C.Pawn) != None && C.Adrenaline >= 100)
 		{
+			log("Trying to DoCombo");
 			xPawn(C.Pawn).DoCombo(NecroComboClass);
+			log("after Trying to DoCombo");
 		}
 	}
 }

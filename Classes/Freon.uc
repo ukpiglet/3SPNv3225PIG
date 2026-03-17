@@ -681,13 +681,14 @@ function WholeThaw(Freon_Pawn Thawer){
 		
 		switch(Thaws)
 		{
-			case 10: Message = class'Message_Thaw_Flamer';      break;
-			case 20: Message = class'Message_Thaw_Scorcher';    break;
-			case 30: Message = class'Message_Thaw_Thawsome';    break;
-			case 40: Message = class'Message_Thaw_Incinerator'; break;
-			case 50: Message = class'Message_Thaw_GodOfThaw';   break;
-			case 55: Message = class'Message_Thaw_Feeling_hot';   break;
-			case 60: Message = class'Message_Thaw_hotter_than_hell';   break;
+			case 10: Message = class'Message_Thaw_Flamer';      		break;
+			case 20: Message = class'Message_Thaw_Scorcher';    		break;
+			case 30: Message = class'Message_Thaw_Thawsome';    		break;
+			case 40: Message = class'Message_Thaw_Incinerator'; 		break;
+			case 45: Message = class'Message_Thaw_Fire';				break;
+			case 50: Message = class'Message_Thaw_GodOfThaw';   		break;
+			case 55: Message = class'Message_Thaw_Feeling_hot';			break;
+			case 60: Message = class'Message_Thaw_hotter_than_hell';	break;
 		}
 
 		if(Message!=None)
