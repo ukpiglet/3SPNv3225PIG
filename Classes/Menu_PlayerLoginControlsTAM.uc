@@ -82,9 +82,9 @@ function bool ContextMenuOpened( GUIContextMenu Menu )
     {
             Menu.ContextItems[i++] = "-";
             Menu.ContextItems[i] = "Force use resurrect "$"["$List.Get()$"]";
-            MenuCommand[i++] = 'ForceRes';
+            MenuCommand[i++] = 'makespec';
 			Menu.ContextItems[i] = "Make spectator "$"["$List.Get()$"]";
-            MenuCommand[i++] = 'Spectate';
+            MenuCommand[i++] = 'makespec';
     }
 
     return true;
@@ -97,14 +97,15 @@ function ContextClick(GUIContextMenu Menu, int ClickIndex)
     local GameReplicationInfo GRI;
     local PlayerController PC;
 
-	if (ClickIndex > ContextItems.length -1)
-		return;
-
-    if (MenuCommand[ClickIndex] == '')
+    switch (MenuCommand[ClickIndex])
     {
-        Super.ContextClick(Menu, ClickIndex);
-        return;
-    }
+        case 'forceres':
+		case 'makespec':
+			break;
+		default:
+            Super.ContextClick(Menu, ClickIndex);
+			return;
+	}
 
     GRI = GetGRI();
     if (GRI == None)
@@ -120,16 +121,7 @@ function ContextClick(GUIContextMenu Menu, int ClickIndex)
 
     PC = PlayerOwner();
 
-    switch (MenuCommand[ClickIndex])
-    {
-        case 'ForceRes':
-            PC.Admin("forceres"@List.GetExtra());
-            break;
-		case 'Spectate':
-            PC.Admin("makespec"@List.GetExtra());
-            break;
-			
-    }
+    PC.Admin(MenuCommand[ClickIndex]@List.GetExtra());
 }
 
 defaultproperties

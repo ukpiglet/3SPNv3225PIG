@@ -1557,15 +1557,10 @@ function DoResOn(Controller C)
 	local int i;
     local class<Combo> ComboClass;
 
-	log(name@"DoResOn");
-
 	if(C != None)
 	{
-		log(name@"DoResOn C != None");
 		if(NecroComboClass == None)
 		{
-			log(name@"DoResOn NecroComboClass == None");
-
 			for(i = 0; i < ArrayCount(ComboNameList); i++)
 			{
 				ComboClass = class<Combo>(DynamicLoadObject(ComboNameList[i], class'Class', true));
@@ -1574,18 +1569,14 @@ function DoResOn(Controller C)
 					(ComboClass.default.keys[2] == 2) && (ComboClass.default.keys[3] == 2) )
 				{
 					NecroComboClass = ComboClass;
-					log(name@"DoResOn NecroComboClass found");
 					break;
 				}
 			}
 		}
 
-		log(name@"DoResOn for player: NecroComboClass hopefully found"@(NecroComboClass != None)@(xPawn(C.Pawn) != None)@(C.Adrenaline));
 		if(NecroComboClass != None && xPawn(C.Pawn) != None && C.Adrenaline >= 100)
 		{
-			log("Trying to DoCombo");
 			xPawn(C.Pawn).DoCombo(NecroComboClass);
-			log("after Trying to DoCombo");
 		}
 	}
 }
