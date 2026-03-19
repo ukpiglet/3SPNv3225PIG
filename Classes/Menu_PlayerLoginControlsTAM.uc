@@ -82,7 +82,7 @@ function bool ContextMenuOpened( GUIContextMenu Menu )
     {
             Menu.ContextItems[i++] = "-";
             Menu.ContextItems[i] = "Force use resurrect "$"["$List.Get()$"]";
-            MenuCommand[i++] = 'makespec';
+            MenuCommand[i++] = 'forceres';
 			Menu.ContextItems[i] = "Make spectator "$"["$List.Get()$"]";
             MenuCommand[i++] = 'makespec';
     }
