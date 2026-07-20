@@ -52,18 +52,21 @@ function InitComponent(GUIController MyController, GUIComponent MyOwner)
     RedSpinnyDude.bPlayRandomAnims = true;
     RedSpinnyDude.SetDrawScale(0.2);
     RedSpinnyDude.SpinRate = 12000;
+	RedSpinnyDude.bHidden = True;
 
     BlueSpinnyDude = P.Spawn(Class'XInterface.SpinnyWeap');
     BlueSpinnyDude.SetDrawType(DT_Mesh);
     BlueSpinnyDude.bPlayRandomAnims = true;
     BlueSpinnyDude.SetDrawScale(0.2);
     BlueSpinnyDude.SpinRate = 12000;
+    BlueSpinnyDude.bHidden = True;
 
     YellowSpinnyDude = P.Spawn(Class'XInterface.SpinnyWeap');
     YellowSpinnyDude.SetDrawType(DT_Mesh);
     YellowSpinnyDude.bPlayRandomAnims = true;
     YellowSpinnyDude.SetDrawScale(0.2);
     YellowSpinnyDude.SpinRate = 12000;
+    YellowSpinnyDude.bHidden = True;
 
     moCheckBox(Controls[20]).Checked(!class'Misc_Player'.default.bUseTeamModels);
     moCheckBox(Controls[21]).Checked(class'Misc_Player'.default.bForceRedEnemyModel);
@@ -137,16 +140,6 @@ function InitComponent(GUIController MyController, GUIComponent MyOwner)
     //OnChange(Controls[2]);	
 	
 	//class'Menu_Menu3SPN'.default.SettingsDirty = OldDirty;
-}
-
-function HideSpinnyDudes(bool bHide)
-{
-    if(RedSpinnyDude != None)
-        RedSpinnyDude.bHidden = bHide;
-    if(BlueSpinnyDude != None)
-        BlueSpinnyDude.bHidden = bHide;
-    if(YellowSpinnyDude != None)
-        YellowSpinnyDude.bHidden = bHide;
 }
 
 function string GetRandomModel()
@@ -242,7 +235,8 @@ function UpdateSpinnyDudes()
 		return;
 	}
 
-    Rec = Class'xUtil'.static.FindPlayerRecord(YellowModel);
+    //Rec = Class'xUtil'.static.FindPlayerRecord(YellowModel);
+    Rec = Class'xUtil'.static.FindPlayerRecord(RedModel);	// Red == Enemies
     YellowMesh = Mesh(DynamicLoadObject(Rec.MeshName, class'Mesh'));
 	if(YellowMesh == None)
 	{
@@ -489,11 +483,12 @@ function bool OnClick(GUIComponent C)
 	return true;
 }
 
+/*
 function ShowPanel(bool bShow)
 {
     Super.ShowPanel(bShow);
-    HideSpinnyDudes(!bShow);
 }
+*/
 
 defaultproperties
 {
