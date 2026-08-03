@@ -923,6 +923,11 @@ auto state PendingMatch
         }
         PlayStartupMessage();
     }
+	
+	function beginstate()
+	{
+		ElapsedTime = 0;
+	}    
 }
 
 /* timeouts */
