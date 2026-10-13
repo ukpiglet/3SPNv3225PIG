@@ -24,6 +24,25 @@ function DisplayDebug(Canvas Canvas, float XPos, float YPos)
 }
 */
 
+function NotifyTakeHit(pawn InstigatedBy, vector HitLocation, int Damage, class<DamageType> damageType, vector Momentum)
+{
+	local int iDam;
+	local vector AttackLoc;
+
+	Super(PlayerController).NotifyTakeHit(InstigatedBy,HitLocation,Damage,DamageType,Momentum);
+
+	if (FrozenPawn != None)
+	{
+		DamageShake(Damage);
+		iDam = Clamp(Damage,0,250);
+		if ( InstigatedBy != None )
+			AttackLoc = InstigatedBy.Location;
+
+		NewClientPlayTakeHit(AttackLoc, hitLocation - FrozenPawn.Location, iDam, damageType);
+	}
+}
+
+
 //Otherwise:  Freon_Player (Function Engine.PlayerController.ClientVoiceMessage:002C) Accessed None 'Player'
 function ClientVoiceMessage (PlayerReplicationInfo Sender, PlayerReplicationInfo Recipient, name messagetype, byte MessageID)
 {
@@ -251,7 +270,7 @@ function rotator AdjustAim(FireProperties FiredAmmunition, vector projStart, int
         else if ( FiredAmmunition.bInstantHit )
                 bestAim = 1.0;
 
-		if (Role == ROLE_Authority)
+		if (Role == ROLE_Authority && Pawn != None)
 			BestTarget = PickTarget(bestAim, bestDist, FireDir, projStart, FiredAmmunition.MaxRange);
 
         if ( BestTarget == None )

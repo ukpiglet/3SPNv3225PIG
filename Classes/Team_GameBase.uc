@@ -23,6 +23,7 @@ var config bool     bDisableInvis;
 var config bool     bDisableBerserk;
 var array<string>   EnabledCombos;
 
+var config bool     bLetPlayersPee;         // allow full coutdown regardless of number of players
 var config bool     bForceRUP;              // force players to ready up after...
 var config int      ForceRUPMinPlayers;
 var config int      ForceSeconds;           // this many seconds
@@ -401,6 +402,7 @@ static function FillPlayInfo(PlayInfo PI)
     PI.AddSetting("3SPN", "bKickExcessiveCampers", "Kick Excessive Campers", 0, Weight++, "Check",,, True);
 	PI.AddSetting("3SPN", "bUseCamperIcon", "Camper Icons", 0, Weight++, "Check",,, True);
 
+    PI.AddSetting("3SPN", "bLetPlayersPee", "Always NetWait", 0, Weight++, "Check",,, True);
     PI.AddSetting("3SPN", "bForceRUP", "Force Ready", 0, Weight++, "Check",,, True);
     PI.AddSetting("3SPN", "ForceRUPMinPlayers", "Force Ready Min Players", 0, Weight++, "Text", "3;0;999",, True);
     PI.AddSetting("3SPN", "ForceSeconds", "Force Time", 0, Weight++, "Text", "3;0:999",, True);
@@ -510,6 +512,7 @@ static event string GetDescriptionText(string PropName)
       case "bDisableBooster":     return "Disable the Booster adrenaline combo.";
       case "bDisableBerserk":     return "Disable the Berserk adrenaline combo.";
 
+      case "bLetPlayersPee":      return "Always wait NetWait seconds, regardless of whether slots are free or not";
       case "bForceRUP":           return "Force players to ready up after a set amount of time";
       case "ForceRUPMinPlayers":  return "Force players to ready only when at least this many players present.";
       case "ForceSeconds":        return "The amount of time players have to ready up before the game starts automatically";
@@ -637,7 +640,11 @@ function ParseOptions(string Options)
     if(InOpt != "")
         CampThreshold = float(InOpt);
 
-    InOpt = ParseOption(Options, "ForceRUP");
+    InOpt = ParseOption(Options, "LetPlayersPee");
+    if(InOpt != "")
+        bLetPlayersPee = bool(InOpt);
+
+	InOpt = ParseOption(Options, "ForceRUP");
     if(InOpt != "")
         bForceRUP = bool(InOpt);
 
@@ -856,11 +863,6 @@ auto state PendingMatch
 
         Global.Timer();
 
-        // first check if there are enough net players, and enough time has elapsed to give people
-        // a chance to join
-        if ( NumPlayers == 0 )
-          bWaitForNetPlayers = true;
-
         if ( bWaitForNetPlayers && (Level.NetMode != NM_Standalone) )
         {
             if ( NumPlayers >= MinNetPlayers )
@@ -868,7 +870,7 @@ auto state PendingMatch
             else
                 ElapsedTime = 0;
 
-            if ( (NumPlayers == MaxPlayers) || (ElapsedTime > NetWait) )
+            if ( (bLetPlayersPee == False && NumPlayers == MaxPlayers) || (ElapsedTime > NetWait) )
             {
                 bWaitForNetPlayers = false;
                 CountDown = Default.CountDown;
@@ -927,6 +929,7 @@ auto state PendingMatch
 	function beginstate()
 	{
 		ElapsedTime = 0;
+		bWaitForNetPlayers = True;
 	}    
 }
 
@@ -1689,8 +1692,12 @@ function Logout(Controller Exiting)
 
 function bool BecomeSpectator(PlayerController P)
 {
-  if(Team_GameBase(Level.Game)!=None && Team_GameBase(Level.Game).TournamentModule!=None)
-    if(!Team_GameBase(Level.Game).TournamentModule.AllowBecomeSpectator(P))
+  local Team_GameBase TG;
+
+  TG = Team_GameBase(Level.Game);
+
+  if(TG != None && TG.TournamentModule!=None)
+    if(!TG.TournamentModule.AllowBecomeSpectator(P))
       return false;
 
     if ( (P.PlayerReplicationInfo == None) /*|| !GameReplicationInfo.bMatchHasBegun*/
@@ -1718,30 +1725,29 @@ function bool BecomeSpectator(PlayerController P)
 
 function bool AllowBecomeActivePlayer(PlayerController P)
 {
-    local bool b;
+	local Team_GameBase TG;
 
-    b = true;
+	TG = Team_GameBase(Level.Game);
 
-  if(Team_GameBase(Level.Game)!=None && Team_GameBase(Level.Game).TournamentModule!=None)
-    if(!Team_GameBase(Level.Game).TournamentModule.AllowBecomeActivePlayer(P))
-      return false;
+	if(TG != None && TG.TournamentModule!=None && !TG.TournamentModule.AllowBecomeActivePlayer(P) )
+		return false;
 
-   if(TournamentModule != None)
-    return false;
+	if(TournamentModule != None)
+		return false;
 
     if(P.PlayerReplicationInfo == None || (NumPlayers >= MaxPlayers) /*|| P.IsInState('GameEnded')*/)
     {
         P.ReceiveLocalizedMessage(GameMessageClass, 13);
-        b = false;
+        return false;
     }
 
-    if(b && Level.NetMode == NM_Standalone && NumBots > InitialBots)
+    if(Level.NetMode == NM_Standalone && NumBots > InitialBots)
     {
         RemainingBots--;
         bPlayerBecameActive = true;
     }
 
-    return b;
+    return True;
 }
 
 // add bot to the game
@@ -4009,6 +4015,7 @@ defaultproperties
     MaxHealth=1.000000
     AdrenalinePerDamage=1.000000
     ScoreAwardPer10Damage=0.1
+    bLetPlayersPee=True
     bForceRUP=True
     ForceRUPMinPlayers=0
     ForceSeconds=60

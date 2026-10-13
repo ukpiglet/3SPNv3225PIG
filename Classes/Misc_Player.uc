@@ -191,6 +191,24 @@ replication
 		//ServerLoadSettings, ServerSaveSettings, ServerReportNewNetStats;
 }
 
+function NotifyTakeHit(pawn InstigatedBy, vector HitLocation, int Damage, class<DamageType> damageType, vector Momentum)
+{
+	local int iDam;
+	local vector AttackLoc;
+
+	Super(PlayerController).NotifyTakeHit(InstigatedBy,HitLocation,Damage,DamageType,Momentum);
+
+	if (Pawn != None)
+	{
+		DamageShake(Damage);
+		iDam = Clamp(Damage,0,250);
+		if ( InstigatedBy != None )
+			AttackLoc = InstigatedBy.Location;
+
+		NewClientPlayTakeHit(AttackLoc, hitLocation - Pawn.Location, iDam, damageType);
+	}
+}
+
 simulated function PostBeginPlay()
 {
     super.PostBeginPlay();
@@ -266,7 +284,7 @@ function ResetPlayerData()
 	PlayerReplicationInfo.Deaths = 0;
 
 	MPRI = Misc_PRI(PlayerReplicationInfo);
-	
+
 	MPRI.Rank = 0;
 	MPRI.AvgPPR = 0;
 	MPRI.StatsReceived = false;
@@ -288,13 +306,18 @@ function ResetPlayerData()
 
 function LoadPlayerDataStats()
 {
-	Misc_PRI(PlayerReplicationInfo).Rank = PlayerData.Rank;
-	Misc_PRI(PlayerReplicationInfo).AvgPPR = PlayerData.AvgPPR;
-	Misc_PRI(PlayerReplicationInfo).StatsReceived = PlayerData.StatsReceived;
+	local Misc_PRI MPRI;
+	local Team_GameBase TG;
+
+	MPRI = Misc_PRI(PlayerReplicationInfo);
+
+	MPRI.Rank = PlayerData.Rank;
+	MPRI.AvgPPR = PlayerData.AvgPPR;
+	MPRI.StatsReceived = PlayerData.StatsReceived;
 	
 	//level up when player of this ppr joins
-	if(!PlayerReplicationInfo.bOnlySpectator && Team_GameBase(Level.Game)!=None && Team_GameBase(Level.Game).AutoBalanceOnJoinsOver > 0 && PlayerData.AvgPPR > Team_GameBase(Level.Game).AutoBalanceOnJoinsOver)
-      Team_GameBase(Level.Game).ForceAutoBalance = true;
+	if(!PlayerReplicationInfo.bOnlySpectator && TG != None && TG.AutoBalanceOnJoinsOver > 0 && PlayerData.AvgPPR > TG.AutoBalanceOnJoinsOver)
+      TG.ForceAutoBalance = true;
 	
 }
 
@@ -302,6 +325,8 @@ function LoadPlayerData()
 {
 	local int CurrentRound;
 	local Freon_PRI FPRI;
+	local Team_GameBase TG;
+	local ArenaMaster AM;
 
 	LoadPlayerDataStats();
 
@@ -320,10 +345,15 @@ function LoadPlayerData()
 	bRejoined = true; 					//player marked as having left and rejoined
 	LastRezTime = Level.TimeSeconds;	//treat player as having just been res'd (may be a duplicate of Team_Gamebase>PlayerJoined, but who cares?)
 			
-	if(Team_GameBase(Level.Game)!=None)
-		CurrentRound = Team_GameBase(Level.Game).CurrentRound;
-	else if(ArenaMaster(Level.Game)!=None)
-		CurrentRound = ArenaMaster(Level.Game).CurrentRound;
+	TG = Team_GameBase(Level.Game);
+	if(TG!=None)
+		CurrentRound = TG.CurrentRound;
+	else
+	{
+		AM = ArenaMaster(Level.Game);
+		if(AM != None)
+			CurrentRound = AM.CurrentRound;
+	}
 		
 	if(ActiveThisRound)
 		Misc_PRI(PlayerReplicationInfo).PlayedRounds = PlayerData.Current.Rounds-1;
@@ -335,6 +365,8 @@ function StorePlayerData()
 {
 	local int CurrentRound;
 	local Freon_PRI FPRI;
+	local Team_GameBase TG;
+	local ArenaMaster AM;
 
 	if(PlayerData==None)
 	{
@@ -356,10 +388,15 @@ function StorePlayerData()
 		PlayerData.Current.HealthGiven = FPRI.HealthGiven;
 	}
 	
-	if(Team_GameBase(Level.Game)!=None)
-		CurrentRound = Team_GameBase(Level.Game).CurrentRound;
-	else if(ArenaMaster(Level.Game)!=None)
-		CurrentRound = ArenaMaster(Level.Game).CurrentRound;
+	TG = Team_GameBase(Level.Game);
+	if(TG != None)
+		CurrentRound = TG.CurrentRound;
+	else
+	{
+		AM = ArenaMaster(Level.Game);
+		if(AM != None)
+			CurrentRound = AM.CurrentRound;
+	}
 	
 	if(ActiveThisRound)
 		PlayerData.Current.Rounds = Misc_PRI(PlayerReplicationInfo).PlayedRounds+1;
