@@ -29,7 +29,7 @@ function NotifyTakeHit(pawn InstigatedBy, vector HitLocation, int Damage, class<
 	local int iDam;
 	local vector AttackLoc;
 
-	Super(PlayerController).NotifyTakeHit(InstigatedBy,HitLocation,Damage,DamageType,Momentum);
+	Super.NotifyTakeHit(InstigatedBy,HitLocation,Damage,DamageType,Momentum);
 
 	if (FrozenPawn != None)
 	{
