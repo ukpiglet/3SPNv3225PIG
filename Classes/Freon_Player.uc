@@ -52,8 +52,7 @@ function ClientVoiceMessage (PlayerReplicationInfo Sender, PlayerReplicationInfo
 		Super.ClientVoiceMessage ( Sender,  Recipient,  messagetype,  MessageID);
  }
 
-//Overwridden as Pawn somestimes does not exist on client.
-//Warning: Freon_Player (Function UnrealGame.UnrealPlayer.NewClientPlayTakeHit:0095) Accessed None 'Pawn'
+//Overwridden as Pawn does not exist where the player is frozen
 function NewClientPlayTakeHit(vector AttackLoc, vector HitLoc, byte Damage, class<DamageType> damageType)
 {
 	local vector HitDir;
@@ -61,7 +60,12 @@ function NewClientPlayTakeHit(vector AttackLoc, vector HitLoc, byte Damage, clas
 	if ( (myHUD != None) && ((Damage > 0) || bGodMode) )
 	{
 		if ( AttackLoc != vect(0,0,0) )
-			HitDir = Normal(AttackLoc - Pawn.Location);
+		{
+			if (Pawn != None)
+				HitDir = Normal(AttackLoc - Pawn.Location);
+			else
+				HitDir = Normal(AttackLoc - FrozenPawn.Location);
+		}
 		else
 			HitDir = Normal(HitLoc);
 		myHUD.DisplayHit(HitDir, Damage, DamageType);
@@ -70,9 +74,21 @@ function NewClientPlayTakeHit(vector AttackLoc, vector HitLoc, byte Damage, clas
     if( bEnableDamageForceFeedback )        // jdf
         ClientPlayForceFeedback("Damage");  // jdf
 		
-    if ( Level.NetMode == NM_Client && Pawn != None){
-		HitLoc += Pawn.Location;
-		Pawn.PlayTakeHit(HitLoc, Damage, damageType);
+    if ( Level.NetMode == NM_Client)
+	{
+		if (Pawn != None)
+		{
+			HitLoc += Pawn.Location;
+			Pawn.PlayTakeHit(HitLoc, Damage, damageType);
+		}
+		else
+		{
+			if (FrozenPawn != None)
+			{
+				HitLoc += FrozenPawn.Location;
+				FrozenPawn.PlayTakeHit(HitLoc, Damage, damageType);
+			}
+		}
 	}
 }
 
