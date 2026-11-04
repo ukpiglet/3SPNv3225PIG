@@ -5,6 +5,10 @@ class Team_GameBase extends TeamGame
 #exec OBJ LOAD FILE=TeamSymbols.utx
 #exec AUDIO IMPORT FILE="Sounds\Overtime.wav" GROUP=Sounds
 
+// Maybe make this config? If so then it will not necessarily update as the build changes the images acvailable
+var array<string> SULoadingScreens, UWLoadingScreens, WSLoadingScreens, HRLoadingScreens, LoadingScreens;
+//var array<string> LoadingScreens;
+
 var config bool bDebug;
 
 /* general and misc */
@@ -23,7 +27,7 @@ var config bool     bDisableInvis;
 var config bool     bDisableBerserk;
 var array<string>   EnabledCombos;
 
-var config bool     bLetPlayersPee;         // allow full coutdown regardless of number of players
+var config bool     bLetPlayersPee;         // allow full countdown regardless of number of players
 var config bool     bForceRUP;              // force players to ready up after...
 var config int      ForceRUPMinPlayers;
 var config int      ForceSeconds;           // this many seconds
@@ -4006,6 +4010,212 @@ function ResetDefaults()
         NextMapString = "";
     }
 }
+
+// ==============================================================
+// GetLoadingHint. Thanks to Wormbo for pointing out this method
+// ==============================================================
+
+static function string GetLoadingHint(PlayerController PlayerController, string MapName, Color ColorHint)
+{
+	local Material MaterialLoadingScreen;
+	local UT2K4ServerLoading UT2K4ServerLoading;
+	local DrawOpImage Img;
+	local float SubX, SubY, SubXL, SubYL;
+
+	SubX  = -1;
+	SubY  = -1;
+	SubXL = 1024;
+	SubYL = 768;
+
+	//if (int(PlayerController.Level.EngineVersion) < 3375) // May need to be 3376 by the time this code sees the world!
+	//{
+		MaterialLoadingScreen = GetLoadingScreen(PlayerController, MapName, SubX, SubY, SubXL, SubYL);
+
+		if (Texture(MaterialLoadingScreen) != None)
+		{
+			Texture(MaterialLoadingScreen).LODSet = LODSET_Interface;
+
+			foreach PlayerController.AllObjects(Class'UT2K4ServerLoading', UT2K4ServerLoading)
+			{
+				Img = DrawOpImage(UT2K4ServerLoading.Operations[0]);
+				if (Img != None)
+				{
+					Img.Image = MaterialLoadingScreen;
+					Img.SubX  = SubX;
+					Img.SubY  = SubY;
+					Img.SubXL = SubXL;
+					Img.SubYL = SubYL;
+				}
+			}
+		}
+	//}
+
+	return Super.GetLoadingHint(PlayerController, MapName, ColorHint);
+}
+
+static function Material GetLoadingScreen(PlayerController Ref, string MapName, out float SubX, out float SubY, out float SubXL, out float SubYL)
+{
+    local Material MaterialLoadingScreen;
+    local int iLS, PlayerResX, PlayerResY;
+    local GUIController GC;
+    local float AspectRatio;				// Client screen aspect ratio
+	local float LoadingScreenRatio;			// This is the aspect ratio which should be built into the loading screen image
+	local float StandardRatio, SURatioCutoff, UWRatioCutoff, WSRatioCutoff, HRImgCutoffY, DiffStandard, DiffWS, DiffUW, DiffSU, UseRatio;
+	local string CurrentRes, Xstr, Ystr;
+
+	// Ascertain what the closest aspect ratio is to the one the player is currently using
+	AspectRatio = (PlayerResX * 1.f) / PlayerResY;
+	//Log("******** Debug PlayerResX, PlayerResY, Aspect ratio: "$PlayerResX @ PlayerResY @ AspectRatio);
+
+	// Calculate absolute differences for all four ratios
+	DiffStandard = Abs(AspectRatio - StandardRatio);
+	DiffWS = Abs(AspectRatio - WSRatioCutoff);
+	DiffUW = Abs(AspectRatio - UWRatioCutoff);
+	DiffSU = Abs(AspectRatio - SURatioCutoff);
+
+	//log("Ratios StandardRatio, WSRatioCutoff, UWRatioCutoff, SURatioCutoff: "$StandardRatio @ WSRatioCutoff @ UWRatioCutoff @ SURatioCutoff);
+	//log("Difference from each: "$DiffStandard@ DiffWS @ DiffUW @ DiffSU);
+
+	// Select the closest aspect ratio cutoff
+	if (DiffStandard <= DiffWS && DiffStandard <= DiffUW && DiffStandard <= DiffSU)
+	{
+		UseRatio = StandardRatio;
+	}
+	else if (DiffWS <= DiffStandard && DiffWS <= DiffUW && DiffWS <= DiffSU)
+	{
+		UseRatio = WSRatioCutoff;
+	}
+	else if (DiffUW <= DiffStandard && DiffUW <= DiffWS && DiffUW <= DiffSU)
+	{
+		UseRatio = UWRatioCutoff;
+	}
+	else
+	{
+		UseRatio = SURatioCutoff;
+	}
+
+	//log("I chose "$UseRatio@"as the closest to"@AspectRatio);
+	//log("***** debug my aspect ratio is "$AspectRatio@UseRatio@" which is closest to "@SURatioCutoff@UWRatioCutoff@WSRatioCutoff@"( PlayerResY & HRImgCutoffY: "$PlayerResY@HRImgCutoffY@")");
+
+    // Look for an embedded loading image in the map, as a first option - though this is a bit pants as it doesn't support multiple resolutions. Code could easily be changed to support multiple names using "UseRatio
+	//MaterialLoadingScreen = Material(DynamicLoadObject(MapName $ ".LoadingScreen", Class'Material', True));
+
+	//if (MaterialLoadingScreen != None)
+	//{
+	    //SubXL = MaterialLoadingScreen.MaterialUSize();
+		//SubYL = MaterialLoadingScreen.MaterialVSize();
+		////N.B. Map authors, with this code the whole texture will be used. Squeeze it as you will for display on client screens!
+	//}
+	//else
+	//{
+		SURatioCutoff = (32.0/9.0);
+		UWRatioCutoff = (21.0/9.0);
+		WSRatioCutoff = (16.0/9.0);
+		StandardRatio = (4.0/3.0);
+		HRImgCutoffY  = 1080;
+
+		//Get player's screen resolution
+		if (Ref != None && Ref.Player != None && Ref.Player.GUIController != None)
+			GC = GUIController(Ref.Player.GUIController);
+
+		if (GC != None)
+		{
+			if ( GC.ResX == 0 || GC.ResY == 0 )
+			{
+				CurrentRes = Ref.ConsoleCommand("GETCURRENTRES");
+				if ( Divide(CurrentRes, "x", Xstr, Ystr) )
+				{
+					PlayerResX = int(Xstr);
+					PlayerResY = int(Ystr);
+				}
+			}
+			else
+			{
+				PlayerResX = GC.ResX;
+				PlayerResY = GC.ResY;
+			}
+		}
+		else
+		{
+			// Default if cannot find GuiController. Shouldn't happen - but would you put money on it?
+			PlayerResX = 1024;
+			PlayerResY = 768;
+		}
+
+		//Start sample code where you have multiple images, one for each resolution
+		if (UseRatio == SURatioCutoff && Default.SULoadingScreens.Length > 0)
+		{
+			// SuperUltrawide
+			LoadingScreenRatio = (32.0/9.0);
+			iLS = Rand(Default.SULoadingScreens.Length);
+			MaterialLoadingScreen = Material(DynamicLoadObject(Default.SULoadingScreens[iLS], Class'Material', False));
+			//log("Debug ******************** Using SULoadingScreens["$iLS$"]"@Default.SULoadingScreens[iLS]);
+		}
+		else
+		if (UseRatio == UWRatioCutoff && Default.UWLoadingScreens.Length > 0)
+		{
+			// Ultrawide
+			LoadingScreenRatio = (21.0/9.0);
+			iLS = Rand(Default.UWLoadingScreens.Length);
+			MaterialLoadingScreen = Material(DynamicLoadObject(Default.UWLoadingScreens[iLS], Class'Material', False));
+			//log("Debug ******************** Using UWLoadingScreens["$iLS$"]"@Default.UWLoadingScreens[iLS]);
+		}
+		else
+		if (UseRatio == WSRatioCutoff && Default.WSLoadingScreens.Length > 0)
+		{
+			// Wide
+			LoadingScreenRatio = (16.0/9.0);
+			iLS = Rand(Default.WSLoadingScreens.Length);
+			MaterialLoadingScreen = Material(DynamicLoadObject(Default.WSLoadingScreens[iLS], Class'Material', False));
+			//log("Debug ******************** Using WSLoadingScreens["$iLS$"]"@Default.WSLoadingScreens[iLS]);
+		}
+		else if (PlayerResY >= HRImgCutoffY && Default.HRLoadingScreens.Length > 0)
+		{
+			// High res but not widescreen
+			LoadingScreenRatio = (4.0/3.0);
+			iLS = Rand(Default.HRLoadingScreens.Length);
+			MaterialLoadingScreen = Material(DynamicLoadObject(Default.HRLoadingScreens[iLS], Class'Material', False));
+			//log("Debug ******************** Using HRLoadingScreens["$iLS$"]"@Default.HRLoadingScreens[iLS]);
+		}
+		else if (Default.LoadingScreens.Length > 0)
+		{
+			// 4:3ish, but not high res
+			LoadingScreenRatio = (4.0/3.0);
+			iLS = Rand(Default.LoadingScreens.Length);
+			MaterialLoadingScreen = Material(DynamicLoadObject(Default.LoadingScreens[iLS], Class'Material', False));
+			//log("Debug ******************** Using LoadingScreens["$iLS$"]"@Default.LoadingScreens[iLS]);
+		}
+
+		if (MaterialLoadingScreen != None)
+		{
+			SubXL = MaterialLoadingScreen.MaterialUSize();
+			SubYL = MaterialLoadingScreen.MaterialUSize() / LoadingScreenRatio;
+		}
+	//end code where you have multiple images, one for each resolution
+
+		/*
+	// Sample Code where you want to crop a single image to multiple aspect ratios. This makes for fewer screens, but more complexity around making them work nicely at each resolution
+		if (Default.LoadingScreens.Length > 0)
+		{
+			iLS = Rand(Default.LoadingScreens.Length);
+			MaterialLoadingScreen = Material(DynamicLoadObject(Default.LoadingScreens[iLS], Class'Material', False));
+			if (MaterialLoadingScreen == None)
+				return None;
+
+			SubYL = MaterialLoadingScreen.MaterialVSize();
+			SubXL = SubYL * UseRatio;
+		}
+	// End of Sample Code where you want to crop a single image to multiple aspect ratios.
+		*/
+
+	//}
+
+	if (Texture(MaterialLoadingScreen) != None)
+		Texture(MaterialLoadingScreen).LODSet = LODSET_Interface;
+
+    return MaterialLoadingScreen;
+}
+
 
 defaultproperties
 {

@@ -2001,12 +2001,21 @@ simulated function SetInitialColoredName()
 
 event PreClientTravel()
 {
+	local DrawOpImage Img;
+
 	//local int i;
 	/*(i=0; i<10; ++i)
 	{
 		if(EndCeremonyPawns[i]!=None)
 			EndCeremonyPawns[i].Destroy();
 	}*/
+
+	//Reset back the defaults for the loading screen image so it doesn't impact the next gametype's splash screen pre 3375. See Team_Gamebase::GetLoadingHint
+	img=DrawOpImage(class'UT2K4ServerLoading'.Default.Operations[0]);
+	img.SubX=-1;
+	img.SubY=-1;
+	img.SubXL = 1024;
+	img.SubYL = 768;
 
 	Super.PreClientTravel();
 }

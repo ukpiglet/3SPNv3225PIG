@@ -40,6 +40,8 @@ var Sound TeleportSound;
 
 var config bool bAwardAmmoOnThaw;
 
+var(LoadingHints) private localized array<string> FreonHints;
+
 //Otherwise Log message: Freon DM-UCMP-Contrast-SE_Beta2.Freon (Function Engine.GameInfo.EndLogging:0027) 
 function EndLogging(string Reason)
 {
@@ -191,7 +193,7 @@ static event string GetDescriptionText(string PropName)
         case "iAdrenGitters":           return "Deduct Adren from Gitters after this many gits";
         case "AdrenGitLose":            return "How much adrenline for gitters to lose each time";
 		case "bAwardAmmoOnThaw":		return "Award one unit of berzerk ammo as a thaw reward";
-		case "ThawPointAward":		    return "Award points as a thaw reward";
+		case "ThawPointAward":		  return "Award points as a thaw reward";
 		case "bAllowSelfKillThaw":      return "Allow players to freeze themselves into lava for a full thaw";
 		case "bNoTriggerProtection":    return "No protection when players thaw in range of another teammate needing thawing";
 		case "bCanStandOnIcicle":       return "Turn on to be able to stand on frozen players";
@@ -693,15 +695,12 @@ function WholeThaw(Freon_Pawn Thawer){
 
 		if(Message!=None)
 		{
-		   MP = Misc_Player(Thawer.Controller);
-		   if(MP!=None)
-			   MP.BroadcastAnnouncement(Message);
+			MP = Misc_Player(Thawer.Controller);
+			if(MP!=None)
+				MP.BroadcastAnnouncement(Message);
 		}
 	}
 }
-
-
-
 
 function GiveReward(Freon_Pawn Thawer){
 
@@ -717,7 +716,7 @@ function RewardHeldGunOnly(Freon_Pawn Thawer){
 
     local Weapon heldWeapon;
     local float add;
-	
+
     if(Thawer.Role == ROLE_Authority)
     {
         heldWeapon = Thawer.Weapon;
@@ -756,7 +755,7 @@ function RewardButChargeLowIfNeeded(Freon_Pawn Thawer){
 
     if(Thawer.Role != ROLE_Authority)
 		return;
-	    
+
 	heldWeapon = Thawer.Weapon;
 	if(heldWeapon == None)
 		return;
@@ -967,7 +966,7 @@ function AnnounceBest()
 			longesths = PRI;
 
 		if(thaws == None || ((bFullThaws && thaws.HealthGiven < PRI.HealthGiven) || (!bFullThaws && thaws.Thaws < PRI.Thaws) )){
-		    thaws = PRI;
+		  thaws = PRI;
 		}
 
         if(git == None || (git.Git < PRI.Git))
@@ -1290,8 +1289,54 @@ function CheckForCampers()
 //     NextRoundDelayFreon=1 // should be below if needed	
 }
 
+static function string GetNextLoadHint( string MapName )
+{
+	local array<string> Hints;
+
+	Hints = GetAllLoadHints();
+
+	if ( Hints.Length > 0 )
+		return Hints[Rand(Hints.Length)];
+
+	return "";
+}
+
+static function array<string> GetAllLoadHints(optional bool bThisClassOnly)
+{
+	local int i;
+	local array<string> Hints;
+
+	if ( default.FreonHints.Length == 0 )
+		Hints = Super.GetAllLoadHints();
+
+	for ( i = 0; i < default.FreonHints.Length; i++ )
+		Hints[Hints.Length] = default.FreonHints[i];
+
+	return Hints;
+}
+
+
 defaultproperties
 {
+     //SULoadingScreens(0)="LoadingScreens.loading.LoadingScreen1_SU"
+     //UWLoadingScreens(0)="LoadingScreens.loading.LoadingScreen1_UW"
+	 //WSLoadingScreens(0)="LoadingScreens.loading.LoadingScreen1_WS"
+	 //HRLoadingScreens(0)="LoadingScreens.loading.LoadingScreen1_HR"
+	 //LoadingScreens(0)="TestLoadingScreen.loadingscreen1"
+     FreonHints(0)="You can use your shield gun primary to move frozen players together and thaw more than one at a time."
+     FreonHints(1)="The more players that do the thawing the quicker the thaw is."
+     FreonHints(2)="Players with the red or yellow icons beside them will thaw more slowly by teammate, as they suicided."
+     FreonHints(3)="If you use speed adrenaline combo you will thaw much faster."
+     FreonHints(4)="If you push a frozen player into a triggered trap/killzone they will die."
+     FreonHints(5)="If you push a frozen player into Lava they thaw immediately with full health, or die if flagged red."
+     FreonHints(6)="Thawing gives you ammo for the gun you’re holding at the time, points and adrenaline."
+     FreonHints(7)="If you are high health, being near a low health teammate increases their health."
+     FreonHints(8)="If you are low health, being near a higher health teammate increases your health."
+     FreonHints(9)="Teamsay %A, %S, %H, or %W for Adrenaline, Shield, Health, and Weapon information."
+     FreonHints(10)="If you stay in the same place for too long you will be called a camper and receive increasingly painful penalties."
+     FreonHints(11)="You’re not camping if you’re actively thawing"
+     FreonHints(12)="You lose thaw protection if you thaw in range of frozen teammates."
+
      AutoThawTime=90.000000
      ThawSpeed=5.500000
      MinHealthOnThaw=80.000000
