@@ -657,7 +657,7 @@ simulated function UpdateEndCeremony(float DeltaTime)
 	}
 }
 
-function ClientListBest(string acc, string dam, string hs)
+simulated function ClientListBest(string acc, string dam, string hs)
 {
     if(class'Misc_Player'.default.bDisableAnnouncement)
         return;
@@ -766,7 +766,7 @@ simulated function InitInputSystem()
 }
 
 
-function ClientKillBases()
+simulated function ClientKillBases()
 {
     local xPickupBase p;
 
@@ -806,7 +806,7 @@ function Reset()
         xPawn(Pawn).bNoWeaponFiring = bLock;
 }*/
 
-function ClientPlayAlone()
+simulated function ClientPlayAlone()
 {
   if(ServerSoundAlone==None && Len(Misc_BaseGRI(GameReplicationInfo).SoundAloneName)>0) {
     ServerSoundAlone = Sound(DynamicLoadObject(Misc_BaseGRI(GameReplicationInfo).SoundAloneName, class'Sound', True));
@@ -817,7 +817,7 @@ function ClientPlayAlone()
     ClientPlaySound(class'Misc_Player'.default.SoundAlone, true, class'Misc_Player'.default.SoundAloneVolume);
 }
 
-function ClientPlaySpawnProtection()
+simulated function ClientPlaySpawnProtection()
 {
   if(ServerSoundSpawnProtection==None && Len(Misc_BaseGRI(GameReplicationInfo).SoundSpawnProtectionName)>0) {
     ServerSoundSpawnProtection = Sound(DynamicLoadObject(Misc_BaseGRI(GameReplicationInfo).SoundSpawnProtectionName, class'Sound', True));
@@ -878,7 +878,7 @@ simulated function PlayStatusAnnouncementReliable(name AName, byte AnnouncementL
 		ClientPlaySound(ASound,true,Atten,SLOT_Talk);
 }
 
-function ClientResetClock(int seconds)
+simulated function ClientResetClock(int seconds)
 {
     Misc_BaseGRI(GameReplicationInfo).RoundTime = seconds;
 }
@@ -1265,7 +1265,7 @@ function ServerUpdateStatArrays(TeamPlayerReplicationInfo PRI)
         P.FlawlessCount, P.OverkillCount, P.DarkHorseCount, P.SGDamage, P.RoxCount, P.LongestHeadshotDistance);
 }
 
-function ClientSendMiscStats(Misc_PRI P, int HS, int ED, float RFF, float AP, int FC, int OC, int DHC, int SGD, int RoxCount, int LHSD)
+simulated function ClientSendMiscStats(Misc_PRI P, int HS, int ED, float RFF, float AP, int FC, int OC, int DHC, int SGD, int RoxCount, int LHSD)
 {
     P.HeadShots = HS;
 	P.EnemyDamage = ED;
@@ -1279,7 +1279,7 @@ function ClientSendMiscStats(Misc_PRI P, int HS, int ED, float RFF, float AP, in
 	P.LongestHeadshotDistance = LHSD;
 }
 
-function ClientSendAssaultStats(Misc_PRI P, Misc_PRI.HitStats Assault)
+simulated function ClientSendAssaultStats(Misc_PRI P, Misc_PRI.HitStats Assault)
 {
     P.Assault.Primary.Fired     = Assault.Primary.Fired;
     P.Assault.Primary.Hit       = Assault.Primary.Hit;
@@ -1289,7 +1289,7 @@ function ClientSendAssaultStats(Misc_PRI P, Misc_PRI.HitStats Assault)
     P.Assault.Secondary.Damage  = Assault.Secondary.Damage;
 }
 
-function ClientSendShockStats(Misc_PRI P, Misc_PRI.HitStats Shock)
+simulated function ClientSendShockStats(Misc_PRI P, Misc_PRI.HitStats Shock)
 {
     P.Shock.Primary.Fired     = Shock.Primary.Fired;
     P.Shock.Primary.Hit       = Shock.Primary.Hit;
@@ -1299,7 +1299,7 @@ function ClientSendShockStats(Misc_PRI P, Misc_PRI.HitStats Shock)
     P.Shock.Secondary.Damage  = Shock.Secondary.Damage;
 }
 
-function ClientSendLinkStats(Misc_PRI P, Misc_PRI.HitStats Link)
+simulated function ClientSendLinkStats(Misc_PRI P, Misc_PRI.HitStats Link)
 {
     P.Link.Primary.Fired     = Link.Primary.Fired;
     P.Link.Primary.Hit       = Link.Primary.Hit;
@@ -1309,7 +1309,7 @@ function ClientSendLinkStats(Misc_PRI P, Misc_PRI.HitStats Link)
     P.Link.Secondary.Damage  = Link.Secondary.Damage;
 }
 
-function ClientSendMiniStats(Misc_PRI P, Misc_PRI.HitStats Mini)
+simulated function ClientSendMiniStats(Misc_PRI P, Misc_PRI.HitStats Mini)
 {
     P.Mini.Primary.Fired     = Mini.Primary.Fired;
     P.Mini.Primary.Hit       = Mini.Primary.Hit;
@@ -1319,7 +1319,7 @@ function ClientSendMiniStats(Misc_PRI P, Misc_PRI.HitStats Mini)
     P.Mini.Secondary.Damage  = Mini.Secondary.Damage;
 }
 
-function ClientSendFlakStats(Misc_PRI P, Misc_PRI.HitStats Flak)
+simulated function ClientSendFlakStats(Misc_PRI P, Misc_PRI.HitStats Flak)
 {
     P.Flak.Primary.Fired     = Flak.Primary.Fired;
     P.Flak.Primary.Hit       = Flak.Primary.Hit;
@@ -1329,28 +1329,28 @@ function ClientSendFlakStats(Misc_PRI P, Misc_PRI.HitStats Flak)
     P.Flak.Secondary.Damage  = Flak.Secondary.Damage;
 }
 
-function ClientSendRocketStats(Misc_PRI P, Misc_PRI.HitStat Rockets)
+simulated function ClientSendRocketStats(Misc_PRI P, Misc_PRI.HitStat Rockets)
 {
     P.Rockets.Fired = Rockets.Fired;
     P.Rockets.Hit = Rockets.Hit;
     P.Rockets.Damage = Rockets.Damage;
 }
 
-function ClientSendSniperStats(Misc_PRI P, Misc_PRI.HitStat Sniper)
+simulated function ClientSendSniperStats(Misc_PRI P, Misc_PRI.HitStat Sniper)
 {
     P.Sniper.Fired = Sniper.Fired;
     P.Sniper.Hit = Sniper.Hit;
     P.Sniper.Damage = Sniper.Damage;
 }
 
-function ClientSendBioStats(Misc_PRI P, Misc_PRI.HitStat Bio)
+simulated function ClientSendBioStats(Misc_PRI P, Misc_PRI.HitStat Bio)
 {
     P.Bio.Fired = Bio.Fired;
     P.Bio.Hit = Bio.Hit;
     P.Bio.Damage = Bio.Damage;
 }
 
-function ClientSendComboStats(Misc_PRI P, Misc_PRI.HitStat Combo)
+simulated function ClientSendComboStats(Misc_PRI P, Misc_PRI.HitStat Combo)
 {
     P.Combo.Fired = Combo.Fired;
     P.Combo.Hit = Combo.Hit;

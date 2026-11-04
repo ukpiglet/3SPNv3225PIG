@@ -106,14 +106,14 @@ function ServerUpdateStatArrays(TeamPlayerReplicationInfo PRI)
     ClientSendStatsFreon(P, P.Thaws, P.Git, P.HealthGiven);
 }
 
-function ClientSendStatsFreon(Freon_PRI P, int thaws, int git, float HealthGiven)
+simulated function ClientSendStatsFreon(Freon_PRI P, int thaws, int git, float HealthGiven)
 {
     P.Thaws = thaws;
     P.Git = git;
 	P.HealthGiven = HealthGiven;
 }
 
-function ClientListBestFreon(string acc, string dam, string hs, string th, string gt)
+simulated function ClientListBestFreon(string acc, string dam, string hs, string th, string gt)
 {
 	Super.ClientListBest(acc, dam, hs);
 
@@ -554,7 +554,6 @@ state Frozen
         //bCollideWorld = false;
     }
 }
-
 
 function TakeShot()
 {
