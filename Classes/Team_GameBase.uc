@@ -1677,10 +1677,15 @@ function PlayerLeft(PlayerController C)
 
     P = Misc_Player(C);
     if(P == None)
+    {
         return;
+    }
 
     if(PlayerDataManager_ServerLink!=None)
+    {
         PlayerDataManager_ServerLink.PlayerLeft(P);
+    }
+    RemovePlayerFromTeamsCall(C.PlayerReplicationInfo.PlayerID);
 }
 
 function PlayerChangedName(PlayerController C)
@@ -2967,8 +2972,7 @@ function BalanceTeamsRoundStart()
             continue;
         }
 
-        PPR0 = GetPlayerAutoBalancingPPR(C);
-        TeamPPR[TeamIdx] += PPR0;
+        TeamPPR[TeamIdx] += GetPlayerAutoBalancingPPR(C);
         ++TeamSize[TeamIdx];
         ++PlayerCount;
     }
@@ -2981,12 +2985,10 @@ function BalanceTeamsRoundStart()
         }
 
         PPRDelta = abs(TeamPPR[0] - TeamPPR[1]);
-
-        if (!ForceAutoBalance)
-        {
-            ForceAutoBalance = ((CurrentRound - LastRoundBalanced) > AutoBalanceRoundsMin) && PPRDelta > AveragePPR;
-        }
+        ForceAutoBalance = ((CurrentRound - LastRoundBalanced) > AutoBalanceRoundsMin) && PPRDelta > AveragePPR;
     }
+    PPR0 = 0;
+    PPR1 = 0;
 
     if (!ForceAutoBalance && TeamSize[0] == TeamSize[1])
     {
@@ -3004,9 +3006,13 @@ function BalanceTeamsRoundStart()
         SwapPlayers = true;
 
         if (TeamPPR[0] > TeamPPR[1])
+        {
             TeamIdx = 0;
+        }
         else if (TeamPPR[1] > TeamPPR[0])
+        {
             TeamIdx = 1;
+        }
         else
         {
             ForceAutoBalance = false;
@@ -3018,14 +3024,12 @@ function BalanceTeamsRoundStart()
         SwapPlayers = false;
         TeamIdx = (TeamSize[0] > TeamSize[1]) ? 0 : 1;
     }
-
     PPRNeeded = (TeamPPR[TeamIdx] - TeamPPR[1-TeamIdx]) / 2;
 
     if (SwapPlayers)
     {
         PPR0 = PPRNeeded * 2;
         PPR1 = PPRNeeded;
-
         BestMatch = FindBestAutoBalanceCandidate(TeamIdx, PPR0);
         BestMatch2 = FindBestAutoBalanceCandidate(1-TeamIdx, PPR1);
 
