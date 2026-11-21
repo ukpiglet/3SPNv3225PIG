@@ -2937,7 +2937,7 @@ function BalanceTeamsRoundStart()
     local int TeamSize[2];
     local int TeamScore[2];
     local Controller C, BestMatch, BestMatch2;
-    local int TeamIdx, PlayersNeeded, PlayersMoved, i, LastRoundBalanced, AutoBalanceOnDelta;
+    local int TeamIdx, PlayersNeeded, PlayersMoved, i, LastRoundBalanced, AutoBalanceOnDelta, PlayerCount;
     local float PPRNeeded;
     local bool SwapPlayers;
 
