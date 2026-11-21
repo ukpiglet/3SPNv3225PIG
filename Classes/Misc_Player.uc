@@ -315,10 +315,6 @@ function LoadPlayerDataStats()
 	MPRI.AvgPPR = PlayerData.AvgPPR;
 	MPRI.StatsReceived = PlayerData.StatsReceived;
 	
-	//level up when player of this ppr joins
-	if(!PlayerReplicationInfo.bOnlySpectator && TG != None && TG.AutoBalanceOnJoinsOver > 0 && PlayerData.AvgPPR > TG.AutoBalanceOnJoinsOver)
-      TG.ForceAutoBalance = true;
-	
 }
 
 function LoadPlayerData()
@@ -1091,8 +1087,6 @@ function BecomeActivePlayer()
 
 	//level up when player of this ppr joins
 	GB = Team_GameBase(Level.Game);
-	if( GB!=None && GB.AutoBalanceOnJoinsOver > 0 && PlayerData != None && PlayerData.AvgPPR > GB.AutoBalanceOnJoinsOver)
-      GB.ForceAutoBalance = true;
 	
 	PlayerReplicationInfo.bOnlySpectator = false;
 	Level.Game.NumSpectators--;
@@ -1113,10 +1107,6 @@ function BecomeActivePlayer()
 		else
 			TeamIdx = 255;
 		Level.Game.ChangeTeam(self, Level.Game.PickTeam(TeamIdx, None), false);
-
-    if( Team_GameBase(Level.Game)!=None && Team_GameBase(Level.Game).AutoBalanceOnJoins )
-      Team_GameBase(Level.Game).ForceAutoBalance = true;
-	}
 
 	if(!IsInState('GameEnded'))
 	{
@@ -1411,11 +1401,6 @@ function BecomeSpectator()
 
 	ServerSpectate();
 	BroadcastLocalizedMessage(Level.Game.GameMessageClass, 14, PlayerReplicationInfo);
-
-	//level up when player of this ppr leaves
-	GB = Team_GameBase(Level.Game);
-	if(GB!=None && GB.AutoBalanceOnJoinsOver > 0 && PlayerData != None && PlayerData.AvgPPR > GB.AutoBalanceOnJoinsOver)
-      GB.ForceAutoBalance = true;
 
 	ClientBecameSpectator();
 }

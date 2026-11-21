@@ -112,17 +112,6 @@ function PlayerLeft(Misc_Player P)
 	Log("PlayerLeft: "$P.PlayerReplicationInfo.PlayerName);
 	P.StorePlayerData();
 	if(P.PlayerData!=None){
-		
-		//level up when player of this ppr leaves - if configured
-		theGame = Team_GameBase(Level.Game);
-		if( theGame!= None)
-		{
-			if( theGame.AutoBalanceOnJoinsOver > 0 && P.PlayerData.AvgPPR > theGame.AutoBalanceOnJoinsOver)
-				theGame.ForceAutoBalance = true;
-
-			thegame.RemovePlayerFromTeamsCall(P.PlayerReplicationInfo.PlayerID);
-		}
-		
 		class'Misc_PlayerData'.static.DetachPlayerRecord(P.PlayerData);
 	}
 }
