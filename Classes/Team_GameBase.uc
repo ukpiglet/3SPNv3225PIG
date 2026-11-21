@@ -168,7 +168,6 @@ var config int AutoBalanceSeconds;
 var config float AutoBalanceRandomization;
 var config float AutoBalanceAvgPPRWeight;
 var config bool AutoBalanceOnJoins;
-var config float AutoBalanceOnJoinsOver;
 var config bool AllowForceAutoBalance;
 var config int neededToCallTeams, teamsTime;
 var config int ForceAutoBalanceCooldown;
@@ -176,6 +175,7 @@ var int ForceAutoBalanceTimer;
 var bool TeamsAutoBalanced;
 var array<Controller> DontAutoBalanceList;
 var bool ForceAutoBalance;
+var int LastRoundBalanced;
 
 var string GameOptions;
 
@@ -449,7 +449,6 @@ static function FillPlayInfo(PlayInfo PI)
 	PI.AddSetting("3SPN", "AutoBalanceAve", "Auto Balance If average team ppr more than", 0, Weight++, "Text", "8;0:100",,True);
     PI.AddSetting("3SPN", "AutoBalanceSeconds", "Auto Balance Teams Time", 0, Weight++, "Text", "3;0:300",, True);
     PI.AddSetting("3SPN", "AutoBalanceOnJoins", "Auto Balance When New Players Join", 0, Weight++, "Check",,, True);
-	PI.AddSetting("3SPN", "AutoBalanceOnJoinsOver", "Auto Balance when players join with ppr over this", 0, Weight++, "Text", "8;0:100",, True);
     PI.AddSetting("3SPN", "AllowForceAutoBalance", "Auto Balance By Users Writing 'teams' Into Chat", 0, Weight++, "Check",,, True);
     PI.AddSetting("3SPN", "neededToCallTeams", "Number of Users needed to put 'teams' Into Chat to auto-balance",  0, Weight++, "Text", "3;0:999");
     PI.AddSetting("3SPN", "teamsTime", "Time period for n 'teams' calls to trigger balance",  0, Weight++, "Text", "3;0:999");
@@ -563,7 +562,6 @@ static event string GetDescriptionText(string PropName)
       case "AutoBalanceAve":              return "Automatically Balance Teams At Match Start";
       case "AutoBalanceSeconds":            return "Auto Balance Teams if team average more than this (0=off)";
       case "AutoBalanceOnJoins":            return "Auto Balance Teams When New Players Join";
-      case "AutoBalanceOnJoinsOver":        return "Auto Balance Teams When New Players Join with ppr over this (zero to turn off)";
       case "AllowForceAutoBalance":         return "Saying 'teams' Forces Balance (admins can always do this)";
       case "neededToCallTeams":         	return "The number of players needed to call teams";
       case "teamsTime":         			return "The time in seconds for n players to call teams before balance happens";
@@ -2866,44 +2864,38 @@ function BalanceBestPair(){
 	}
 }
 
+function bool IsExcludedFromAutoBalance(Controller C)
+{
+    local int i;
+
+    for (i = 0; i < DontAutoBalanceList.Length; ++i)
+    {
+        if (DontAutoBalanceList[i] == C)
+            return true;
+    }
+
+    return false;
+}
+
 function Controller FindBestAutoBalanceCandidate(int TeamIdx, float PPRNeeded)
 {
   local float PPR, BestPPR;
   local Controller C,BestMatch;
-  local int i;
 
-  // make sure tha auto balance list doesn't grow too big to prevent balancing
-  while(DontAutoBalanceList.Length>NumPlayers/2) {
+  while(DontAutoBalanceList.Length > NumPlayers / 2)
+  {
     DontAutoBalanceList.Remove(0,1);
   }
 
-  // move player that closest matches the required PPR gap / number of players needed
   for(C=Level.ControllerList; C!=None; C=C.NextController)
   {
-    
-    // Skip players who are on the don't switch list. 
-	//Note: (Piglet) This is the code as I found it. Surely the "continue" on this iterator has no effect!
-    for(i=0; i<DontAutoBalanceList.Length; ++i) {
-      if(DontAutoBalanceList[i] == C)
+    if (IsExcludedFromAutoBalance(C))
+    {
         continue;
     }
 
-/*
-	// Skip players who are on the don't switch list. 
-	Note:(Piglet) Made this change to make the code work, but the players hated it. The 'wrong' player was swapped leaving the teams unbalanced. Reverting to investigate further some time.
-    for(i=0; i<DontAutoBalanceList.Length; ++i) {
-      if(DontAutoBalanceList[i] == C)
-        break;
-    }
-	if(i<DontAutoBalanceList.Length)
-		continue;
-*/
-
-    if(    PlayerController(C)!=None &&
-      C.PlayerReplicationInfo!=None &&
-      C.PlayerReplicationInfo.Team!=None &&
-      C.PlayerReplicationInfo.Team.TeamIndex==TeamIdx &&
-      Misc_PRI(C.PlayerReplicationInfo)!=None)
+    if(PlayerController(C)!=None && C.PlayerReplicationInfo!=None && C.PlayerReplicationInfo.Team!=None
+    && C.PlayerReplicationInfo.Team.TeamIndex==TeamIdx && Misc_PRI(C.PlayerReplicationInfo)!=None)
     {
       PPR = abs(PPRNeeded - GetPlayerAutoBalancingPPR(C));
       if(BestMatch==None || PPR<BestPPR)
@@ -2919,26 +2911,37 @@ function Controller FindBestAutoBalanceCandidate(int TeamIdx, float PPRNeeded)
 
 function AutoBalanceSwitchPlayer(Controller C)
 {
-  local int TeamIdx;
-  local int i;
+    local int TeamIdx;
+    local int i;
 
-  i = DontAutoBalanceList.Length;
-  DontAutoBalanceList.Insert(i, 1);
-  DontAutoBalanceList[i] = C;
+    if (C == None || C.PlayerReplicationInfo == None || C.PlayerReplicationInfo.Team == None)
+    {
+        return;
+    }
 
-  TeamIdx = C.PlayerReplicationInfo.Team.TeamIndex;
-  Teams[TeamIdx].RemoveFromTeam(C);
-  Teams[1-TeamIdx].AddToTeam(C);
+    i = DontAutoBalanceList.Length;
+    DontAutoBalanceList.Insert(i, 1);
+    DontAutoBalanceList[i] = C;
+
+    TeamIdx = C.PlayerReplicationInfo.Team.TeamIndex;
+    if (TeamIdx != 0 && TeamIdx != 1)
+    {
+        return;
+    }
+    Teams[TeamIdx].RemoveFromTeam(C);
+    Teams[1-TeamIdx].AddToTeam(C);
 }
 
 function BalanceTeamsRoundStart()
 {
     local float TeamPPR[2];
-    local int TeamSize[2];
-    local int TeamScore[2];
-    local Controller C, BestMatch, BestMatch2;
-    local int TeamIdx, PlayersNeeded, PlayersMoved, i, LastRoundBalanced, AutoBalanceOnDelta, PlayerCount;
+    local float PPR0, PPR1;
+    local float AveragePPR, PPRDelta;
     local float PPRNeeded;
+    local int TeamSize[2];
+    local int TeamIdx, i, PlayerCount;
+    local int PlayersMoved;
+    local Controller C, BestMatch, BestMatch2;
     local bool SwapPlayers;
 
     if (bPigletBalance && (ForceAutoBalance || AutoBalanceAve > 0))
@@ -2946,141 +2949,109 @@ function BalanceTeamsRoundStart()
         BalanceBestPair();
         return;
     }
-
-    for(i=0; i<2; ++i)
+    for (i = 0; i < 2; ++i)
     {
         TeamPPR[i] = 0;
         TeamSize[i] = 0;
-        TeamScore[i] = Teams[i].Score;
     }
-    TeamIdx = 0;
-    PPRNeeded = 0;
-    PlayersNeeded = 0;
-    PlayersMoved = 0;
-    BestMatch = None;
-    BestMatch2 = None;
-    AutoBalanceOnDelta = 0;
-
-    // calculate total PPR for each team
-    for(C=Level.ControllerList; C!=None; C=C.NextController)
+    for (C = Level.ControllerList; C != None; C = C.NextController)
     {
-        if(C.PlayerReplicationInfo==None || C.PlayerReplicationInfo.Team==None)
+        if (C.PlayerReplicationInfo == None || C.PlayerReplicationInfo.Team == None)
         {
             continue;
         }
 
-        TeamScore[C.PlayerReplicationInfo.Team.TeamIndex] += Teams[C.PlayerReplicationInfo.Team.TeamIndex].Score; // do we need to add scores here?
-        TeamPPR[C.PlayerReplicationInfo.Team.TeamIndex] += GetPlayerAutoBalancingPPR(C);
-        ++TeamSize[C.PlayerReplicationInfo.Team.TeamIndex];
+        TeamIdx = C.PlayerReplicationInfo.Team.TeamIndex;
+        if (TeamIdx != 0 && TeamIdx != 1)
+        {
+            continue;
+        }
+
+        PPR0 = GetPlayerAutoBalancingPPR(C);
+        TeamPPR[TeamIdx] += PPR0;
+        ++TeamSize[TeamIdx];
         ++PlayerCount;
     }
+
     if (bholyBalance)
     {
-        AutoBalanceOnDelta = (TeamPPR[0]+TeamPPR[1])/PlayerCount;
-        ForceAutoBalance = (((CurrentRound - LastRoundBalanced) > AutoBalanceRoundsMin) && (AutoBalanceOnDelta < abs(TeamPPR[0]-TeamPPR[1])));
-    }
-    else
-    {
-        AutoBalanceOnDelta = AutoBalanceOnJoinsOver;
+        if (PlayerCount > 0)
+        {
+            AveragePPR = (TeamPPR[0] + TeamPPR[1]) / PlayerCount;
+        }
+
+        PPRDelta = abs(TeamPPR[0] - TeamPPR[1]);
+
+        if (!ForceAutoBalance)
+        {
+            ForceAutoBalance = ((CurrentRound - LastRoundBalanced) > AutoBalanceRoundsMin) && PPRDelta > AveragePPR;
+        }
     }
 
-    if(TeamSize[0]==TeamSize[1] && !ForceAutoBalance)
+    if (!ForceAutoBalance && TeamSize[0] == TeamSize[1])
     {
         return;
     }
 
-    //don't bother balancing if low team sizes  ***debug
-    if( (TeamSize[0]+TeamSize[1]-NumBots) < 3)
+    if (TeamSize[0] + TeamSize[1] - NumBots < 3)
     {
-        ForceAutoBalance = False;
+        ForceAutoBalance = false;
         return;
     }
-    // todo: just pick one team and go with it
-    // Choose the team that is going to give players
-    if(TeamSize[0]>TeamSize[1])
-    {
-        TeamIdx = 0;
-    }
-    else
-    {
-        TeamIdx = 1;
-    }
 
-    // See how many players we need to move, and what PPR they should add up to
-    PlayersNeeded = (TeamSize[TeamIdx] - TeamSize[1-TeamIdx]);
-    PPRNeeded = (TeamPPR[TeamIdx] - TeamPPR[1-TeamIdx])/2;
-    if(PlayersNeeded==0 && ForceAutoBalance)
+    if (TeamSize[0] == TeamSize[1])
     {
-        if(TeamScore[0]>TeamScore[1])
-        {
+        SwapPlayers = true;
+
+        if (TeamPPR[0] > TeamPPR[1])
             TeamIdx = 0;
-        }
-        else if(TeamScore[1]>TeamScore[0])
-        {
+        else if (TeamPPR[1] > TeamPPR[0])
             TeamIdx = 1;
-        }
-        else if(TeamPPR[0]>TeamPPR[1])
-        {
-            TeamIdx = 0;
-        }
-        else if(TeamPPR[1]>TeamPPR[0])
-        {
-            TeamIdx = 1;
-        }
         else
         {
             ForceAutoBalance = false;
             return;
         }
     }
-
-    if(TeamSize[TeamIdx] >= TeamSize[1-TeamIdx])
+    else
     {
-        PlayersNeeded = 1;
-        PPRNeeded = (TeamPPR[TeamIdx] - TeamPPR[1-TeamIdx])/2;
-        if(TeamSize[TeamIdx] == TeamSize[1-TeamIdx])
-        {// Cannot give players, so swap
-            SwapPlayers = true;
-        }
+        SwapPlayers = false;
+        TeamIdx = (TeamSize[0] > TeamSize[1]) ? 0 : 1;
     }
 
-    // Calculate ppr needed for each move
-    if(PlayersNeeded>0)
-    {
-        PPRNeeded /= PlayersNeeded;
-    }
+    PPRNeeded = (TeamPPR[TeamIdx] - TeamPPR[1-TeamIdx]) / 2;
 
-    while(PlayersNeeded>0)
+    if (SwapPlayers)
     {
-        // move player that closest matches the required PPR gap / number of players needed
-        if(SwapPlayers)
+        PPR0 = PPRNeeded * 2;
+        PPR1 = PPRNeeded;
+
+        BestMatch = FindBestAutoBalanceCandidate(TeamIdx, PPR0);
+        BestMatch2 = FindBestAutoBalanceCandidate(1-TeamIdx, PPR1);
+
+        if (BestMatch != None && BestMatch2 != None)
         {
-
-            BestMatch = FindBestAutoBalanceCandidate(TeamIdx, PPRNeeded*2);
-            BestMatch2 = FindBestAutoBalanceCandidate(1-TeamIdx, PPRNeeded);
-            if(BestMatch!=None && BestMatch2!=None)
-            {
-                AutoBalanceSwitchPlayer(BestMatch);
-                AutoBalanceSwitchPlayer(BestMatch2);
-            }
+            AutoBalanceSwitchPlayer(BestMatch);
+            AutoBalanceSwitchPlayer(BestMatch2);
+            PlayersMoved = 2;
         }
-        else
-        {
-            BestMatch = FindBestAutoBalanceCandidate(TeamIdx, PPRNeeded);
-            if(BestMatch!=None)
-            {
-                AutoBalanceSwitchPlayer(BestMatch);
-            }
-        }
-        --PlayersNeeded;
-        ++PlayersMoved;
     }
-
-    if(PlayersMoved>0)
+    else
     {
-        BroadcastLocalizedMessage( class'Message_TeamsBalanced' );
+        BestMatch = FindBestAutoBalanceCandidate(TeamIdx, PPRNeeded);
+
+        if (BestMatch != None)
+        {
+            AutoBalanceSwitchPlayer(BestMatch);
+            PlayersMoved = 1;
+        }
     }
-    LastRoundBalanced = CurrentRound;
+
+    if (PlayersMoved > 0)
+    {
+        BroadcastLocalizedMessage(class'Message_TeamsBalanced');
+        LastRoundBalanced = CurrentRound;
+    }
     ForceAutoBalance = false;
 }
 
@@ -4366,7 +4337,6 @@ defaultproperties
 	AutoBalanceAve=1.0
     AutoBalanceSeconds=20
     AutoBalanceOnJoins=True
-	AutoBalanceOnJoinsOver=0
     AllowForceAutoBalance=True
 	neededToCallTeams=2
 	teamsTime=20
