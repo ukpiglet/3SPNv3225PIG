@@ -1651,11 +1651,11 @@ event PostLogin(PlayerController NewPlayer)
 
     CheckMaxLives(None);
 
-    if(P.PlayerData != None && (P.PlayerReplicationInfo.Team == 0 || P.PlayerReplicationInfo.Team == 1)
+    if(P.PlayerData != None && (P.PlayerReplicationInfo.Team.TeamIndex == 0 || P.PlayerReplicationInfo.Team.TeamIndex == 1))
     {
         if(!NewPlayer.PlayerReplicationInfo.bOnlySpectator && AutoBalanceOnJoins)
         {
-            if ((AutoBalanceOnJoinOver > 0 && P.PlayerData.AvgPPR > AutoBalanceOnJoinOver) || bholyBalance)
+            if ((AutoBalanceOnJoinsOver > 0 && P.PlayerData.AvgPPR > AutoBalanceOnJoinsOver) || bholyBalance)
             {
                 ForceAutoBalance = true;
             }
@@ -1690,7 +1690,7 @@ function PlayerLeft(PlayerController C)
 
     if (AutoBalanceOnJoins)
     {
-        if(AutoBalanceOnJoinsOver > 0 && P.PPR > AutoBalanceOnJoinsOver)
+        if(AutoBalanceOnJoinsOver > 0 && Misc_PRI(P.PlayerReplicationInfo).AvgPPR > AutoBalanceOnJoinsOver)
         {
             ForceAutoBalance = true;
         }
@@ -1748,7 +1748,7 @@ function bool BecomeSpectator(PlayerController P)
     {
         if (AutoBalanceOnJoins)
         {
-            if(AutoBalanceOnJoinsOver > 0 && P.PPR > AutoBalanceOnJoinsOver)
+            if(AutoBalanceOnJoinsOver > 0 && Misc_PRI(P.PlayerReplicationInfo).AvgPPR > AutoBalanceOnJoinsOver)
             {
                 ForceAutoBalance = true;
             }
@@ -3002,6 +3002,7 @@ function BalanceTeamsRoundStart()
     local bool SwapPlayers;
 
     PlayerCount = 0;
+    TeamIdx = 0;
     for(i=0; i<2; ++i)
     {
         TeamPPR[i] = 0;
@@ -3036,28 +3037,27 @@ function BalanceTeamsRoundStart()
         PPRDelta = abs(TeamPPR[0] - TeamPPR[1]);
         ForceAutoBalance = ((CurrentRound - LastRoundBalanced) > AutoBalanceRoundsMin) && PPRDelta > AveragePPR;
     }
+    if (TeamPPR[0] == TeamPPR[1])
+    {
+        ForceAutoBalance = false;
+        return;
+    }
     if (bPigletBalance && (ForceAutoBalance || AutoBalanceAve > 0))
     {
         BalanceBestPair();
         return;
     }
-
     if (TeamSize[0] == TeamSize[1])
     {
         SwapPlayers = true;
-        if (TeamPPR[0] > TeamPPR[1])
-            TeamIdx = 0;
-        else if (TeamPPR[1] > TeamPPR[0])
+        if (TeamPPR[1] > TeamPPR[0])
             TeamIdx = 1;
-        else {
-            ForceAutoBalance = false;
-            return;
-        }
     }
     else
     {
         SwapPlayers = false;
-        TeamIdx = (TeamSize[0] > TeamSize[1]) ? 0 : 1;
+        if (TeamSize[0] < TeamSize[1])
+            TeamIdx = 1;
     }
     PPRNeeded = (TeamPPR[TeamIdx] - TeamPPR[1-TeamIdx]) / 2;
 

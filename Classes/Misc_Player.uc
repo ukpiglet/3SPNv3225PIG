@@ -307,7 +307,6 @@ function ResetPlayerData()
 function LoadPlayerDataStats()
 {
 	local Misc_PRI MPRI;
-	local Team_GameBase TG;
 
 	MPRI = Misc_PRI(PlayerReplicationInfo);
 
@@ -1107,6 +1106,7 @@ function BecomeActivePlayer()
 		else
 			TeamIdx = 255;
 		Level.Game.ChangeTeam(self, Level.Game.PickTeam(TeamIdx, None), false);
+	}
 
 	if(!IsInState('GameEnded'))
 	{
@@ -1380,7 +1380,6 @@ state GameEnded
 function BecomeSpectator()
 {
 	local Misc_PlayerDataManager_ServerLink PlayerDataManager_ServerLink;
-	local Team_GameBase GB;
 
 	if (Role < ROLE_Authority)
 		return;
