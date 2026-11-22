@@ -160,8 +160,6 @@ var bool MatchStatsRegistered;
 var config bool bSpawnProtectionOnRez;
 
 var config bool bPigletBalance;
-var config bool bholyBalance;
-var config int AutoBalanceRoundsMin;
 var config bool AutoBalanceTeams;
 var config float AutoBalanceAve;
 var config int AutoBalanceSeconds;
@@ -172,12 +170,15 @@ var config float AutoBalanceOnJoinsOver;
 var config bool AllowForceAutoBalance;
 var config int neededToCallTeams, teamsTime;
 var config int ForceAutoBalanceCooldown;
-var config int AutoBalancePlayerCooldownRounds;
-var array<int> DontAutoBalanceRounds;
 var int ForceAutoBalanceTimer;
 var bool TeamsAutoBalanced;
 var array<Controller> DontAutoBalanceList;
 var bool ForceAutoBalance;
+
+var config bool bholyBalance;
+var config int AutoBalanceRoundsMin;
+var config int AutoBalancePlayerCooldownRounds;
+var array<int> DontAutoBalanceRounds;
 var int LastRoundBalanced;
 
 var string GameOptions;
@@ -1672,7 +1673,7 @@ function PlayerJoined(PlayerController C)
 
     if(PlayerDataManager_ServerLink!=None)
         PlayerDataManager_ServerLink.PlayerJoined(P);
-
+		
 	P.LastRezTime = Level.TimeSeconds; //piglet otherwise this player gets priority in necrocombo
 }
 
@@ -2790,7 +2791,7 @@ function BalanceBestPair(){
 		Team1[Team1.length] = MovingPlayer; 
 		AutoBalanceSwitchPlayer(MovingPlayer.C);
 	}
-
+	
 	// Team one has 2+ more players.
 	while ((Team1.Length - Team0.Length) > 1)
 	{
@@ -2921,8 +2922,8 @@ function Controller FindBestAutoBalanceCandidate(int TeamIdx, float PPRNeeded)
   // move player that closest matches the required PPR gap / number of players needed
   for(C=Level.ControllerList; C!=None; C=C.NextController)
   {
-
-    // Skip players who are on the don't switch list.
+    
+    // Skip players who are on the don't switch list. 
 	//Note: (Piglet) This is the code as I found it. Surely the "continue" on this iterator has no effect!
     if (IsExcludedFromAutoBalance(C))
     {
@@ -2997,12 +2998,10 @@ function BalanceTeamsRoundStart()
     local int TeamSize[2];
     local Controller C, BestMatch, BestMatch2;
     local int TeamIdx, PlayersMoved, i, PlayerCount;
-    local float PPRNeeded, AveragePPR, PPRDelta, PPR0, PPR1;
+    local float PPRNeeded, AveragePPR, PPRDelta;
     local bool SwapPlayers;
 
     PlayerCount = 0;
-    PPR0 = 0;
-    PPR1 = 0;
     for(i=0; i<2; ++i)
     {
         TeamPPR[i] = 0;
@@ -3020,6 +3019,7 @@ function BalanceTeamsRoundStart()
 			++TeamSize[C.PlayerReplicationInfo.Team.TeamIndex];
         ++PlayerCount;
     }
+
     if (PlayerCount == 0) return;
 	if(TeamSize[0]==TeamSize[1] && !ForceAutoBalance)
 		return;
@@ -3063,10 +3063,10 @@ function BalanceTeamsRoundStart()
 
         // move player that closest matches the required PPR gap / number of players needed
     if(SwapPlayers) {
-
+	
 	  BestMatch = FindBestAutoBalanceCandidate(TeamIdx, PPRNeeded*2);
 	  BestMatch2 = FindBestAutoBalanceCandidate(1-TeamIdx, PPRNeeded);
-
+	
       if(BestMatch!=None && BestMatch2!=None) {
         AutoBalanceSwitchPlayer(BestMatch);
         AutoBalanceSwitchPlayer(BestMatch2);
@@ -4369,6 +4369,7 @@ defaultproperties
 	AutoBalanceAve=1.0
     AutoBalanceSeconds=20
     AutoBalanceOnJoins=True
+	AutoBalanceOnJoinsOver=0
     AllowForceAutoBalance=True
 	neededToCallTeams=2
 	teamsTime=20
@@ -4398,9 +4399,9 @@ defaultproperties
 	bUseChatIcon=False
 	bUseOldMessages=False
 	NewNetExp=True
-	NewNetExp_ThresholdProj=0.04
+	NewNetExp_ThresholdProj=0.045
 	NewNetExp_ThresholdHS=0.2
-	NewNetExp_ProjMult=-1.0
+	NewNetExp_ProjMult=-2.0
 	NewNetExp_HSMult=1.0
 	misc_util_class=class'Misc_Util'
 	bPigletBalance=True
