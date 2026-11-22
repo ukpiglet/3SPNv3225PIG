@@ -450,6 +450,13 @@ function DoResurrection()
 		
 		xPawn.Thaw();
 
+		if(Resurrectee == None || Resurrectee.Pawn == None)
+		{
+			log("Debug: Resurrectee or Resurrectee.Pawn is none after attempted thaw. Abort!");
+			Abort(false);
+			return;
+		}
+
         PlaySound(Sound'Thaw', SLOT_None, 300.0);
         BroadcastLocalizedMessage(class'NecroMessages', 2, Necromancer.PlayerReplicationInfo, Resurrectee.PlayerReplicationInfo);		
     }
@@ -514,6 +521,7 @@ function DoResurrection()
 	// for some reason pawn is sometimes none! Abort until root cause is known
 	if(Resurrectee == None || Resurrectee.Pawn == None)
 	{
+		log("Debug: Unexpected pawn is none. Abort!");
 		Abort(false);
 		return;
 	}
