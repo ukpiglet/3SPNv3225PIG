@@ -117,9 +117,6 @@ function PlayerLeft(Misc_Player P)
 		theGame = Team_GameBase(Level.Game);
 		if( theGame!= None)
 		{
-			if( theGame.AutoBalanceOnJoinsOver > 0 && P.PlayerData.AvgPPR > theGame.AutoBalanceOnJoinsOver)
-				theGame.ForceAutoBalance = true;
-
 			thegame.RemovePlayerFromTeamsCall(P.PlayerReplicationInfo.PlayerID);
 		}
 		
